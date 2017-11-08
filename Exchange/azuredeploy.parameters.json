@@ -3,7 +3,7 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "baseTemplateUri": {
-      "value": "https://raw.githubusercontent.com/jamesbannan/pluralsight/master/microsoft-azure-resource-manager-mastering/nested"
+      "value": "https://raw.githubusercontent.com/JohnOnTheWeb/Exchange/tree/master/Exchange"
     },
     "nestedDeploymentNameStorage": {
       "value": "deploy-storage-account"
