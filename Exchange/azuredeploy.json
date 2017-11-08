@@ -1,8 +1,60 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
-  "parameters": {},
-  "variables": {},
-  "resources": [],
-  "outputs": {}
-}
+  "parameters": {
+    "baseTemplateUri": {
+      "type": "string",
+      "metadata": {
+        "description": "Base URI of template resources."
+      }
+    },
+    "nestedDeploymentNameStorage": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the storage account deployment."
+      }
+    },
+    "sharedTemplateNameStorage": {
+      "type": "string",
+      "metadata": {
+        "description": "Template name for the storage account."
+      }
+    },
+    "storageType": {
+      "type": "string",
+      "metadata": {
+        "description": "Type of storage account."
+      }
+    },
+    "storageAccountNamePrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Prefix string for storage account name."
+      }
+    }
+  },
+    "variables": {
+      "deploymentApiVersion": "2016-02-01",
+      "storageApiVersion": "2015-06-15"
+    },
+    "resources": [
+      {
+        "apiVersion": "[variables('deploymentApiVersion')]",
+        "name": "[parameters('nestedDeploymentNameStorage')]",
+        "type": "Microsoft.Resources/deployments",
+        "properties": {
+          "mode": "Incremental",
+          "templateLink": {
+            "uri": "[concat(parameters('baseTemplateUri'), '/shared/', parameters('sharedTemplateNameStorage'))]",
+            "contentVersion": "1.0.0.0"
+          },
+          "parameters": {
+            "storageType": { "value": "[parameters('storageType')]" },
+            "storageApiVersion": { "value": "[variables('storageApiVersion')]" },
+            "storageAccountNamePrefix": { "value": "[parameters('storageAccountNamePrefix')]" }
+          }
+        }
+      }
+    ],
+    "outputs": {}
+  }
