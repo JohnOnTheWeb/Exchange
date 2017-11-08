@@ -1,0 +1,110 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "subnetID": {
+      "type": "string",
+      "metadata": {
+        "description": "Virtual network subnet reference."
+      }
+    },
+    "vmStorageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Virtual Network Storage reference for VM "
+      }
+    },
+    "vmAdminUserName": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "ManangementAdmin"
+    },
+    "vmAdminPassword": {
+      "type": "securestring"
+    },
+    "vmSize": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "Standard_D1_v2"
+    }
+  },
+  "variables": {
+    "vmImagePublisher": "MicrosoftWindowsServer",
+    "vmImageOffer": "WindowsServer",
+    "vmSku": "2012-R2-Datacenter"
+  },
+  "resources": [
+    {
+      "name": "ExchangeManagmentNic",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-03-30",
+      "dependsOn": [
+
+      ],
+      "tags": {
+        "displayName": "ExchangeManagmentNic"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[parameters('subnetID')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "ExchangeManagmentVM",
+      "type": "Microsoft.Compute/virtualMachines",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', 'ExchangeManagmentNic')]"
+      ],
+      "tags": {
+        "displayName": "ExchangeManagmentVM"
+      },
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "ExchangeManagment",
+          "adminUsername": "[parameters('vmAdminUserName')]",
+          "adminPassword": "[parameters('vmAdminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('vmImagePublisher')]",
+            "offer": "[variables('vmImageOffer')]",
+            "sku": "[variables('vmSku')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "vmPrivateOSDisk",
+            "vhd": {
+              "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', parameters('vmStorageAccountName')), '2016-01-01').primaryEndpoints.blob, 'vhds', '/', 'vmManagementOSDisk', '.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "\"[resourceId('Microsoft.Network/networkInterfaces', '/ExchangeManagmentNic'))]\""
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "outputs": {
+  }
+}

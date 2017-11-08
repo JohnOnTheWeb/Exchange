@@ -65,7 +65,7 @@
     "subnetMgtName": "subnet-Managment",
     "subnetTstName": "subnet-Test",
     "vNetID": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vNetName'))]",
-    
+    "subnetManagmentID": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('subnetMgtName'))]"
   },
   "resources": [
 
@@ -104,6 +104,12 @@
             }
           },
           {
+            "name": "[variables('subnetSRVName')]",
+            "properties": {
+              "addressPrefix": "[parameters('subnetSrvRange')]"
+            }
+          },
+          {
             "name": "[variables('subnetMgtName')]",
             "properties": {
               "addressPrefix": "[parameters('subnetMgtRange')]"
@@ -122,7 +128,7 @@
   "outputs": {
     "subnetID": {
       "type": "string",
-      "value": "[variables('vNetID')]"
+      "value": "[variables('subnetManagmentID')]"
     }
   }
 }

@@ -8,18 +8,6 @@
         "description": "Base URI of template resources."
       }
     },
-    "nestedDeploymentNameStorage": {
-      "type": "string",
-      "metadata": {
-        "description": "Name of the storage account deployment."
-      }
-    },
-    "sharedTemplateNameStorage": {
-      "type": "string",
-      "metadata": {
-        "description": "Template name for the storage account."
-      }
-    },
     "storageType": {
       "type": "string",
       "metadata": {
@@ -30,18 +18,6 @@
       "type": "string",
       "metadata": {
         "description": "Prefix string for storage account name."
-      }
-    },
-    "nestedDeploymentNameVnet": {
-      "type": "string",
-      "metadata": {
-        "description": "Name of the virtual network deployment."
-      }
-    },
-    "sharedTemplateNameVnet": {
-      "type": "string",
-      "metadata": {
-        "description": "Template name for the virtual network."
       }
     },
     "vNetName": {
@@ -91,6 +67,14 @@
       "metadata": {
         "description": "IP range of second subnet."
       }
+    },
+    "vmAdminUserName": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "ManangementAdmin"
+    },
+    "vmAdminPassword": {
+      "type": "securestring"
     }
   },
   "variables": {
@@ -101,12 +85,12 @@
   "resources": [
     {
       "apiVersion": "[variables('deploymentApiVersion')]",
-      "name": "[parameters('nestedDeploymentNameVnet')]",
+      "name": "VNetDeployment",
       "type": "Microsoft.Resources/deployments",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('baseTemplateUri'), '/shared/', parameters('sharedTemplateNameVnet'))]",
+          "uri": "[concat(parameters('baseTemplateUri'), '/shared/', 'VNet.json')]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -120,22 +104,44 @@
           "subnetMgtRange": { "value": "[parameters('subnetMgtRange')]" },
           "subnetTstRange": { "value": "[parameters('subnetTstRange')]" }
         }
-    }
+      }
     },
     {
       "apiVersion": "[variables('deploymentApiVersion')]",
-      "name": "[parameters('nestedDeploymentNameStorage')]",
+      "name": "StorageDeployment",
       "type": "Microsoft.Resources/deployments",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('baseTemplateUri'), '/shared/', parameters('sharedTemplateNameStorage'))]",
+          "uri": "[concat(parameters('baseTemplateUri'), '/shared/', 'BaseStorage.json')]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
           "storageType": { "value": "[parameters('storageType')]" },
           "storageApiVersion": { "value": "[variables('storageApiVersion')]" },
           "storageAccountNamePrefix": { "value": "[parameters('storageAccountNamePrefix')]" }
+        }
+      }
+    },
+    {
+      "apiVersion": "[variables('deploymentApiVersion')]",
+      "name": "ManagmentVMDeployment",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/','StorageDeployment')]",
+        "[concat('Microsoft.Resources/deployments/', 'VNetDeployment')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('baseTemplateUri'), '/shared/', 'ManagementVM')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "subnetID": { "value": "[reference('VNetDeployment').outputs.subnetID.value]" },
+          "vmStorageAccountName": { "value": "[reference('StorageDeployment').outputs.vmNic.value]" },
+          "vmAdminUserName": { "value": "[parameters('vmAdminUserName')]" },
+          "vmAdminPassword": { "value": "[parameters('vmAdminPassword')]" }
         }
       }
     }

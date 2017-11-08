@@ -5,23 +5,11 @@
     "baseTemplateUri": {
       "value": "https://raw.githubusercontent.com/JohnOnTheWeb/Exchange/master/Exchange"
     },
-    "nestedDeploymentNameStorage": {
-      "value": "deploy-storage-account"
-    },
-    "sharedTemplateNameStorage": {
-      "value": "BaseStorage.json"
-    },
     "storageAccountNamePrefix": {
       "value": "storage"
     },
     "storageType": {
       "value": "Standard_LRS"
-    },
-    "nestedDeploymentNameVnet": {
-      "value": "deploy-virtual-network"
-    },
-    "sharedTemplateNameVnet": {
-      "value": "VNet.json"
     },
     "vNetName": {
       "value": "virtual-network-01"
@@ -46,6 +34,12 @@
     },
     "subnetTstRange": {
       "value": "10.100.5.0/24"
+    },
+    "vmManagementAdminUserName": {
+      "value": "Administrator"
+    },
+    "vmManagementAdminPassword": {
+      "value": "ExchangeDev1"
     }
   }
 }
