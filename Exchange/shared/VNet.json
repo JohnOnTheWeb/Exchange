@@ -20,13 +20,37 @@
         "description": "IP range of the virtual network."
       }
     },
-    "subnetProdRange": {
+    "subnetDBRange": {
       "type": "string",
       "metadata": {
         "description": "IP range of first subnet."
       }
     },
-    "subnetDevRange": {
+    "subnetWebRange": {
+      "type": "string",
+      "metadata": {
+        "description": "IP range of second subnet."
+      }
+    },
+    "subnetSBRange": {
+      "type": "string",
+      "metadata": {
+        "description": "IP range of first subnet."
+      }
+    },
+    "subnetSrvRange": {
+      "type": "string",
+      "metadata": {
+        "description": "IP range of second subnet."
+      }
+    },
+    "subnetMgtRange": {
+      "type": "string",
+      "metadata": {
+        "description": "IP range of first subnet."
+      }
+    },
+    "subnetTstRange": {
       "type": "string",
       "metadata": {
         "description": "IP range of second subnet."
@@ -34,49 +58,71 @@
     }
   },
   "variables": {
-    "subnetProdName": "subnet-prod",
-    "subnetDevName": "subnet-dev",
+    "subnetDBName": "subnet-DB",
+    "subnetWebName": "subnet-Web",
+    "subnetSBName": "subnet-ServiceBus",
+    "subnetSRVName": "subnet-Service",
+    "subnetMgtName": "subnet-Managment",
+    "subnetTstName": "subnet-Test",
     "vNetID": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vNetName'))]",
-    "vNetSubnetID": "[concat(variables('vNetID'), '/subnets/', 'subnet-Test')]"
+    
   },
   "resources": [
 
     {
-      "name": "[parameters('vNetName')]",
+      "name": "vnExchangeDev1",
       "type": "Microsoft.Network/virtualNetworks",
       "location": "[resourceGroup().location]",
-      "apiVersion": "[parameters('vNetApiVersion')]",
+      "apiVersion": "2016-03-30",
       "dependsOn": [],
       "tags": {
-        "displayName": "[parameters('vNetName')]"
+        "displayName": "vnExchangeDev1"
       },
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
-            "[parameters('vNetRange')]"
+            "[parameters('vNetName')]"
           ]
         },
         "subnets": [
           {
-            "name": "[variables('subnetProdName')]",
+            "name": "[variables('subnetDBName')]",
             "properties": {
-              "addressPrefix": "[parameters('subnetProdRange')]"
+              "addressPrefix": "[parameters('subnetDBRange')]"
             }
           },
           {
-            "name": "[variables('subnetDevName')]",
+            "name": "[variables('subnetWebName')]",
             "properties": {
-              "addressPrefix": "[parameters('subnetDevRange')]"
+              "addressPrefix": "[parameters('subnetWebRange')]"
+            }
+          },
+          {
+            "name": "[variables('subnetSBName')]",
+            "properties": {
+              "addressPrefix": "[parameters('subnetSBRange')]"
+            }
+          },
+          {
+            "name": "[variables('subnetMgtName')]",
+            "properties": {
+              "addressPrefix": "[parameters('subnetMgtRange')]"
+            }
+          },
+          {
+            "name": "[variables('subnetTstName')]",
+            "properties": {
+              "addressPrefix": "[parameters('subnetTstRange')]"
             }
           }
         ]
       }
-    }
+    },
   ],
   "outputs": {
     "subnetID": {
       "type": "string",
-      "value": "[variables('vNetSubnetID')]"
+      "value": "[variables('vNetID')]"
     }
   }
 }

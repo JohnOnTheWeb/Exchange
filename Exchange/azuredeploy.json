@@ -56,13 +56,37 @@
         "description": "IP range of the virtual network."
       }
     },
-    "subnetProdRange": {
+    "subnetDBRange": {
       "type": "string",
       "metadata": {
         "description": "IP range of first subnet."
       }
     },
-    "subnetDevRange": {
+    "subnetWebRange": {
+      "type": "string",
+      "metadata": {
+        "description": "IP range of second subnet."
+      }
+    },
+    "subnetSBRange": {
+      "type": "string",
+      "metadata": {
+        "description": "IP range of first subnet."
+      }
+    },
+    "subnetSrvRange": {
+      "type": "string",
+      "metadata": {
+        "description": "IP range of second subnet."
+      }
+    },
+    "subnetMgtRange": {
+      "type": "string",
+      "metadata": {
+        "description": "IP range of first subnet."
+      }
+    },
+    "subnetTstRange": {
       "type": "string",
       "metadata": {
         "description": "IP range of second subnet."
@@ -89,8 +113,12 @@
           "vNetName": { "value": "[parameters('vNetName')]" },
           "vNetApiVersion": { "value": "[variables('vNetApiVersion')]" },
           "vNetRange": { "value": "[parameters('vNetRange')]" },
-          "subnetProdRange": { "value": "[parameters('subnetProdRange')]" },
-          "subnetDevRange": { "value": "[parameters('subnetDevRange')]" }
+          "subnetDBRange": { "value": "[parameters('subnetDBRange')]" },
+          "subnetWebRange": { "value": "[parameters('subnetWebRange')]" },
+          "subnetSBRange": { "value": "[parameters('subnetSBRange')]" },
+          "subnetSrvRange": { "value": "[parameters('subnetSrvRange')]" },
+          "subnetMgtRange": { "value": "[parameters('subnetMgtRange')]" },
+          "subnetTstRange": { "value": "[parameters('subnetTstRange')]" }
         }
     }
     },

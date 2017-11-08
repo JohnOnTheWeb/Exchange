@@ -27,13 +27,25 @@
       "value": "virtual-network-01"
     },
     "vNetRange": {
-      "value": "10.0.0.0/16"
+      "value": "10.100.0.0/20"
     },
-    "subnetProdRange": {
-      "value": "10.0.1.0/24"
+    "subnetDBRange": {
+      "value": "10.100.0.0/24"
     },
-    "subnetDevRange": {
-      "value": "10.0.2.0/24"
+    "subnetWebRange": {
+      "value": "10.100.1.0/24"
+    },
+    "subnetSBRange": {
+      "value": "10.100.2.0/24"
+    },
+    "subnetSrvRange": {
+      "value": "10.100.3.0/24"
+    },
+    "subnetMgtRange": {
+      "value": "10.100.4.0/24"
+    },
+    "subnetTstRange": {
+      "value": "10.100.5.0/24"
     }
   }
 }
