@@ -98,7 +98,7 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "\"[resourceId('Microsoft.Network/networkInterfaces', '/ExchangeManagmentNic'))]\""
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', 'ExchangeManagmentNic')]"
             }
           ]
         }

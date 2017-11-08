@@ -134,12 +134,12 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('baseTemplateUri'), '/shared/', 'ManagementVM')]",
+          "uri": "[concat(parameters('baseTemplateUri'), '/shared/', 'ManagementVM.json')]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
           "subnetID": { "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vNetName'), 'subnet-Managment')]" },
-          "vmStorageAccountName": { "value": "[reference('StorageDeployment').outputs.vmNic.value]" },
+          "vmStorageAccountName": { "value": "[reference('StorageDeployment').outputs.storageAccountName.value]" },
           "vmAdminUserName": { "value": "[parameters('vmManagementAdminUserName')]" },
           "vmAdminPassword": { "value": "[parameters('vmManagementAdminPassword')]" }
         }
