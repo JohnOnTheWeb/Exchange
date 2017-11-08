@@ -70,7 +70,7 @@
   "resources": [
 
     {
-      "name": " parameters('vNetName')",
+      "name": "[parameters('vNetName')]",
       "type": "Microsoft.Network/virtualNetworks",
       "location": "[resourceGroup().location]",
       "apiVersion": "2016-03-30",
