@@ -36,7 +36,7 @@
       "value": "10.100.5.0/24"
     },
     "vmManagementAdminUserName": {
-      "value": "Administrator"
+      "value": "ExchangeAdmin"
     },
     "vmManagementAdminPassword": {
       "value": "ExchangeDev1"
