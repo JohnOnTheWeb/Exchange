@@ -138,7 +138,7 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "subnetID": { "value": "[reference('VNetDeployment').outputs.subnetID.value]" },
+          "subnetID": { "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vNetName'), 'subnet-Managment')]" },
           "vmStorageAccountName": { "value": "[reference('StorageDeployment').outputs.vmNic.value]" },
           "vmAdminUserName": { "value": "[parameters('vmManagementAdminUserName')]" },
           "vmAdminPassword": { "value": "[parameters('vmManagementAdminPassword')]" }
