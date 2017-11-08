@@ -40,12 +40,13 @@
     "vNetSubnetID": "[concat(variables('vNetID'), '/subnets/', 'subnet-Test')]"
   },
   "resources": [
+
     {
       "name": "[parameters('vNetName')]",
       "type": "Microsoft.Network/virtualNetworks",
       "location": "[resourceGroup().location]",
       "apiVersion": "[parameters('vNetApiVersion')]",
-      "dependsOn": [ ],
+      "dependsOn": [],
       "tags": {
         "displayName": "[parameters('vNetName')]"
       },

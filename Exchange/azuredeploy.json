@@ -92,30 +92,6 @@
           "subnetProdRange": { "value": "[parameters('subnetProdRange')]" },
           "subnetDevRange": { "value": "[parameters('subnetDevRange')]" }
         }
-      },
-       "vNetName": {
-      "type": "string",
-      "metadata": {
-        "description": "Name of the virtual network."
-      }
-    },
-    "vNetRange": {
-      "type": "string",
-      "metadata": {
-        "description": "IP range of the virtual network."
-      }
-    },
-    "subnetProdRange": {
-      "type": "string",
-      "metadata": {
-        "description": "IP range of first subnet."
-      }
-    },
-    "subnetDevRange": {
-      "type": "string",
-      "metadata": {
-        "description": "IP range of second subnet."
-      }
     }
     },
     {
