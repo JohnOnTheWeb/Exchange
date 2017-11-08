@@ -12,7 +12,7 @@
       "value": "Standard_LRS"
     },
     "vNetName": {
-      "value": "virtual-network-01"
+      "value": "exchangevnet"
     },
     "vNetRange": {
       "value": "10.100.0.0/20"
