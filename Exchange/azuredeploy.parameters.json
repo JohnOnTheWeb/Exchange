@@ -3,7 +3,7 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "baseTemplateUri": {
-      "value": "https://raw.githubusercontent.com/JohnOnTheWeb/Exchange/tree/master/Exchange"
+      "value": "https://raw.githubusercontent.com/JohnOnTheWeb/Exchange/master/Exchange"
     },
     "nestedDeploymentNameStorage": {
       "value": "deploy-storage-account"
@@ -13,6 +13,27 @@
     },
     "storageAccountNamePrefix": {
       "value": "storage"
+    },
+    "storageType": {
+      "value": "Standard_LRS"
+    },
+    "nestedDeploymentNameVnet": {
+      "value": "deploy-virtual-network"
+    },
+    "sharedTemplateNameVnet": {
+      "value": "VNet.json"
+    },
+    "vNetName": {
+      "value": "virtual-network-01"
+    },
+    "vNetRange": {
+      "value": "10.0.0.0/16"
+    },
+    "subnetProdRange": {
+      "value": "10.0.1.0/24"
+    },
+    "subnetDevRange": {
+      "value": "10.0.2.0/24"
     }
   }
 }

@@ -31,30 +31,110 @@
       "metadata": {
         "description": "Prefix string for storage account name."
       }
+    },
+    "nestedDeploymentNameVnet": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the virtual network deployment."
+      }
+    },
+    "sharedTemplateNameVnet": {
+      "type": "string",
+      "metadata": {
+        "description": "Template name for the virtual network."
+      }
+    },
+    "vNetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the virtual network."
+      }
+    },
+    "vNetRange": {
+      "type": "string",
+      "metadata": {
+        "description": "IP range of the virtual network."
+      }
+    },
+    "subnetProdRange": {
+      "type": "string",
+      "metadata": {
+        "description": "IP range of first subnet."
+      }
+    },
+    "subnetDevRange": {
+      "type": "string",
+      "metadata": {
+        "description": "IP range of second subnet."
+      }
     }
   },
-    "variables": {
-      "deploymentApiVersion": "2016-02-01",
-      "storageApiVersion": "2015-06-15"
+  "variables": {
+    "deploymentApiVersion": "2016-02-01",
+    "storageApiVersion": "2015-06-15",
+    "vNetApiVersion": "2015-06-15"
+  },
+  "resources": [
+    {
+      "apiVersion": "[variables('deploymentApiVersion')]",
+      "name": "[parameters('nestedDeploymentNameVnet')]",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('baseTemplateUri'), '/shared/', parameters('sharedTemplateNameVnet'))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "vNetName": { "value": "[parameters('vNetName')]" },
+          "vNetApiVersion": { "value": "[variables('vNetApiVersion')]" },
+          "vNetRange": { "value": "[parameters('vNetRange')]" },
+          "subnetProdRange": { "value": "[parameters('subnetProdRange')]" },
+          "subnetDevRange": { "value": "[parameters('subnetDevRange')]" }
+        }
+      },
+       "vNetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the virtual network."
+      }
     },
-    "resources": [
-      {
-        "apiVersion": "[variables('deploymentApiVersion')]",
-        "name": "[parameters('nestedDeploymentNameStorage')]",
-        "type": "Microsoft.Resources/deployments",
-        "properties": {
-          "mode": "Incremental",
-          "templateLink": {
-            "uri": "[concat(parameters('baseTemplateUri'), '/shared/', parameters('sharedTemplateNameStorage'))]",
-            "contentVersion": "1.0.0.0"
-          },
-          "parameters": {
-            "storageType": { "value": "[parameters('storageType')]" },
-            "storageApiVersion": { "value": "[variables('storageApiVersion')]" },
-            "storageAccountNamePrefix": { "value": "[parameters('storageAccountNamePrefix')]" }
-          }
+    "vNetRange": {
+      "type": "string",
+      "metadata": {
+        "description": "IP range of the virtual network."
+      }
+    },
+    "subnetProdRange": {
+      "type": "string",
+      "metadata": {
+        "description": "IP range of first subnet."
+      }
+    },
+    "subnetDevRange": {
+      "type": "string",
+      "metadata": {
+        "description": "IP range of second subnet."
+      }
+    }
+    },
+    {
+      "apiVersion": "[variables('deploymentApiVersion')]",
+      "name": "[parameters('nestedDeploymentNameStorage')]",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('baseTemplateUri'), '/shared/', parameters('sharedTemplateNameStorage'))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "storageType": { "value": "[parameters('storageType')]" },
+          "storageApiVersion": { "value": "[variables('storageApiVersion')]" },
+          "storageAccountNamePrefix": { "value": "[parameters('storageAccountNamePrefix')]" }
         }
       }
-    ],
+    }
+  ],
     "outputs": {}
   }
