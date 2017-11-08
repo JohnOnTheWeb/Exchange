@@ -35,12 +35,10 @@
     },
     "cfgServerCount": {
       "type": "int",
-      "minLength": 1,
       "defaultValue": 2
     },
     "appServerCount": {
       "type": "int",
-      "minLength": 1,
       "defaultValue": 2
     }
   },
