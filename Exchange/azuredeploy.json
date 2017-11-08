@@ -68,12 +68,12 @@
         "description": "IP range of second subnet."
       }
     },
-    "vmAdminUserName": {
+    "vmManagementAdminUserName": {
       "type": "string",
       "minLength": 1,
       "defaultValue": "ManangementAdmin"
     },
-    "vmAdminPassword": {
+    "vmManagementAdminPassword": {
       "type": "securestring"
     }
   },
@@ -140,8 +140,8 @@
         "parameters": {
           "subnetID": { "value": "[reference('VNetDeployment').outputs.subnetID.value]" },
           "vmStorageAccountName": { "value": "[reference('StorageDeployment').outputs.vmNic.value]" },
-          "vmAdminUserName": { "value": "[parameters('vmAdminUserName')]" },
-          "vmAdminPassword": { "value": "[parameters('vmAdminPassword')]" }
+          "vmAdminUserName": { "value": "[parameters('vmManagementAdminUserName')]" },
+          "vmAdminPassword": { "value": "[parameters('vmManagementAdminPassword')]" }
         }
       }
     }

@@ -65,7 +65,7 @@
     "subnetMgtName": "subnet-Managment",
     "subnetTstName": "subnet-Test",
     "vNetID": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vNetName'))]",
-    "subnetManagmentID": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('subnetMgtName'))]"
+    "subnetManagmentID": "[resourceId('Microsoft.Network/virtualNetworks/subnets',parameters('vNetName'), variables('subnetMgtName'))]"
   },
   "resources": [
 
