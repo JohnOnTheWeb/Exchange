@@ -75,6 +75,21 @@
     },
     "vmManagementAdminPassword": {
       "type": "securestring"
+    },
+    "vmSBSize": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "Standard_D1_v2"
+    },
+    "cfgSBServerCount": {
+      "type": "int",
+      "minLength": 1,
+      "defaultValue": 2
+    },
+    "appSBServerCount": {
+      "type": "int",
+      "minLength": 1,
+      "defaultValue": 2
     }
   },
   "variables": {
@@ -142,6 +157,32 @@
           "vmStorageAccountName": { "value": "[reference('StorageDeployment').outputs.storageAccountName.value]" },
           "vmAdminUserName": { "value": "[parameters('vmManagementAdminUserName')]" },
           "vmAdminPassword": { "value": "[parameters('vmManagementAdminPassword')]" }
+        }
+      }
+    },
+    {
+      "apiVersion": "[variables('deploymentApiVersion')]",
+      "name": "SBDeployment",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/','StorageDeployment')]",
+        "[concat('Microsoft.Resources/deployments/', 'VNetDeployment')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('baseTemplateUri'), '/shared/', 'SBFarm.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "subnetID": { "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vNetName'), 'subnet-Managment')]" },
+          "vmStorageAccountName": { "value": "[reference('StorageDeployment').outputs.storageAccountName.value]" },
+          "vmAdminUserName": { "value": "[parameters('vmManagementAdminUserName')]" },
+          "vmAdminPassword": { "value": "[parameters('vmManagementAdminPassword')]" },
+          "sbFarmNamePrefix": { "value": "GenPop" },
+          "vmSize": { "value": "[parameters('vmSBSize')]" },
+          "cfgServerCount": { "value": "[parameters('cfgSBServerCount')]" },
+          "appServerCount": { "value": "[parameters('appSBServerCount')]" }
         }
       }
     }

@@ -33,6 +33,7 @@
     <Content Include="Deploy-AzureResourceGroup.ps1" />
     <None Include="shared\BaseStorage.json" />
     <None Include="shared\ManagementVM.json" />
+    <None Include="shared\SBFarm.json" />
     <None Include="shared\VNet.json" />
   </ItemGroup>
   <Target Name="GetReferenceAssemblyPaths" />
