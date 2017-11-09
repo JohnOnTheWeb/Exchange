@@ -2,6 +2,12 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "baseTemplateUri": {
+      "type": "string",
+      "metadata": {
+        "description": "Base URI of template resources."
+      }
+    },
     "subnetID": {
       "type": "string",
       "metadata": {
@@ -9,6 +15,12 @@
       }
     },
     "vmStorageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Virtual Network Storage reference for VM "
+      }
+    },
+    "vmStorageAccountKey": {
       "type": "string",
       "metadata": {
         "description": "Virtual Network Storage reference for VM "
@@ -101,7 +113,67 @@
               "id": "[resourceId('Microsoft.Network/networkInterfaces', 'ExchangeManagmentNic')]"
             }
           ]
-        }
+        },
+        "resources": [
+          "name",
+          "IIS",
+          "type",
+          "extensions",
+          "location",
+          "[resourceGroup().location]",
+          "apiVersion",
+          "2016-03-30",
+          "dependsOn",
+          [
+            "[resourceId('Microsoft.Compute/virtualMachines', concat('vmWeb','-',copyIndex()))]"
+          ],
+          "tags",
+          {
+            "displayName": "IIS"
+          },
+          "properties",
+          {
+            "publisher": "Microsoft.Powershell",
+            "type": "DSC",
+            "typeHandlerVersion": "2.9",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "configuration": {
+                "url": "[concat(parameters('baseTemplateUri'), '/dsc/', 'FileResourceDemo.zip')]",
+                "script": "FileResourceDemo.ps1\\FileResourceDemo"
+              },
+              "configurationArguments": {
+                "MachineName": "[concat('ExchangeWeb','-',copyIndex())]"
+              },
+              "modulesUrl": "",
+              "configurationFunction": ""
+            },
+            "protectedSettings": {
+
+            }
+          },
+          {
+            "type": "extensions",
+            "name": "CustomScriptExtension",
+            "apiVersion": "2015-06-15",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+              "ExchangeManagmentVM"
+            ],
+            "properties": {
+              "publisher": "Microsoft.Compute",
+              "type": "CustomScriptExtension",
+              "typeHandlerVersion": "1.8",
+              "autoUpgradeMinorVersion": true,
+              "settings": {
+                "fileUris": [
+                  "[concat(parameters('baseTemplateUri'), '/ps1/CreateFileShare.ps1')]"
+                ],
+                "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ','azurefiles.ps1 -SAName ',parameters('vmStorageAccountName'),'  -SAKey ', listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('vmStorageAccountName')), '2015-06-15').key1)]"
+              }
+            }
+          }
+        ]
       }
     }
   ],
