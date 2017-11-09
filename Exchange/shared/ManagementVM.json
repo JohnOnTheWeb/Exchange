@@ -20,12 +20,6 @@
         "description": "Virtual Network Storage reference for VM "
       }
     },
-    "vmStorageAccountKey": {
-      "type": "string",
-      "metadata": {
-        "description": "Virtual Network Storage reference for VM "
-      }
-    },
     "vmAdminUserName": {
       "type": "string",
       "minLength": 1,
