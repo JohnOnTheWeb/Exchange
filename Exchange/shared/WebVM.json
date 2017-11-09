@@ -91,7 +91,41 @@
             }
           ]
         }
-      }
+      },
+      "resources": [
+        {
+          "name": "IIS",
+          "type": "extensions",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2016-03-30",
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', concat('vmWeb','-',copyIndex()))]"
+          ],
+          "tags": {
+            "displayName": "IIS"
+          },
+          "properties": {
+            "publisher": "Microsoft.Powershell",
+            "type": "DSC",
+            "typeHandlerVersion": "2.9",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "configuration": {
+                "url": "https://github.com/Azure/azure-quickstart-templates/blob/master/dsc-extension-iis-server-windows-vm/ContosoWebsite.ps1.zip",
+                "script": "ContosoWebsite.ps1\\ContosWebSite"
+              },
+              "configurationArguments": {
+                "MachineName": "[concat('ExchangeWeb','-',copyIndex())]"
+              },
+              "modulesUrl": "",
+              "configurationFunction": ""
+            },
+            "protectedSettings": {
+
+            }
+          }
+        }
+      ]
     },
     {
       "name": "[concat('Web','-',copyIndex(),'-nic-0')]",
