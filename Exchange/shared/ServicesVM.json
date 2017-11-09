@@ -41,20 +41,20 @@
   },
   "resources": [
     {
-      "name": "[concat('vmTest','-',copyIndex())]",
+      "name": "[concat('vmServices','-',copyIndex())]",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[resourceGroup().location]",
       "apiVersion": "2015-06-15",
       "copy": {
         "count": 2,
-        "name": "vmTestCopy"
+        "name": "vmSrvCopy"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces', concat('Test','-',copyIndex(),'-nic-0'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces', concat('srv','-',copyIndex(),'-nic-0'))]",
         "[resourceId('Microsoft.Compute/availabilitySets',  variables('servicesAvailabilitySet'))]"
       ],
       "tags": {
-        "displayName": "vmTest"
+        "displayName": "vmService"
       },
       "properties": {
         "hardwareProfile": {
@@ -64,7 +64,7 @@
           "id": "[resourceId('Microsoft.Compute/availabilitySets',variables('servicesAvailabilitySet'))]"
         },
         "osProfile": {
-          "computerName": "[concat('vmTest-',copyIndex())]",
+          "computerName": "[concat('vmSrv-',copyIndex())]",
           "adminUsername": "[parameters('vmAdminUserName')]",
           "adminPassword": "[parameters('vmAdminPassword')]"
         },
@@ -76,9 +76,9 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "[concat('Test','-',copyIndex(),'-osdisk')]",
+            "name": "[concat('srv','-',copyIndex(),'-osdisk')]",
             "vhd": {
-              "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', parameters('vmStorageAccountName')), '2016-01-01').primaryEndpoints.blob, 'vhds', '/', 'test-',copyIndex(),'-OSDisk', '.vhd')]"
+              "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', parameters('vmStorageAccountName')), '2016-01-01').primaryEndpoints.blob, 'vhds', '/', 'srv-',copyIndex(),'-OSDisk', '.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -87,25 +87,25 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat('Test','-',copyIndex(),'-nic-0'))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat('srv','-',copyIndex(),'-nic-0'))]"
             }
           ]
         }
       }
     },
     {
-      "name": "[concat('Test','-',copyIndex(),'-nic-0')]",
+      "name": "[concat('srv','-',copyIndex(),'-nic-0')]",
       "type": "Microsoft.Network/networkInterfaces",
       "location": "[resourceGroup().location]",
       "apiVersion": "2016-03-30",
       "copy": {
         "count": "[parameters('servicesServerCount')]",
-        "name": "vmAppNicCopy"
+        "name": "vmServicesNicCopy"
       },
       "dependsOn": [
       ],
       "tags": {
-        "displayName": "vmTestNic"
+        "displayName": "vmServicesNic"
       },
       "properties": {
         "ipConfigurations": [
@@ -132,7 +132,7 @@
         "platformFaultDomainCount": 2
       },
       "tags": {
-        "displayName": "TestAvailabilitySet"
+        "displayName": "ServicesAvailabilitySet"
       }
     }
   ],

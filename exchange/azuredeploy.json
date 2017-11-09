@@ -88,6 +88,33 @@
     "appSBServerCount": {
       "type": "int",
       "defaultValue": 2
+    },
+    "vmTestSize": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "Standard_D1_v2"
+    },
+    "testServerCount": {
+      "type": "int",
+      "defaultValue": 2
+    },
+    "vmWebSize": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "Standard_D1_v2"
+    },
+    "WebServerCount": {
+      "type": "int",
+      "defaultValue": 2
+    },
+    "vmServicesSize": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "Standard_D1_v2"
+    },
+    "ServicesServerCount": {
+      "type": "int",
+      "defaultValue": 2
     }
   },
   "variables": {
@@ -181,6 +208,78 @@
           "vmSize": { "value": "[parameters('vmSBSize')]" },
           "cfgServerCount": { "value": "[parameters('cfgSBServerCount')]" },
           "appServerCount": { "value": "[parameters('appSBServerCount')]" }
+        }
+      }
+    },
+    {
+      "apiVersion": "[variables('deploymentApiVersion')]",
+      "name": "TestDeployment",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/','StorageDeployment')]",
+        "[concat('Microsoft.Resources/deployments/', 'VNetDeployment')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('baseTemplateUri'), '/shared/', 'TestVM.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "subnetID": { "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vNetName'), 'subnet-Managment')]" },
+          "vmStorageAccountName": { "value": "[reference('StorageDeployment').outputs.storageAccountName.value]" },
+          "vmAdminUserName": { "value": "[parameters('vmManagementAdminUserName')]" },
+          "vmAdminPassword": { "value": "[parameters('vmManagementAdminPassword')]" },
+          "vmSize": { "value": "[parameters('vmTestSize')]" },
+          "testServerCount": { "value": "[parameters('testServerCount')]" }
+        }
+      }
+    },
+    {
+      "apiVersion": "[variables('deploymentApiVersion')]",
+      "name": "WebDeployment",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/','StorageDeployment')]",
+        "[concat('Microsoft.Resources/deployments/', 'VNetDeployment')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('baseTemplateUri'), '/shared/', 'WebVM.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "subnetID": { "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vNetName'), 'subnet-Managment')]" },
+          "vmStorageAccountName": { "value": "[reference('StorageDeployment').outputs.storageAccountName.value]" },
+          "vmAdminUserName": { "value": "[parameters('vmManagementAdminUserName')]" },
+          "vmAdminPassword": { "value": "[parameters('vmManagementAdminPassword')]" },
+          "vmSize": { "value": "[parameters('vmWebSize')]" },
+          "webServerCount": { "value": "[parameters('webServerCount')]" }
+        }
+      }
+    },
+    {
+      "apiVersion": "[variables('deploymentApiVersion')]",
+      "name": "ServicesDeployment",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/','StorageDeployment')]",
+        "[concat('Microsoft.Resources/deployments/', 'VNetDeployment')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('baseTemplateUri'), '/shared/', 'ServicesVM.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "subnetID": { "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vNetName'), 'subnet-Managment')]" },
+          "vmStorageAccountName": { "value": "[reference('StorageDeployment').outputs.storageAccountName.value]" },
+          "vmAdminUserName": { "value": "[parameters('vmManagementAdminUserName')]" },
+          "vmAdminPassword": { "value": "[parameters('vmManagementAdminPassword')]" },
+          "vmSize": { "value": "[parameters('vmServicesSize')]" },
+          "ServicesServerCount": { "value": "[parameters('servicesServerCount')]" }
         }
       }
     }

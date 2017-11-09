@@ -17,7 +17,7 @@
     "vmAdminUserName": {
       "type": "string",
       "minLength": 1,
-      "defaultValue": "ManangementTest"
+      "defaultValue": "ManangementWeb"
     },
     "vmAdminPassword": {
       "type": "securestring"
@@ -34,27 +34,27 @@
    
   },
   "variables": {
-    "webAvailabilitySet": "TestappAvSet",
+    "webAvailabilitySet": "WebappAvSet",
     "vmImagePublisher": "MicrosoftWindowsServer",
     "vmImageOffer": "WindowsServer",
     "vmSku": "2012-R2-Datacenter"
   },
   "resources": [
     {
-      "name": "[concat('vmTest','-',copyIndex())]",
+      "name": "[concat('vmWeb','-',copyIndex())]",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[resourceGroup().location]",
       "apiVersion": "2015-06-15",
       "copy": {
         "count": 2,
-        "name": "vmTestCopy"
+        "name": "vmWebCopy"
       },
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces', concat('Test','-',copyIndex(),'-nic-0'))]",
         "[resourceId('Microsoft.Compute/availabilitySets',  variables('webAvailabilitySet'))]"
       ],
       "tags": {
-        "displayName": "vmTest"
+        "displayName": "vmWeb"
       },
       "properties": {
         "hardwareProfile": {
@@ -64,7 +64,7 @@
           "id": "[resourceId('Microsoft.Compute/availabilitySets',variables('webAvailabilitySet'))]"
         },
         "osProfile": {
-          "computerName": "[concat('vmTest-',copyIndex())]",
+          "computerName": "[concat('vmWeb-',copyIndex())]",
           "adminUsername": "[parameters('vmAdminUserName')]",
           "adminPassword": "[parameters('vmAdminPassword')]"
         },
@@ -76,9 +76,9 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "[concat('Test','-',copyIndex(),'-osdisk')]",
+            "name": "[concat('Web','-',copyIndex(),'-osdisk')]",
             "vhd": {
-              "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', parameters('vmStorageAccountName')), '2016-01-01').primaryEndpoints.blob, 'vhds', '/', 'test-',copyIndex(),'-OSDisk', '.vhd')]"
+              "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', parameters('vmStorageAccountName')), '2016-01-01').primaryEndpoints.blob, 'vhds', '/', 'web-',copyIndex(),'-OSDisk', '.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -87,14 +87,14 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat('Test','-',copyIndex(),'-nic-0'))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat('Web','-',copyIndex(),'-nic-0'))]"
             }
           ]
         }
       }
     },
     {
-      "name": "[concat('Test','-',copyIndex(),'-nic-0')]",
+      "name": "[concat('Web','-',copyIndex(),'-nic-0')]",
       "type": "Microsoft.Network/networkInterfaces",
       "location": "[resourceGroup().location]",
       "apiVersion": "2016-03-30",
@@ -105,7 +105,7 @@
       "dependsOn": [
       ],
       "tags": {
-        "displayName": "vmTestNic"
+        "displayName": "vmWebNic"
       },
       "properties": {
         "ipConfigurations": [
@@ -132,7 +132,7 @@
         "platformFaultDomainCount": 2
       },
       "tags": {
-        "displayName": "TestAvailabilitySet"
+        "displayName": "WebAvailabilitySet"
       }
     }
   ],
