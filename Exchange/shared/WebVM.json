@@ -185,7 +185,7 @@
             "settings": {
               "configuration": {
                 "url": "[concat(parameters('baseTemplateUri'), '/dsc/', 'ExchangeWebServer.zip')]",
-                "script": "ContosoWebsite.ps1\\ContosWebSite"
+                "script": "ExchangeWebServer.ps1\\ExchangeWebServer"
               },
               "configurationArguments": {
                 "MachineName": "[concat('ExchangeWeb','-',copyIndex())]"
