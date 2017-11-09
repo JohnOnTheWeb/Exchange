@@ -34,7 +34,10 @@
     <None Include="shared\BaseStorage.json" />
     <None Include="shared\ManagementVM.json" />
     <None Include="shared\SBFarm.json" />
+    <None Include="shared\ServicesVM.json" />
+    <None Include="shared\TestVM.json" />
     <None Include="shared\VNet.json" />
+    <None Include="shared\WebVM.json" />
   </ItemGroup>
   <Target Name="GetReferenceAssemblyPaths" />
 </Project>

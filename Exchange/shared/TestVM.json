@@ -2,12 +2,6 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "sbFarmNamePrefix": {
-      "type": "string",
-      "metadata": {
-        "description": "Prefix for naming in farm."
-      }
-    },
     "subnetID": {
       "type": "string",
       "metadata": {
@@ -36,73 +30,15 @@
     "cfgServerCount": {
       "type": "int",
       "defaultValue": 2
-    },
-    "appServerCount": {
-      "type": "int",
-      "defaultValue": 2
     }
   },
   "variables": {
-    "cfgAvailabilitySet": "[concat(parameters('sbFarmNamePrefix'), 'cfgAvSet')]",
     "appAvailabilitySet": "[concat(parameters('sbFarmNamePrefix'), 'appAvSet')]",
     "vmImagePublisher": "MicrosoftWindowsServer",
     "vmImageOffer": "WindowsServer",
     "vmSku": "2012-R2-Datacenter"
   },
   "resources": [
-    {
-      "name": "[concat('vmSBConfig','-',copyIndex())]",
-      "type": "Microsoft.Compute/virtualMachines",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2015-06-15",
-      "copy": {
-        "count": 2,
-        "name": "vmSBConfigCopy"
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('sbFarmNamePrefix'),'-vmcfg','-',copyIndex(),'-nic-0'))]",
-        "[resourceId('Microsoft.Compute/availabilitySets', variables('cfgAvailabilitySet'))]"
-      ],
-      "tags": {
-        "displayName": "vmSBConfig"
-      },
-      "properties": {
-        "hardwareProfile": {
-          "vmSize": "[parameters('vmSize')]"
-        },
-        "availabilitySet": {
-          "id": "[resourceId('Microsoft.Compute/availabilitySets',variables('cfgAvailabilitySet'))]"
-        },
-        "osProfile": {
-          "computerName": "[concat(parameters('sbFarmNamePrefix'), '-sbcfg-')]",
-          "adminUsername": "[parameters('vmAdminUserName')]",
-          "adminPassword": "[parameters('vmAdminPassword')]"
-        },
-        "storageProfile": {
-          "imageReference": {
-            "offer": "[variables('vmImageOffer')]",
-            "publisher": "[variables('vmImagePublisher')]",
-            "sku": "[variables('vmSku')]",
-            "version": "latest"
-          },
-          "osDisk": {
-            "name": "[concat('SBConfig','-',copyIndex(),'-osdisk')]",
-            "vhd": {
-              "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', parameters('vmStorageAccountName')), '2016-01-01').primaryEndpoints.blob, 'vhds', '/', 'vmsbconfigOSDisk', '.vhd')]"
-            },
-            "caching": "ReadWrite",
-            "createOption": "FromImage"
-          }
-        },
-        "networkProfile": {
-          "networkInterfaces": [
-            {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('sbFarmNamePrefix'),'-vmcfg','-',copyIndex(),'-nic-0'))]"
-            }
-          ]
-        }
-      }
-    },
     {
       "name": "[concat('vmSBApp','-',copyIndex())]",
       "type": "Microsoft.Compute/virtualMachines",
@@ -157,34 +93,6 @@
       }
     },
     {
-      "name": "[concat(parameters('sbFarmNamePrefix'),'-vmcfg','-',copyIndex(),'-nic-0')]",
-      "type": "Microsoft.Network/networkInterfaces",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2016-03-30",
-      "copy": {
-        "count": "[parameters('cfgServerCount')]",
-        "name": "vmConfigNicCopy"
-      },
-      "dependsOn": [
-      ],
-      "tags": {
-        "displayName": "vmCfgNic"
-      },
-      "properties": {
-        "ipConfigurations": [
-          {
-            "name": "ipconfig1",
-            "properties": {
-              "privateIPAllocationMethod": "Dynamic",
-              "subnet": {
-                "id": "[parameters('subnetID')]"
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
       "name": "[concat(parameters('sbFarmNamePrefix'),'-vmapp','-',copyIndex(),'-nic-0')]",
       "type": "Microsoft.Network/networkInterfaces",
       "location": "[resourceGroup().location]",
@@ -224,20 +132,6 @@
       },
       "tags": {
         "displayName": "ConfigAvailabilitySet"
-      }
-    },
-    {
-      "name": "[variables('appAvailabilitySet')]",
-      "type": "Microsoft.Compute/availabilitySets",
-      "apiVersion": "2015-06-15",
-      "dependsOn": [],
-      "location": "[resourceGroup().location]",
-      "properties": {
-        "platformUpdateDomainCount": 2,
-        "platformFaultDomainCount": 2
-      },
-      "tags": {
-        "displayName": "AppAvailabilitySet"
       }
     }
   ],
