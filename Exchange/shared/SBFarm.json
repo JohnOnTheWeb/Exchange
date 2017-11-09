@@ -71,7 +71,7 @@
           "vmSize": "[parameters('vmSize')]"
         },
         "availabilitySet": {
-          "id": "[resourceId('Microsoft.Compute/availabilitySets','SBConfigAvailabilitySet')]"
+          "id": "[resourceId('Microsoft.Compute/availabilitySets',variables('cfgAvailabilitySet'))]"
         },
         "osProfile": {
           "computerName": "[concat(parameters('sbFarmNamePrefix'), '-sbcfg-')]",
@@ -124,7 +124,7 @@
           "vmSize": "[parameters('vmSize')]"
         },
         "availabilitySet": {
-          "id": "[resourceId('Microsoft.Compute/availabilitySets','SBAppAvailabilitySet')]"
+          "id": "[resourceId('Microsoft.Compute/availabilitySets',variables('appAvailabilitySet'))]"
         },
         "osProfile": {
           "computerName": "[concat(parameters('sbFarmNamePrefix'), '-sbapp-')]",
