@@ -23,6 +23,9 @@
     "subnetWebRange": {
       "value": "10.100.1.0/24"
     },
+    "webLBIP": {
+      "value": "10.100.1.100"
+    },
     "subnetSBRange": {
       "value": "10.100.2.0/24"
     },

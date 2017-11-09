@@ -2,6 +2,12 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "baseTemplateUri": {
+      "type": "string",
+      "metadata": {
+        "description": "Base URI of template resources."
+      }
+    },
     "subnetID": {
       "type": "string",
       "metadata": {
@@ -30,16 +36,83 @@
     "webServerCount": {
       "type": "int",
       "defaultValue": 2
+    },
+    "webLBIP": {
+      "type": "string"
     }
-   
   },
   "variables": {
     "webAvailabilitySet": "WebappAvSet",
     "vmImagePublisher": "MicrosoftWindowsServer",
     "vmImageOffer": "WindowsServer",
-    "vmSku": "2012-R2-Datacenter"
+    "vmSku": "2012-R2-Datacenter",
+    "vmWebLoadBalancerName": "WebLB"
   },
   "resources": [
+    {
+      "name": "[variables('vmWebLoadBalancerName')]",
+      "type": "Microsoft.Network/loadBalancers",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+
+      ],
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "properties": {
+              "subnet": {
+                "id": "[parameters('subnetID')]"
+              },
+              "privateIPAddress": "[parameters('webLBIP')]",
+              "privateIPAllocationMethod": "Static"
+            },
+            "name": "FrontEndWebPool"
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "BackEndWebPool"
+          }
+        ],
+        "loadBalancingRules": [
+          {
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers',variables('vmWebLoadBalancerName')),'/frontendIpConfigurations/FrontEndWebPool')]"
+              },
+              "backendAddressPool": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers',variables('vmWebLoadBalancerName')),'/backendAddressPools/BackEndWebPool')]"
+              },
+              "probe": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers',variables('vmWebLoadBalancerName')),'/probes/web-lb-probe')]"
+
+              },
+              "protocol": "Tcp",
+              "frontendPort": 80,
+              "backendPort": 80,
+              "idleTimeoutInMinutes": 15
+            },
+            "name": "web-lb-rule"
+          }
+
+        ],
+        "probes": [
+          {
+            "properties": {
+              "protocol": "Tcp",
+              "port": 80,
+              "intervalInSeconds": 15,
+              "numberOfProbes": 2
+            },
+            "name": "web-lb-probe"
+          }
+
+        ]
+      }
+
+
+    },
     {
       "name": "[concat('vmWeb','-',copyIndex())]",
       "type": "Microsoft.Compute/virtualMachines",
@@ -111,7 +184,7 @@
             "autoUpgradeMinorVersion": true,
             "settings": {
               "configuration": {
-                "url": "https://github.com/Azure/azure-quickstart-templates/blob/master/dsc-extension-iis-server-windows-vm/ContosoWebsite.ps1.zip",
+                "url": "[concat(parameters('baseTemplateUri'), '/dsc/', 'ExchangeWebServer.zip')]",
                 "script": "ContosoWebsite.ps1\\ContosWebSite"
               },
               "configurationArguments": {
@@ -127,6 +200,7 @@
         }
       ]
     },
+    
     {
       "name": "[concat('Web','-',copyIndex(),'-nic-0')]",
       "type": "Microsoft.Network/networkInterfaces",

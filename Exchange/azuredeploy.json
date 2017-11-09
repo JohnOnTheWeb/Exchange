@@ -44,79 +44,85 @@
         "description": "IP range of second subnet."
       }
     },
-    "subnetSBRange": {
+    "webLBIP": {
       "type": "string",
       "metadata": {
-        "description": "IP range of first subnet."
+        "description": "IP to support Web Load Balancing"
       }
     },
-    "subnetSrvRange": {
-      "type": "string",
-      "metadata": {
-        "description": "IP range of second subnet."
+      "subnetSBRange": {
+        "type": "string",
+        "metadata": {
+          "description": "IP range of first subnet."
+        }
+      },
+      "subnetSrvRange": {
+        "type": "string",
+        "metadata": {
+          "description": "IP range of second subnet."
+        }
+      },
+      "subnetMgtRange": {
+        "type": "string",
+        "metadata": {
+          "description": "IP range of first subnet."
+        }
+      },
+      "subnetTstRange": {
+        "type": "string",
+        "metadata": {
+          "description": "IP range of second subnet."
+        }
+      },
+      "vmManagementAdminUserName": {
+        "type": "string",
+        "minLength": 1,
+        "defaultValue": "ManangementAdmin"
+      },
+      "vmManagementAdminPassword": {
+        "type": "securestring"
+      },
+      "vmSBSize": {
+        "type": "string",
+        "minLength": 1,
+        "defaultValue": "Standard_D1_v2"
+      },
+      "cfgSBServerCount": {
+        "type": "int",
+        "defaultValue": 2
+      },
+      "appSBServerCount": {
+        "type": "int",
+        "defaultValue": 2
+      },
+      "vmTestSize": {
+        "type": "string",
+        "minLength": 1,
+        "defaultValue": "Standard_D1_v2"
+      },
+      "testServerCount": {
+        "type": "int",
+        "defaultValue": 2
+      },
+      "vmWebSize": {
+        "type": "string",
+        "minLength": 1,
+        "defaultValue": "Standard_D1_v2"
+      },
+      "WebServerCount": {
+        "type": "int",
+        "defaultValue": 2
+      },
+      "vmServicesSize": {
+        "type": "string",
+        "minLength": 1,
+        "defaultValue": "Standard_D1_v2"
+      },
+      "ServicesServerCount": {
+        "type": "int",
+        "defaultValue": 2
       }
     },
-    "subnetMgtRange": {
-      "type": "string",
-      "metadata": {
-        "description": "IP range of first subnet."
-      }
-    },
-    "subnetTstRange": {
-      "type": "string",
-      "metadata": {
-        "description": "IP range of second subnet."
-      }
-    },
-    "vmManagementAdminUserName": {
-      "type": "string",
-      "minLength": 1,
-      "defaultValue": "ManangementAdmin"
-    },
-    "vmManagementAdminPassword": {
-      "type": "securestring"
-    },
-    "vmSBSize": {
-      "type": "string",
-      "minLength": 1,
-      "defaultValue": "Standard_D1_v2"
-    },
-    "cfgSBServerCount": {
-      "type": "int",
-      "defaultValue": 2
-    },
-    "appSBServerCount": {
-      "type": "int",
-      "defaultValue": 2
-    },
-    "vmTestSize": {
-      "type": "string",
-      "minLength": 1,
-      "defaultValue": "Standard_D1_v2"
-    },
-    "testServerCount": {
-      "type": "int",
-      "defaultValue": 2
-    },
-    "vmWebSize": {
-      "type": "string",
-      "minLength": 1,
-      "defaultValue": "Standard_D1_v2"
-    },
-    "WebServerCount": {
-      "type": "int",
-      "defaultValue": 2
-    },
-    "vmServicesSize": {
-      "type": "string",
-      "minLength": 1,
-      "defaultValue": "Standard_D1_v2"
-    },
-    "ServicesServerCount": {
-      "type": "int",
-      "defaultValue": 2
-    }
-  },
   "variables": {
     "deploymentApiVersion": "2016-02-01",
     "storageApiVersion": "2015-06-15",
@@ -255,7 +261,9 @@
           "vmAdminUserName": { "value": "[parameters('vmManagementAdminUserName')]" },
           "vmAdminPassword": { "value": "[parameters('vmManagementAdminPassword')]" },
           "vmSize": { "value": "[parameters('vmWebSize')]" },
-          "webServerCount": { "value": "[parameters('webServerCount')]" }
+          "webServerCount": { "value": "[parameters('webServerCount')]" },
+          "webLBIP": { "value": "[parameters('webLBIP')]" },
+          "baseTemplateUri": { "value": "[parameters('baseTemplateUri')]" }
         }
       }
     },
