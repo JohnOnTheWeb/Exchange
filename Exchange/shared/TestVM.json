@@ -17,7 +17,7 @@
     "vmAdminUserName": {
       "type": "string",
       "minLength": 1,
-      "defaultValue": "ManangementAdmin"
+      "defaultValue": "ManangementTest"
     },
     "vmAdminPassword": {
       "type": "securestring"
@@ -27,43 +27,43 @@
       "minLength": 1,
       "defaultValue": "Standard_D1_v2"
     },
-    "cfgServerCount": {
+    "testServerCount": {
       "type": "int",
       "defaultValue": 2
     }
   },
   "variables": {
-    "appAvailabilitySet": "[concat(parameters('sbFarmNamePrefix'), 'appAvSet')]",
+    "testAvailabilitySet": "TestappAvSet",
     "vmImagePublisher": "MicrosoftWindowsServer",
     "vmImageOffer": "WindowsServer",
     "vmSku": "2012-R2-Datacenter"
   },
   "resources": [
     {
-      "name": "[concat('vmSBApp','-',copyIndex())]",
+      "name": "[concat('vmTest','-',copyIndex())]",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[resourceGroup().location]",
       "apiVersion": "2015-06-15",
       "copy": {
         "count": 2,
-        "name": "vmSBConfigCopy"
+        "name": "vmTestCopy"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('sbFarmNamePrefix'),'-vmapp','-',copyIndex(),'-nic-0'))]",
-        "[resourceId('Microsoft.Compute/availabilitySets',  variables('appAvailabilitySet'))]"
+        "[resourceId('Microsoft.Network/networkInterfaces', concat('Test','-',copyIndex(),'-nic-0'))]",
+        "[resourceId('Microsoft.Compute/availabilitySets',  variables('testAvailabilitySet'))]"
       ],
       "tags": {
-        "displayName": "vmSBConfig"
+        "displayName": "vmTest"
       },
       "properties": {
         "hardwareProfile": {
           "vmSize": "[parameters('vmSize')]"
         },
         "availabilitySet": {
-          "id": "[resourceId('Microsoft.Compute/availabilitySets',variables('appAvailabilitySet'))]"
+          "id": "[resourceId('Microsoft.Compute/availabilitySets',variables('testAvailabilitySet'))]"
         },
         "osProfile": {
-          "computerName": "[concat(parameters('sbFarmNamePrefix'), '-sbapp-')]",
+          "computerName": "[concat('vmTest-',copyIndex())]",
           "adminUsername": "[parameters('vmAdminUserName')]",
           "adminPassword": "[parameters('vmAdminPassword')]"
         },
@@ -75,9 +75,9 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "[concat('SBApp','-',copyIndex(),'-osdisk')]",
+            "name": "[concat('Test','-',copyIndex(),'-osdisk')]",
             "vhd": {
-              "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', parameters('vmStorageAccountName')), '2016-01-01').primaryEndpoints.blob, 'vhds', '/', 'vmsbappOSDisk', '.vhd')]"
+              "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', parameters('vmStorageAccountName')), '2016-01-01').primaryEndpoints.blob, 'vhds', '/', 'test-',copyIndex(),'-OSDisk', '.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -86,14 +86,14 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('sbFarmNamePrefix'),'-vmapp','-',copyIndex(),'-nic-0'))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat('Test','-',copyIndex(),'-nic-0'))]"
             }
           ]
         }
       }
     },
     {
-      "name": "[concat(parameters('sbFarmNamePrefix'),'-vmapp','-',copyIndex(),'-nic-0')]",
+      "name": "[concat('Test','-',copyIndex(),'-nic-0')]",
       "type": "Microsoft.Network/networkInterfaces",
       "location": "[resourceGroup().location]",
       "apiVersion": "2016-03-30",
@@ -104,7 +104,7 @@
       "dependsOn": [
       ],
       "tags": {
-        "displayName": "vmAppNic"
+        "displayName": "vmTestNic"
       },
       "properties": {
         "ipConfigurations": [
@@ -121,7 +121,7 @@
       }
     },
     {
-      "name": "[variables('cfgAvailabilitySet')]",
+      "name": "[variables('testAvailabilitySet')]",
       "type": "Microsoft.Compute/availabilitySets",
       "apiVersion": "2015-06-15",
       "dependsOn": [],
@@ -131,7 +131,7 @@
         "platformFaultDomainCount": 2
       },
       "tags": {
-        "displayName": "ConfigAvailabilitySet"
+        "displayName": "TestAvailabilitySet"
       }
     }
   ],

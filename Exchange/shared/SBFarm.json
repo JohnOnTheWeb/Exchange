@@ -74,7 +74,7 @@
           "id": "[resourceId('Microsoft.Compute/availabilitySets',variables('cfgAvailabilitySet'))]"
         },
         "osProfile": {
-          "computerName": "[concat(parameters('sbFarmNamePrefix'), '-sbcfg-')]",
+          "computerName": "[concat(parameters('sbFarmNamePrefix'), '-sbcfg-',copyIndex())]",
           "adminUsername": "[parameters('vmAdminUserName')]",
           "adminPassword": "[parameters('vmAdminPassword')]"
         },
@@ -88,7 +88,7 @@
           "osDisk": {
             "name": "[concat('SBConfig','-',copyIndex(),'-osdisk')]",
             "vhd": {
-              "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', parameters('vmStorageAccountName')), '2016-01-01').primaryEndpoints.blob, 'vhds', '/', 'vmsbconfigOSDisk', '.vhd')]"
+              "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', parameters('vmStorageAccountName')), '2016-01-01').primaryEndpoints.blob, 'vhds', '/', 'vmsbcfg-',copyIndex(),'-OSDisk', '.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -110,14 +110,14 @@
       "apiVersion": "2015-06-15",
       "copy": {
         "count": 2,
-        "name": "vmSBConfigCopy"
+        "name": "vmSBAppCopy"
       },
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('sbFarmNamePrefix'),'-vmapp','-',copyIndex(),'-nic-0'))]",
         "[resourceId('Microsoft.Compute/availabilitySets',  variables('appAvailabilitySet'))]"
       ],
       "tags": {
-        "displayName": "vmSBConfig"
+        "displayName": "vmSBApp"
       },
       "properties": {
         "hardwareProfile": {
@@ -127,7 +127,7 @@
           "id": "[resourceId('Microsoft.Compute/availabilitySets',variables('appAvailabilitySet'))]"
         },
         "osProfile": {
-          "computerName": "[concat(parameters('sbFarmNamePrefix'), '-sbapp-')]",
+          "computerName": "[concat(parameters('sbFarmNamePrefix'), '-sbapp-',copyIndex())]",
           "adminUsername": "[parameters('vmAdminUserName')]",
           "adminPassword": "[parameters('vmAdminPassword')]"
         },
@@ -141,7 +141,7 @@
           "osDisk": {
             "name": "[concat('SBApp','-',copyIndex(),'-osdisk')]",
             "vhd": {
-              "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', parameters('vmStorageAccountName')), '2016-01-01').primaryEndpoints.blob, 'vhds', '/', 'vmsbappOSDisk', '.vhd')]"
+              "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', parameters('vmStorageAccountName')), '2016-01-01').primaryEndpoints.blob, 'vhds', '/', 'vmsbapp-',copyIndex(),'-OSDisk', '.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
