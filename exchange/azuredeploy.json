@@ -186,7 +186,6 @@
         "parameters": {
           "subnetID": { "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vNetName'), 'subnet-Managment')]" },
           "vmStorageAccountName": { "value": "[reference('StorageDeployment').outputs.storageAccountName.value]" },
-          "vmStorageAccountKey": { "value": "[reference('StorageDeployment').outputs.listKeysOutput.value]" },
           "vmAdminUserName": { "value": "[parameters('vmManagementAdminUserName')]" },
           "vmAdminPassword": { "value": "[parameters('vmManagementAdminPassword')]" },
           "baseTemplateUri": { "value": "[parameters('baseTemplateUri')]" }
