@@ -2,10 +2,139 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "subnetID": {
+      "type": "string",
+      "metadata": {
+        "description": "Virtual network subnet reference."
+      }
+    },
+    "vmStorageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Virtual Network Storage reference for VM "
+      }
+    },
+    "vmAdminUserName": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "ManangementTest"
+    },
+    "vmAdminPassword": {
+      "type": "securestring"
+    },
+    "vmSize": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "Standard_D1_v2"
+    },
+    "webServerCount": {
+      "type": "int",
+      "defaultValue": 2
+    }
+   
   },
   "variables": {
+    "webAvailabilitySet": "TestappAvSet",
+    "vmImagePublisher": "MicrosoftWindowsServer",
+    "vmImageOffer": "WindowsServer",
+    "vmSku": "2012-R2-Datacenter"
   },
   "resources": [
+    {
+      "name": "[concat('vmTest','-',copyIndex())]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-15",
+      "copy": {
+        "count": 2,
+        "name": "vmTestCopy"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', concat('Test','-',copyIndex(),'-nic-0'))]",
+        "[resourceId('Microsoft.Compute/availabilitySets',  variables('webAvailabilitySet'))]"
+      ],
+      "tags": {
+        "displayName": "vmTest"
+      },
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets',variables('webAvailabilitySet'))]"
+        },
+        "osProfile": {
+          "computerName": "[concat('vmTest-',copyIndex())]",
+          "adminUsername": "[parameters('vmAdminUserName')]",
+          "adminPassword": "[parameters('vmAdminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "offer": "[variables('vmImageOffer')]",
+            "publisher": "[variables('vmImagePublisher')]",
+            "sku": "[variables('vmSku')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat('Test','-',copyIndex(),'-osdisk')]",
+            "vhd": {
+              "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', parameters('vmStorageAccountName')), '2016-01-01').primaryEndpoints.blob, 'vhds', '/', 'test-',copyIndex(),'-OSDisk', '.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat('Test','-',copyIndex(),'-nic-0'))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "[concat('Test','-',copyIndex(),'-nic-0')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-03-30",
+      "copy": {
+        "count": "[parameters('webServerCount')]",
+        "name": "vmAppNicCopy"
+      },
+      "dependsOn": [
+      ],
+      "tags": {
+        "displayName": "vmTestNic"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[parameters('subnetID')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[variables('webAvailabilitySet')]",
+      "type": "Microsoft.Compute/availabilitySets",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [],
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "platformUpdateDomainCount": 2,
+        "platformFaultDomainCount": 2
+      },
+      "tags": {
+        "displayName": "TestAvailabilitySet"
+      }
+    }
   ],
   "outputs": {
   }
