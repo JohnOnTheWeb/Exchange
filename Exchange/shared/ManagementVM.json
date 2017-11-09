@@ -59,6 +59,9 @@
               "privateIPAllocationMethod": "Dynamic",
               "subnet": {
                 "id": "[parameters('subnetID')]"
+              },
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses','ExMgtPubIPName')]"
               }
             }
           }
@@ -119,7 +122,7 @@
           "2016-03-30",
           "dependsOn",
           [
-            "[resourceId('Microsoft.Compute/virtualMachines', concat('vmWeb','-',copyIndex()))]"
+            "[resourceId('Microsoft.Network/networkInterfaces', 'ExchangeManagmentNic')]"
           ],
           "tags",
           {
@@ -137,7 +140,7 @@
                 "script": "FileResourceDemo.ps1\\FileResourceDemo"
               },
               "configurationArguments": {
-                "MachineName": "[concat('ExchangeWeb','-',copyIndex())]"
+                "MachineName": "ExchangeManagmentNic"
               },
               "modulesUrl": "",
               "configurationFunction": ""
