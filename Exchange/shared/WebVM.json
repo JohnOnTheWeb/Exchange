@@ -50,7 +50,7 @@
         "name": "vmWebCopy"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces', concat('Test','-',copyIndex(),'-nic-0'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces', concat('Web','-',copyIndex(),'-nic-0'))]",
         "[resourceId('Microsoft.Compute/availabilitySets',  variables('webAvailabilitySet'))]"
       ],
       "tags": {

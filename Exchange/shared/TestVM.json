@@ -98,7 +98,7 @@
       "location": "[resourceGroup().location]",
       "apiVersion": "2016-03-30",
       "copy": {
-        "count": "[parameters('cfgServerCount')]",
+        "count": "[parameters('testServerCount')]",
         "name": "vmAppNicCopy"
       },
       "dependsOn": [
