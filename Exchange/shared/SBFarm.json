@@ -43,8 +43,8 @@
     }
   },
   "variables": {
-    "cfgAvailibilitySet": "[concat(parameters('sbFarmNamePrefix'), 'cfgAvSet')]",
-    "appAvailibilitySet": "[concat(parameters('sbFarmNamePrefix'), 'appAvSet')]",
+    "cfgAvailabilitySet": "[concat(parameters('sbFarmNamePrefix'), 'cfgAvSet')]",
+    "appAvailabilitySet": "[concat(parameters('sbFarmNamePrefix'), 'appAvSet')]",
     "vmImagePublisher": "MicrosoftWindowsServer",
     "vmImageOffer": "WindowsServer",
     "vmSku": "2012-R2-Datacenter"
@@ -61,7 +61,7 @@
       },
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('sbFarmNamePrefix'),'-vmcfg','-',copyIndex(),'-nic-0'))]",
-        "[resourceId('Microsoft.Compute/availabilitySets', variables('cfgAvailibilitySet'))]"
+        "[resourceId('Microsoft.Compute/availabilitySets', variables('cfgAvailabilitySet'))]"
       ],
       "tags": {
         "displayName": "vmSBConfig"
@@ -114,7 +114,7 @@
       },
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('sbFarmNamePrefix'),'-vmapp','-',copyIndex(),'-nic-0'))]",
-        "[resourceId('Microsoft.Compute/availabilitySets', variables('appAvailibilitySet'))]"
+        "[resourceId('Microsoft.Compute/availabilitySets',  variables('appAvailabilitySet'))]"
       ],
       "tags": {
         "displayName": "vmSBConfig"
@@ -213,7 +213,7 @@
       }
     },
     {
-      "name": "[variables('cfgAvailibilitySet')]",
+      "name": "[variables('cfgAvailabilitySet')]",
       "type": "Microsoft.Compute/availabilitySets",
       "apiVersion": "2015-06-15",
       "dependsOn": [],
@@ -223,11 +223,11 @@
         "platformFaultDomainCount": 2
       },
       "tags": {
-        "displayName": "ConfigAvailibilitySet"
+        "displayName": "ConfigAvailabilitySet"
       }
     },
     {
-      "name": "[variables('appAvailibilitySet')]",
+      "name": "[variables('appAvailabilitySet')]",
       "type": "Microsoft.Compute/availabilitySets",
       "apiVersion": "2015-06-15",
       "dependsOn": [],
@@ -237,7 +237,7 @@
         "platformFaultDomainCount": 2
       },
       "tags": {
-        "displayName": "AppAvailibilitySet"
+        "displayName": "AppAvailabilitySet"
       }
     }
   ],

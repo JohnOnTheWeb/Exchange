@@ -83,12 +83,10 @@
     },
     "cfgSBServerCount": {
       "type": "int",
-      "minLength": 1,
       "defaultValue": 2
     },
     "appSBServerCount": {
       "type": "int",
-      "minLength": 1,
       "defaultValue": 2
     }
   },
