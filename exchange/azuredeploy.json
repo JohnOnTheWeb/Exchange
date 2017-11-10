@@ -188,7 +188,8 @@
           "vmStorageAccountName": { "value": "[reference('StorageDeployment').outputs.storageAccountName.value]" },
           "vmAdminUserName": { "value": "[parameters('vmManagementAdminUserName')]" },
           "vmAdminPassword": { "value": "[parameters('vmManagementAdminPassword')]" },
-          "baseTemplateUri": { "value": "[parameters('baseTemplateUri')]" }
+          "baseTemplateUri": { "value": "[parameters('baseTemplateUri')]" },
+          "vmMgmtPrivatePublicIPDnsName": { "value": "ex-managment-ipdns" }
         }
       }
     },
