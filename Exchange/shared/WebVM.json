@@ -201,7 +201,6 @@
         }
       ]
     },
-    
     {
       "name": "[concat('Web','-',copyIndex(),'-nic-0')]",
       "type": "Microsoft.Network/networkInterfaces",
