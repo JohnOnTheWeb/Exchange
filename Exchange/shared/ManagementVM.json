@@ -187,11 +187,11 @@
               "autoUpgradeMinorVersion": true,
               "settings": {
                 "fileUris": [
-                  "https://raw.githubusercontent.com/######/#####/master/azurefiles.ps1"
+                  "[concat(parameters('baseTemplateUri'), '/dsc/', 'CreateFileShare.zip')]"
                 ]
               },
               "protectedSettings": {
-                "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ','azurefiles.ps1 -SAName ',parameters('AzureFilesStorageName'),'  -SAKey ', listKeys(resourceId(variables('AzureFilesStorageAccountResourceGroup'),'Microsoft.Storage/storageAccounts', parameters('AzureFilesStorageName')), '2015-06-15').key1)]"
+                "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ','CreateFileShare.ps1 -SAName ',parameters('vmStorageAccountName'),'  -SAKey ', listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('vmStorageAccountName')), '2015-06-15').key1)]"
               }
             }
           }
