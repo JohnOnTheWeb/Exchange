@@ -183,11 +183,16 @@
             "typeHandlerVersion": "2.20",
             "autoUpgradeMinorVersion": true,
             "settings": {
+              "configuration\": {": null,
+              "url": "[concat(parameters('baseTemplateUri'), '/dsc/', 'ExchangeWebServer.zip')]",
+              "script": "ExchangeWebServer.ps1",
+              "function": "ExchangeWebServer"
+            }
               "configurationArguments": {
-                "MachineName": "[concat('vmWeb-',copyIndex())]"
+                "MachineName": "[concat('vmWeb-',copyIndex()]"
               },
               "modulesUrl": "[concat(parameters('baseTemplateUri'), '/dsc/', 'ExchangeWebServer.zip')]",
-              "configurationFunction": "ExchangeWebServer"
+              "configurationFunction": "ExchangeWebServer.ps1\\ExchangeWebServer"
             },
             "protectedSettings": {
 

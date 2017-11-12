@@ -95,7 +95,8 @@
               "id": "[resourceId('Microsoft.Network/networkInterfaces', concat('Test','-',copyIndex(),'-nic-0'))]"
             }
           ]
-        },
+        }
+      },
         "resources": [
           {
             "name": "IIS",
@@ -126,7 +127,7 @@
             }
           }
         ]
-      }
+      
     },
     {
       "name": "[concat('Test','-',copyIndex(),'-nic-0')]",
