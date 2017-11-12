@@ -187,7 +187,7 @@
                 "MachineName": "[concat('vmWeb-',copyIndex())]"
               },
               "modulesUrl": "[concat(parameters('baseTemplateUri'), '/dsc/', 'ExchangeWebServer.zip')]",
-              "configurationFunction": "ExchangeWebServer.ps1\\ExchangeWebServer"
+              "configurationFunction": "ExchangeWebServer"
             },
             "protectedSettings": {
 
