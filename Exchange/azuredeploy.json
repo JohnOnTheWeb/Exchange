@@ -239,8 +239,7 @@
           "vmAdminUserName": { "value": "[parameters('vmManagementAdminUserName')]" },
           "vmAdminPassword": { "value": "[parameters('vmManagementAdminPassword')]" },
           "vmSize": { "value": "[parameters('vmTestSize')]" },
-          "testServerCount": { "value": "[parameters('testServerCount')]" },
-          "baseTemplateUri": { "value": "[parameters('baseTemplateUri')]" }
+          "testServerCount": { "value": "[parameters('testServerCount')]" }
         }
       }
     },
