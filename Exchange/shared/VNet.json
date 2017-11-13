@@ -521,8 +521,6 @@
               "direction": "Outbound"
             }
           }
-
-
         ]
       }
     },
@@ -531,6 +529,12 @@
       "dependsOn": [],
       "location": "[resourceGroup().location]",
       "name": "[parameters('vNetName')]",
+      "outputs": {
+        "subnetID": {
+          "type": "string",
+          "value": "[variables('subnetManagmentID')]"
+        }
+      },
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -545,59 +549,60 @@
               "networkSecurityGroup": {
                 "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgDBName'))]"
               }
-            },
-            {
-              "name": "[variables('subnetWebName')]",
-              "properties": {
-                "addressPrefix": "[parameters('subnetWebRange')]",
-                "networkSecurityGroup": {
-                  "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgWebName'))]"
-                }
-              },
-              {
-                "name": "[variables('subnetSBName')]",
-                "properties": {
-                  "addressPrefix": "[parameters('subnetSBRange')]",
-                  "networkSecurityGroup": {
-                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgSBName'))]"
-                  }
-                },
-                {
-                  "name": "[variables('subnetSRVName')]",
-                  "properties": {
-                    "addressPrefix": "[parameters('subnetSrvRange')]",
-                    "networkSecurityGroup": {
-                      "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgSRVName'))]"
-                    }
-                  },
-                  {
-                    "name": "[variables('subnetMgtName')]",
-                    "properties": {
-                      "addressPrefix": "[parameters('subnetMgtRange')]",
-                      "networkSecurityGroup": {
-                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgMgtName'))]"
-                      }
-                    },
-                    {
-                      "name": "[variables('subnetTstName')]",
-                      "properties": {
-                        "addressPrefix": "[parameters('subnetTstRange')]",
-                        "networkSecurityGroup": {
-                          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgTestName'))]"
-                        }
-                      }
-                      ]
-                    },
-                    "tags": {
-                      "displayName": "VirtualNetwork"
-                    },
-                    "type": "Microsoft.Network/virtualNetworks"
-                  },
+            }
+          },
+          {
+            "name": "[variables('subnetWebName')]",
+            "properties": {
+              "addressPrefix": "[parameters('subnetWebRange')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgWebName'))]"
+              }
+            }
+          },
+          {
+            "name": "[variables('subnetSBName')]",
+            "properties": {
+              "addressPrefix": "[parameters('subnetSBRange')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgSBName'))]"
+              }
+            }
+          },
+          {
+            "name": "[variables('subnetSRVName')]",
+            "properties": {
+              "addressPrefix": "[parameters('subnetSrvRange')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgSRVName'))]"
+              }
+            }
+          },
+          {
+            "name": "[variables('subnetMgtName')]",
+            "properties": {
+              "addressPrefix": "[parameters('subnetMgtRange')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgMgtName'))]"
+              }
+            }
+          },
+          {
+            "name": "[variables('subnetTstName')]",
+            "properties": {
+              "addressPrefix": "[parameters('subnetTstRange')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgTestName'))]"
+              }
+            }
+          }
+        ],
+        "tags": {
+          "displayName": "VirtualNetwork"
+        },
+        "type": "Microsoft.Network/virtualNetworks"
+      }
+    }
+  ]
 
-                  "outputs": {
-                    "subnetID": {
-                      "type": "string",
-                      "value": "[variables('subnetManagmentID')]"
-                    }
-                  }
-                }
+}
