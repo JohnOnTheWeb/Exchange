@@ -51,7 +51,8 @@
     "vmImagePublisher": "MicrosoftWindowsServer",
     "vmImageOffer": "WindowsServer",
     "vmSku": "2012-R2-Datacenter",
-    "vmWebLoadBalancerName": "WebLB"
+    "vmExtWebLoadBalancerName": "ExtWebLB",
+    "vmIntWebLoadBalancerName": "IntWebLB"
   },
   "resources": [
     {
@@ -71,7 +72,7 @@
       }
     },
     {
-      "name": "[variables('vmWebLoadBalancerName')]",
+      "name": "[variables('vmExtWebLoadBalancerName')]",
       "type": "Microsoft.Network/loadBalancers",
       "apiVersion": "2017-06-01",
       "location": "[resourceGroup().location]",
@@ -82,9 +83,69 @@
         "frontendIPConfigurations": [
           {
             "properties": {
+              "publicIPAddress": { "id": "[resourceId('Microsoft.Network/publicIPAddresses','ExWebPubIPName')]" },
+             
+            },
+            "name": "FrontEndWebPool"
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "BackEndWebPool"
+          }
+        ],
+        "loadBalancingRules": [
+          {
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers',variables('vmExtWebLoadBalancerName')),'/frontendIpConfigurations/FrontEndWebPool')]"
+              },
+              "backendAddressPool": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers',variables('vmExtWebLoadBalancerName')),'/backendAddressPools/BackEndWebPool')]"
+              },
+              "probe": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers',variables('vmExtWebLoadBalancerName')),'/probes/web-lb-probe')]"
+
+              },
+              "protocol": "Tcp",
+              "frontendPort": 80,
+              "backendPort": 80,
+              "idleTimeoutInMinutes": 15
+            },
+            "name": "web-lb-rule"
+          }
+
+        ],
+        "probes": [
+          {
+            "properties": {
+              "protocol": "Tcp",
+              "port": 80,
+              "intervalInSeconds": 15,
+              "numberOfProbes": 2
+            },
+            "name": "web-lb-probe"
+          }
+
+        ]
+      }
+
+
+    },
+    {
+      "name": "[variables('vmIntWebLoadBalancerName')]",
+      "type": "Microsoft.Network/loadBalancers",
+      "apiVersion": "2017-06-01",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        
+      ],
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "properties": {
               "privateIPAddress": "[parameters('webLBIP')]",
               "privateIPAllocationMethod": "Static",
-              "publicIPAddress": { "id": "[resourceId('Microsoft.Network/publicIPAddresses','ExWebPubIPName')]" },
               "subnet": {
                 "id": "[parameters('subnetID')]"
               }
@@ -101,13 +162,13 @@
           {
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers',variables('vmWebLoadBalancerName')),'/frontendIpConfigurations/FrontEndWebPool')]"
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers',variables('vmIntWebLoadBalancerName')),'/frontendIpConfigurations/FrontEndWebPool')]"
               },
               "backendAddressPool": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers',variables('vmWebLoadBalancerName')),'/backendAddressPools/BackEndWebPool')]"
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers',variables('vmIntWebLoadBalancerName')),'/backendAddressPools/BackEndWebPool')]"
               },
               "probe": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers',variables('vmWebLoadBalancerName')),'/probes/web-lb-probe')]"
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers',variables('vmIntWebLoadBalancerName')),'/probes/web-lb-probe')]"
 
               },
               "protocol": "Tcp",
