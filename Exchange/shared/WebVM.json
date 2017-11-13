@@ -84,7 +84,7 @@
             "properties": {
               "privateIPAddress": "[parameters('webLBIP')]",
               "privateIPAllocationMethod": "Static",
-              "publicIPAddress": "[resourceId('Microsoft.Network/publicIPAddresses','ExWebPubIPName')]",
+              "publicIPAddress": { "id": "[resourceId('Microsoft.Network/publicIPAddresses','ExWebPubIPName')]" },
               "subnet": {
                 "id": "[parameters('subnetID')]"
               }
