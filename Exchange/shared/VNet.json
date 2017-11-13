@@ -64,7 +64,12 @@
     "subnetSRVName": "subnet-Service",
     "subnetMgtName": "subnet-Managment",
     "subnetTstName": "subnet-Test",
-    "nsgDBName": "LimitDBSubnetAccess",
+    "nsgDBName": "LimitDB",
+    "nsgSrvName": "LimitSRV",
+    "nsgTestName": "LimitTest",
+    "nsgWebName": "LimitWeb",
+    "nsgSBName": "LimitSB",
+    "nsgMgtName": "LimitMgt",
     "vNetID": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vNetName'))]",
     "subnetManagmentID": "[resourceId('Microsoft.Network/virtualNetworks/subnets',parameters('vNetName'), variables('subnetMgtName'))]"
   },
@@ -78,7 +83,7 @@
         "[resourceId('Microsoft.Network/virtualNetworks', parameters('vNetName'))]"
       ],
       "tags": {
-        "displayName": "NSG - Remote Access"
+        "displayName": "NSG DB"
       },
       "properties": {
         "securityRules": [
@@ -129,7 +134,400 @@
       }
     },
     {
-      "apiVersion": "2016-03-30",
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('nsgSRVName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vNetName'))]"
+      ],
+      "tags": {
+        "displayName": "NSG SRV"
+      },
+      "properties": {
+        "securityRules": [
+          {
+            "name": "allow-Web",
+            "properties": {
+              "description": "Allow Web Subnet",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "[parameters('subnetWebRange')]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "allow-SB",
+            "properties": {
+              "description": "Allow SB Subnet",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "[parameters('subnetSBRange')]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 101,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "allow-mgmt",
+            "properties": {
+              "description": "Allow Managment Subnet",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "[parameters('subnetMgtRange')]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 102,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "block-internet",
+            "properties": {
+              "description": "Block Internet",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "Internet",
+              "access": "Deny",
+              "priority": 200,
+              "direction": "Outbound"
+            }
+          }
+
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('nsgTestName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vNetName'))]"
+      ],
+      "tags": {
+        "displayName": "NSG Test"
+      },
+      "properties": {
+        "securityRules": [
+          {
+            "name": "allow-mgmt",
+            "properties": {
+              "description": "Allow Managment Subnet",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "[parameters('subnetMgtRange')]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 102,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "allow-internet",
+            "properties": {
+              "description": "allow Internet",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "Internet",
+              "access": "Allow",
+              "priority": 200,
+              "direction": "Outbound"
+            }
+          },
+          {
+            "name": "allow-web",
+            "properties": {
+              "description": "allow Web",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "[parameters('subnetWebRange')]",
+              "access": "Allow",
+              "priority": 201,
+              "direction": "Outbound"
+            }
+          },
+          {
+            "name": "allow-service",
+            "properties": {
+              "description": "allow Web",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "[parameters('subnetSrvRange')]",
+              "access": "Allow",
+              "priority": 202,
+              "direction": "Outbound"
+            }
+          },
+          {
+            "name": "allow-SB",
+            "properties": {
+              "description": "allow SB",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "[parameters('subnetSBRange')]",
+              "access": "Allow",
+              "priority": 203,
+              "direction": "Outbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('nsgWebName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vNetName'))]"
+      ],
+      "tags": {
+        "displayName": "NSG Web"
+      },
+      "properties": {
+        "securityRules": [
+          {
+            "name": "allow-Service",
+            "properties": {
+              "description": "Allow Service Subnet",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "[parameters('subnetWebRange')]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 200,
+              "direction": "Outbound"
+            }
+          },
+          {
+            "name": "allow-SB",
+            "properties": {
+              "description": "Allow SB Subnet",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "[parameters('subnetSBRange')]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 201,
+              "direction": "Outbound"
+            }
+          },
+          {
+            "name": "allow-mgmt",
+            "properties": {
+              "description": "Allow Managment Subnet",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "[parameters('subnetMgtRange')]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 102,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "allow-internet",
+            "properties": {
+              "description": "Allow Internet",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "Internet",
+              "access": "Allow",
+              "priority": 103,
+              "direction": "Inbound"
+            }
+          }
+
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('nsgSBName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vNetName'))]"
+      ],
+      "tags": {
+        "displayName": "NSG Test"
+      },
+      "properties": {
+        "securityRules": [
+          {
+            "name": "allow-mgmt",
+            "properties": {
+              "description": "Allow Managment Subnet",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "[parameters('subnetMgtRange')]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 102,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "block-internet",
+            "properties": {
+              "description": "Block Internet",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "Internet",
+              "access": "Deny",
+              "priority": 200,
+              "direction": "Outbound"
+            }
+          }
+
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('nsgMgtName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vNetName'))]"
+      ],
+      "tags": {
+        "displayName": "NSG Management"
+      },
+      "properties": {
+        "securityRules": [
+          {
+            "name": "allow-internet",
+            "properties": {
+              "description": "Block Internet",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "Internet",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "allow-web",
+            "properties": {
+              "description": "Allow Web Subnet",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "[parameters('subnetWebRange')]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 101,
+              "direction": "Outbound"
+            }
+          },
+          {
+            "name": "allow-sb",
+            "properties": {
+              "description": "Allow SB Subnet",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "[parameters('subnetSBRange')]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 102,
+              "direction": "Outbound"
+            }
+          },
+          {
+            "name": "allow-db",
+            "properties": {
+              "description": "Allow DB Subnet",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "[parameters('subnetDBRange')]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 103,
+              "direction": "Outbound"
+            }
+          },
+          {
+            "name": "allow-srv",
+            "properties": {
+              "description": "Allow Services Subnet",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "[parameters('subnetSRVRange')]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 104,
+              "direction": "Outbound"
+            }
+          },
+          {
+            "name": "allow-test",
+            "properties": {
+              "description": "Allow Test Subnet",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "[parameters('subnetTstRange')]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 105,
+              "direction": "Outbound"
+            }
+          },
+          {
+            "name": "allow-internet",
+            "properties": {
+              "description": "Block Internet",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "Internet",
+              "access": "Allow",
+              "priority": 200,
+              "direction": "Outbound"
+            }
+          }
+
+
+        ]
+      }
+    },
+    {
+      "apiVersion": "2017-06-01",
       "dependsOn": [],
       "location": "[resourceGroup().location]",
       "name": "[parameters('vNetName')]",
@@ -143,51 +541,63 @@
           {
             "name": "[variables('subnetDBName')]",
             "properties": {
-              "addressPrefix": "[parameters('subnetDBRange')]"
-            }
-          },
-          {
-            "name": "[variables('subnetWebName')]",
-            "properties": {
-              "addressPrefix": "[parameters('subnetWebRange')]"
-            }
-          },
-          {
-            "name": "[variables('subnetSBName')]",
-            "properties": {
-              "addressPrefix": "[parameters('subnetSBRange')]"
-            }
-          },
-          {
-            "name": "[variables('subnetSRVName')]",
-            "properties": {
-              "addressPrefix": "[parameters('subnetSrvRange')]"
-            }
-          },
-          {
-            "name": "[variables('subnetMgtName')]",
-            "properties": {
-              "addressPrefix": "[parameters('subnetMgtRange')]"
-            }
-          },
-          {
-            "name": "[variables('subnetTstName')]",
-            "properties": {
-              "addressPrefix": "[parameters('subnetTstRange')]"
-            }
-          }
-        ]
-      },
-      "tags": {
-        "displayName": "VirtualNetwork"
-      },
-      "type": "Microsoft.Network/virtualNetworks"
-    }
-  ],
-  "outputs": {
-    "subnetID": {
-      "type": "string",
-      "value": "[variables('subnetManagmentID')]"
-    }
-  }
-}
+              "addressPrefix": "[parameters('subnetDBRange')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgDBName'))]"
+              }
+            },
+            {
+              "name": "[variables('subnetWebName')]",
+              "properties": {
+                "addressPrefix": "[parameters('subnetWebRange')]",
+                "networkSecurityGroup": {
+                  "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgWebName'))]"
+                }
+              },
+              {
+                "name": "[variables('subnetSBName')]",
+                "properties": {
+                  "addressPrefix": "[parameters('subnetSBRange')]",
+                  "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgSBName'))]"
+                  }
+                },
+                {
+                  "name": "[variables('subnetSRVName')]",
+                  "properties": {
+                    "addressPrefix": "[parameters('subnetSrvRange')]",
+                    "networkSecurityGroup": {
+                      "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgSRVName'))]"
+                    }
+                  },
+                  {
+                    "name": "[variables('subnetMgtName')]",
+                    "properties": {
+                      "addressPrefix": "[parameters('subnetMgtRange')]",
+                      "networkSecurityGroup": {
+                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgMgtName'))]"
+                      }
+                    },
+                    {
+                      "name": "[variables('subnetTstName')]",
+                      "properties": {
+                        "addressPrefix": "[parameters('subnetTstRange')]",
+                        "networkSecurityGroup": {
+                          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgTestName'))]"
+                        }
+                      }
+                      ]
+                    },
+                    "tags": {
+                      "displayName": "VirtualNetwork"
+                    },
+                    "type": "Microsoft.Network/virtualNetworks"
+                  },
+
+                  "outputs": {
+                    "subnetID": {
+                      "type": "string",
+                      "value": "[variables('subnetManagmentID')]"
+                    }
+                  }
+                }
