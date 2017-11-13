@@ -107,24 +107,29 @@
               "[resourceId('Microsoft.Compute/virtualMachines', concat('vmTest','-',copyIndex()))]"
             ],
             "tags": {
-              "displayName": "IIS"
+              "displayName": "FileResourceDemo"
             },
             "properties": {
-              "publisher": "Microsoft.Powershell",
-              "type": "DSC",
-              "typeHandlerVersion": "2.20",
-              "autoUpgradeMinorVersion": true,
+            "publisher": "Microsoft.Powershell",
+            "type": "DSC",
+            "typeHandlerVersion": "2.20",
+            "autoUpgradeMinorVersion": true,
               "settings": {
-                "configurationArguments": {
-                  "MachineName": "[concat('vmTest','-',copyIndex())]"
+                "configuration": {
+                  "url": "[concat(parameters('baseTemplateUri'), '/dsc/', 'FileResourceDemo.zip')]",
+                  "script": "FileResourceDemo.ps1",
+                  "function": "FileResourceDemo"
                 },
-                "modulesUrl": "[concat(parameters('baseTemplateUri'), '/dsc/', 'FileResourceDemo.zip')]",
-                "configurationFunction": "FileResourceDemo.ps1\\FileResourceDemo"
+                "configurationArguments": {
+                  "MachineName": "concat('vmTest','-',copyIndex())"
+                },
+                "modulesUrl": "",
+                "configurationFunction": ""
               },
-              "protectedSettings": {
+            "protectedSettings": {
 
-              }
             }
+          }
           }
         ]
       

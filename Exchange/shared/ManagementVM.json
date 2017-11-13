@@ -146,7 +146,7 @@
             "[resourceId('Microsoft.Compute/virtualMachines', 'ExchangeManagmentVM')]"
           ],
           "tags": {
-            "displayName": "IIS"
+            "displayName": "FileResourceDemo"
           },
           "properties": {
             "publisher": "Microsoft.Powershell",
@@ -155,9 +155,9 @@
             "autoUpgradeMinorVersion": true,
             "settings": {
               "configuration": {
-                "url": "[concat(parameters('baseTemplateUri'), '/dsc/', 'ExchangeWebServer.zip')]",
-                "script": "ExchangeWebServer.ps1\\ExchangeWebServer",
-                "function": "Main"
+                "url": "[concat(parameters('baseTemplateUri'), '/dsc/', 'FileResourceDemo.zip')]",
+                "script": "FileResourceDemo.ps1",
+                "function": "FileResourceDemo"
               },
               "configurationArguments": {
                 "MachineName": "ExchangeManagmentVM"
