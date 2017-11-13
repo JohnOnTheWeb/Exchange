@@ -61,7 +61,7 @@
       "apiVersion": "2016-03-30",
       "dependsOn": [],
       "tags": {
-        "displayName": "ExMgtPubIPName"
+        "displayName": "ExWebPubIPName"
       },
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
@@ -82,12 +82,12 @@
         "frontendIPConfigurations": [
           {
             "properties": {
-              "subnet": {
-                "id": "[parameters('subnetID')]"
-              },
               "privateIPAddress": "[parameters('webLBIP')]",
               "privateIPAllocationMethod": "Static",
-              "publicIPAddress": "[resourceId('Microsoft.Network/publicIPAddresses','ExMgtPubIPName')]"
+              "publicIPAddress": "[resourceId('Microsoft.Network/publicIPAddresses',parameters('vmWebPrivatePublicIPDnsName'))]",
+              "subnet": {
+                "id": "[parameters('subnetID')]"
+              }
             },
             "name": "FrontEndWebPool"
           }
@@ -212,7 +212,9 @@
               },
               "configurationArguments": {
                 "MachineName": "[concat('vmWeb-',copyIndex())]"
-              }
+              },
+              "modulesUrl": "",
+              "configurationFunction": ""
             },
             "protectedSettings": {
 

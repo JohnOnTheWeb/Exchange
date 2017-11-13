@@ -418,7 +418,7 @@
       "properties": {
         "securityRules": [
           {
-            "name": "allow-internet",
+            "name": "allow-internet-in",
             "properties": {
               "description": "Block Internet",
               "protocol": "*",
@@ -502,7 +502,7 @@
             }
           },
           {
-            "name": "allow-internet",
+            "name": "allow-internet-Out",
             "properties": {
               "description": "Block Internet",
               "protocol": "*",
