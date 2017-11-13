@@ -76,7 +76,7 @@
       "apiVersion": "2017-06-01",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/publicIPAddresses',parameters('vmWebPrivatePublicIPDnsName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses','ExWebPubIPName')]"
       ],
       "properties": {
         "frontendIPConfigurations": [
@@ -84,7 +84,7 @@
             "properties": {
               "privateIPAddress": "[parameters('webLBIP')]",
               "privateIPAllocationMethod": "Static",
-              "publicIPAddress": "[resourceId('Microsoft.Network/publicIPAddresses',parameters('vmWebPrivatePublicIPDnsName'))]",
+              "publicIPAddress": "[resourceId('Microsoft.Network/publicIPAddresses','ExWebPubIPName')]",
               "subnet": {
                 "id": "[parameters('subnetID')]"
               }
