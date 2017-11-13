@@ -64,11 +64,70 @@
     "subnetSRVName": "subnet-Service",
     "subnetMgtName": "subnet-Managment",
     "subnetTstName": "subnet-Test",
+    "nsgDBName": "LimitDBSubnetAccess",
     "vNetID": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vNetName'))]",
     "subnetManagmentID": "[resourceId('Microsoft.Network/virtualNetworks/subnets',parameters('vNetName'), variables('subnetMgtName'))]"
   },
   "resources": [
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('nsgDBName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vNetName'))]"
+      ],
+      "tags": {
+        "displayName": "NSG - Remote Access"
+      },
+      "properties": {
+        "securityRules": [
+          {
+            "name": "allow-Service",
+            "properties": {
+              "description": "Allow Service Subnet",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "1433",
+              "sourceAddressPrefix": "[parameters('subnetSrvRange')]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "allow-mgmt",
+            "properties": {
+              "description": "Allow Managment Subnet",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "[parameters('subnetMgtRange')]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "block-internet",
+            "properties": {
+              "description": "Block Internet",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "Internet",
+              "access": "Deny",
+              "priority": 200,
+              "direction": "Outbound"
+            }
+          }
 
+        ]
+      }
+    },
     {
       "name": "[parameters('vNetName')]",
       "type": "Microsoft.Network/virtualNetworks",
@@ -123,7 +182,7 @@
           }
         ]
       }
-    },
+    }
   ],
   "outputs": {
     "subnetID": {

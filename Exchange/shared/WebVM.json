@@ -39,6 +39,11 @@
     },
     "webLBIP": {
       "type": "string"
+    },
+    "vmWebPrivatePublicIPDnsName": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "ex-web-ipdns"
     }
   },
   "variables": {
@@ -50,12 +55,28 @@
   },
   "resources": [
     {
+      "name": "ExWebPubIPName",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-03-30",
+      "dependsOn": [],
+      "tags": {
+        "displayName": "ExMgtPubIPName"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('vmWebPrivatePublicIPDnsName')]"
+        }
+      }
+    },
+    {
       "name": "[variables('vmWebLoadBalancerName')]",
       "type": "Microsoft.Network/loadBalancers",
       "apiVersion": "2015-06-15",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-
+        "[resourceId('Microsoft.Network/publicIPAddresses','ExMgtPubIPName')]"
       ],
       "properties": {
         "frontendIPConfigurations": [
@@ -65,7 +86,8 @@
                 "id": "[parameters('subnetID')]"
               },
               "privateIPAddress": "[parameters('webLBIP')]",
-              "privateIPAllocationMethod": "Static"
+              "privateIPAllocationMethod": "Static",
+              "publicIPAddress": "[resourceId('Microsoft.Network/publicIPAddresses','ExMgtPubIPName')]"
             },
             "name": "FrontEndWebPool"
           }
