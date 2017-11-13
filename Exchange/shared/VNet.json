@@ -106,7 +106,7 @@
               "sourceAddressPrefix": "[parameters('subnetMgtRange')]",
               "destinationAddressPrefix": "*",
               "access": "Allow",
-              "priority": 100,
+              "priority": 101,
               "direction": "Inbound"
             }
           },
@@ -129,14 +129,10 @@
       }
     },
     {
-      "name": "[parameters('vNetName')]",
-      "type": "Microsoft.Network/virtualNetworks",
-      "location": "[resourceGroup().location]",
       "apiVersion": "2016-03-30",
       "dependsOn": [],
-      "tags": {
-        "displayName": "VirtualNetwork"
-      },
+      "location": "[resourceGroup().location]",
+      "name": "[parameters('vNetName')]",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -181,7 +177,11 @@
             }
           }
         ]
-      }
+      },
+      "tags": {
+        "displayName": "VirtualNetwork"
+      },
+      "type": "Microsoft.Network/virtualNetworks"
     }
   ],
   "outputs": {

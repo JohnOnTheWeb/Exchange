@@ -73,7 +73,7 @@
     {
       "name": "[variables('vmWebLoadBalancerName')]",
       "type": "Microsoft.Network/loadBalancers",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-06-01",
       "location": "[resourceGroup().location]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/publicIPAddresses','ExMgtPubIPName')]"
