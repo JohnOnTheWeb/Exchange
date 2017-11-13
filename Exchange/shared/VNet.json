@@ -80,7 +80,6 @@
       "name": "[variables('nsgDBName')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vNetName'))]"
       ],
       "tags": {
         "displayName": "NSG DB"
@@ -139,7 +138,6 @@
       "name": "[variables('nsgSRVName')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vNetName'))]"
       ],
       "tags": {
         "displayName": "NSG SRV"
@@ -212,7 +210,6 @@
       "name": "[variables('nsgTestName')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vNetName'))]"
       ],
       "tags": {
         "displayName": "NSG Test"
@@ -298,7 +295,6 @@
       "name": "[variables('nsgWebName')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vNetName'))]"
       ],
       "tags": {
         "displayName": "NSG Web"
@@ -371,7 +367,6 @@
       "name": "[variables('nsgSBName')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vNetName'))]"
       ],
       "tags": {
         "displayName": "NSG Test"
@@ -416,7 +411,6 @@
       "name": "[variables('nsgMgtName')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vNetName'))]"
       ],
       "tags": {
         "displayName": "NSG Management"
@@ -526,7 +520,14 @@
     },
     {
       "apiVersion": "2015-06-15",
-      "dependsOn": [],
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgMgtName'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgTestName'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgSBName'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgSrvName'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgWebName'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgDBName'))]"
+      ],
       "location": "[resourceGroup().location]",
       "name": "[parameters('vNetName')]",
       "properties": {
