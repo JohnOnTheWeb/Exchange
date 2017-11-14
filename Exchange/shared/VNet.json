@@ -97,11 +97,11 @@
           {
             "name": "allow-Internet",
             "properties": {
-              "description": "Allow Service Subnet",
+              "description": "Allow Internet Subnet",
               "protocol": "Tcp",
               "sourcePortRange": "*",
               "destinationPortRange": "1433,80",
-              "sourceAddressPrefix": "Internet",
+              "sourceAddressPrefix": "*",
               "destinationAddressPrefix": "*",
               "access": "Allow",
               "priority": 100,
