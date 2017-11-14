@@ -35,9 +35,9 @@
     }
   },
   "variables": {
-    "vmImagePublisher": "MicrosoftWindowsServer",
-    "vmImageOffer": "WindowsServer",
-    "vmSku": "2012-R2-Datacenter"
+    "vmImagePublisher": "MicrosoftSQLServer",
+    "vmImageOffer": "SQL2016SP1-WS2016",
+    "vmSku": "Standard"
   },
   "resources": [
     {
@@ -49,7 +49,7 @@
 
       ],
       "tags": {
-        "displayName": "ExchangeManagmentNic"
+        "displayName": "ExchangeMainDBNic"
       },
       "properties": {
         "ipConfigurations": [
@@ -96,7 +96,7 @@
           "osDisk": {
             "name": "vmPrivateOSDisk",
             "vhd": {
-              "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', parameters('vmStorageAccountName')), '2016-01-01').primaryEndpoints.blob, 'vhds', '/', 'vmWebDBOSDisk', '.vhd')]"
+              "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', parameters('vmStorageAccountName')), '2016-01-01').primaryEndpoints.blob, 'vhds', '/', 'vmMainDBOSDisk', '.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
