@@ -57,12 +57,89 @@
   },
   "resources": [
     {
+      "name": "vmRedisWebNic",
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2016-09-01",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "subnet": {
+                "id": "[parameters('subnetID')]"
+              },
+              "privateIPAllocationMethod": "Dynamic",
+              
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "vmRedisWeb",
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2016-04-30-preview",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', 'vmRedisWebNic')]"
+
+      ],
+      "properties": {
+        "osProfile": {
+          "computerName": "vmRedisWeb",
+          "adminUsername": "[parameters('vmAdminUserName')]",
+          "adminPassword": "[parameters('vmAdminPassword')]"
+        },
+        "hardwareProfile": {
+          "vmSize": "Standard_A1"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "bitnami",
+            "offer": "redis",
+            "sku": "redis",
+            "version": "latest"
+          },
+          "osDisk": {
+            "createOption": "fromImage",
+            "vhd": {
+              "uri": "[concat(concat(reference(resourceId('Test', 'Microsoft.Storage/storageAccounts', parameters('vmStorageAccountName')), '2015-06-15').primaryEndpoints['blob'], 'vhds/'), 'vmRedisWebOSdisk', '.vhd')]"
+            },
+            "name": "vmRedisWeb"
+          },
+          "dataDisks": []
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', 'vmRedisWebNic')]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": true,
+            "storageUri": "[reference(resourceId('ether', 'Microsoft.Storage/storageAccounts', parameters('vmStorageAccountName')), '2015-06-15').primaryEndpoints['blob']]"
+          }
+        }
+      },
+      "plan": {
+        "name": "redis",
+        "publisher": "bitnami",
+        "product": "redis"
+      }
+    },
+    {
       "name": "ExAppGateway",
       "type": "Microsoft.Network/applicationGateways",
       "apiVersion": "2017-06-01",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', 'ExWebPubIPName')]"
+        "[resourceId('Microsoft.Network/publicIPAddresses', 'ExWebPubIPName')]"
       ],
       "properties": {
         "sku": {
@@ -85,7 +162,7 @@
             "name": "appGatewayFrontendIP",
             "properties": {
               "PublicIPAddress": {
-                "id": "[concat('Microsoft.Network/publicIPAddresses/', 'ExWebPubIPName')]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', 'ExWebPubIPName')]"
               }
             }
           }
