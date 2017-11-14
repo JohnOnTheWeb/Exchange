@@ -29,7 +29,7 @@
     "deployBACSBVM": {
       "value": "yes"
     },
-    "deployWFSBAGSVM": {
+    "deployWFSBVM": {
       "value": "yes"
     },
     "vNetName": {

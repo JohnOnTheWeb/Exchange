@@ -51,7 +51,7 @@
   },
   "resources": [
     {
-      "name": "[concat('vmSBConfig','-',copyIndex())]",
+      "name": "[concat(parameters('sbFarmNamePrefix'),'-','SBConfig','-',copyIndex())]",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[resourceGroup().location]",
       "apiVersion": "2015-06-15",
@@ -104,7 +104,7 @@
       }
     },
     {
-      "name": "[concat('vmSBApp','-',copyIndex())]",
+      "name": "[concat(parameters('sbFarmNamePrefix'),'-','SBApp','-',copyIndex())]",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[resourceGroup().location]",
       "apiVersion": "2015-06-15",

@@ -404,7 +404,7 @@
     },
     {
       "apiVersion": "[variables('deploymentApiVersion')]",
-      "name": "ChaceGenPopSBDeployment",
+      "name": "ChacGenPopSBDeployment",
       "condition": "[equals(parameters('deployCHASESBVM'),'yes')]",
       "type": "Microsoft.Resources/deployments",
       "dependsOn": [

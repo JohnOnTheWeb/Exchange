@@ -102,7 +102,7 @@
           "osDisk": {
             "createOption": "fromImage",
             "vhd": {
-              "uri": "[concat(concat(reference(resourceId('Test', 'Microsoft.Storage/storageAccounts', parameters('vmStorageAccountName')), '2015-06-15').primaryEndpoints['blob'], 'vhds/'), 'vmRedisWebOSdisk', '.vhd')]"
+              "uri": "[concat(concat(reference(resourceId( 'Microsoft.Storage/storageAccounts', parameters('vmStorageAccountName')), '2015-06-15').primaryEndpoints['blob'], 'vhds/'), 'vmRedisWebOSdisk', '.vhd')]"
             },
             "name": "vmRedisWeb"
           },
@@ -118,7 +118,7 @@
         "diagnosticsProfile": {
           "bootDiagnostics": {
             "enabled": true,
-            "storageUri": "[reference(resourceId('ether', 'Microsoft.Storage/storageAccounts', parameters('vmStorageAccountName')), '2015-06-15').primaryEndpoints['blob']]"
+            "storageUri": "[reference(resourceId( 'Microsoft.Storage/storageAccounts', parameters('vmStorageAccountName')), '2015-06-15').primaryEndpoints['blob']]"
           }
         }
       },
