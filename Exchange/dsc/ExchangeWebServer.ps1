@@ -3,7 +3,7 @@
 	 $VerbosePreference = "Continue"
   param ($MachineName)
  Import-DscResource -ModuleName PSDesiredStateConfiguration
-	Write-Verbose "Ddesired state module loaded"
+	Write-Verbose "Desired state module loaded"
 
   Node localhost
   {
@@ -11,7 +11,7 @@
     {
       RebootNodeIfNeeded = $true
 		}
-    }
+    
     #Install the IIS Role
 
     WindowsFeature IIS
