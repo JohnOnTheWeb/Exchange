@@ -95,16 +95,30 @@
       "properties": {
         "securityRules": [
           {
-            "name": "allow-Internet",
+            "name": "allow-Internet-80",
             "properties": {
               "description": "Allow Internet Subnet",
               "protocol": "Tcp",
               "sourcePortRange": "*",
-              "destinationPortRange": "1433,80",
-              "sourceAddressPrefix": "*",
+              "destinationPortRange": "80",
+              "sourceAddressPrefix": "Internet",
               "destinationAddressPrefix": "*",
               "access": "Allow",
               "priority": 100,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "allow-Internet-1433",
+            "properties": {
+              "description": "Allow Internet Subnet",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "1433",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 101,
               "direction": "Inbound"
             }
           },
