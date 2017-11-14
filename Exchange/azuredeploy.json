@@ -8,6 +8,13 @@
         "description": "Base URI of template resources."
       }
     },
+    "deployTestVM": {
+      "type": "string",
+      "metadata": {
+        "description": "Type of storage account."
+      },
+      "defaultValue": "no"
+    },
     "storageType": {
       "type": "string",
       "metadata": {
@@ -50,79 +57,79 @@
         "description": "IP to support Web Load Balancing"
       }
     },
-      "subnetSBRange": {
-        "type": "string",
-        "metadata": {
-          "description": "IP range of first subnet."
-        }
-      },
-      "subnetSrvRange": {
-        "type": "string",
-        "metadata": {
-          "description": "IP range of second subnet."
-        }
-      },
-      "subnetMgtRange": {
-        "type": "string",
-        "metadata": {
-          "description": "IP range of first subnet."
-        }
-      },
-      "subnetTstRange": {
-        "type": "string",
-        "metadata": {
-          "description": "IP range of second subnet."
-        }
-      },
-      "vmManagementAdminUserName": {
-        "type": "string",
-        "minLength": 1,
-        "defaultValue": "ManangementAdmin"
-      },
-      "vmManagementAdminPassword": {
-        "type": "securestring"
-      },
-      "vmSBSize": {
-        "type": "string",
-        "minLength": 1,
-        "defaultValue": "Standard_D1_v2"
-      },
-      "cfgSBServerCount": {
-        "type": "int",
-        "defaultValue": 2
-      },
-      "appSBServerCount": {
-        "type": "int",
-        "defaultValue": 2
-      },
-      "vmTestSize": {
-        "type": "string",
-        "minLength": 1,
-        "defaultValue": "Standard_D1_v2"
-      },
-      "testServerCount": {
-        "type": "int",
-        "defaultValue": 2
-      },
-      "vmWebSize": {
-        "type": "string",
-        "minLength": 1,
-        "defaultValue": "Standard_D1_v2"
-      },
-      "WebServerCount": {
-        "type": "int",
-        "defaultValue": 2
-      },
-      "vmServicesSize": {
-        "type": "string",
-        "minLength": 1,
-        "defaultValue": "Standard_D1_v2"
-      },
-      "ServicesServerCount": {
-        "type": "int",
-        "defaultValue": 2
+    "subnetSBRange": {
+      "type": "string",
+      "metadata": {
+        "description": "IP range of first subnet."
       }
     },
+    "subnetSrvRange": {
+      "type": "string",
+      "metadata": {
+        "description": "IP range of second subnet."
+      }
+    },
+    "subnetMgtRange": {
+      "type": "string",
+      "metadata": {
+        "description": "IP range of first subnet."
+      }
+    },
+    "subnetTstRange": {
+      "type": "string",
+      "metadata": {
+        "description": "IP range of second subnet."
+      }
+    },
+    "vmManagementAdminUserName": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "ManangementAdmin"
+    },
+    "vmManagementAdminPassword": {
+      "type": "securestring"
+    },
+    "vmSBSize": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "Standard_D1_v2"
+    },
+    "cfgSBServerCount": {
+      "type": "int",
+      "defaultValue": 2
+    },
+    "appSBServerCount": {
+      "type": "int",
+      "defaultValue": 2
+    },
+    "vmTestSize": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "Standard_D1_v2"
+    },
+    "testServerCount": {
+      "type": "int",
+      "defaultValue": 2
+    },
+    "vmWebSize": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "Standard_D1_v2"
+    },
+    "WebServerCount": {
+      "type": "int",
+      "defaultValue": 2
+    },
+    "vmServicesSize": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "Standard_D1_v2"
+    },
+    "ServicesServerCount": {
+      "type": "int",
+      "defaultValue": 2
+    }
+  },
   "variables": {
     "deploymentApiVersion": "2016-02-01",
     "storageApiVersion": "2015-06-15",
@@ -271,6 +278,7 @@
       "apiVersion": "[variables('deploymentApiVersion')]",
       "name": "TestDeployment",
       "type": "Microsoft.Resources/deployments",
+      "condition": "[equals(parameters('deployTestVM'),'yes')]",
       "dependsOn": [
         "[concat('Microsoft.Resources/deployments/','StorageDeployment')]",
         "[concat('Microsoft.Resources/deployments/', 'VNetDeployment')]"
