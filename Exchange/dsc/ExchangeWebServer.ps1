@@ -1,10 +1,14 @@
 ﻿Configuration ExchangeWebServer
 {
+	 $VerbosePreference = "Continue"
   param ($MachineName)
+ Import-DscResource -ModuleName PSDesiredStateConfiguration
+	Write-Verbose "Ddesired state module loaded"
 
-  Node $MachineName
+  Node localhost
   {
     #Install the IIS Role
+
     WindowsFeature IIS
     {
       Ensure = “Present”

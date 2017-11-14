@@ -32,11 +32,9 @@
     </None>
     <Content Include="Deploy-AzureResourceGroup.ps1" />
     <None Include="dsc\ExchangeWebServer.ps1" />
-    <None Include="dsc\ExchangeWebServer.zip" />
     <None Include="dsc\FileResourceDemo.ps1" />
     <None Include="dsc\FileResourceDemo.zip" />
     <None Include="ps1\CreateFileShare.ps1" />
-    <None Include="ps1\CreateFileShare.zip" />
     <None Include="shared\BaseStorage.json" />
     <None Include="shared\ManagementVM.json" />
     <None Include="shared\SBFarm.json" />
