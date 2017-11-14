@@ -1,0 +1,98 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+ "parameters": {
+  "baseTemplateUri": {
+    "type": "string",
+    "metadata": {
+      "description": "Base URI of template resources."
+    }
+  },
+    "subnetID": {
+      "type": "string",
+      "metadata": {
+        "description": "Virtual network subnet reference."
+      }
+    },
+    "vmStorageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Virtual Network Storage reference for VM "
+      }
+    },
+    "vmAdminUserName": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "ManangementAdmin"
+    },
+    "vmAdminPassword": {
+      "type": "securestring"
+    },
+    "vmSize": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "Standard_D1_v2"
+    }
+  },
+  "variables": {
+    "vmImagePublisher": "MicrosoftWindowsServer",
+    "vmImageOffer": "WindowsServer",
+    "vmSku": "2012-R2-Datacenter"
+  },
+  "resources": [
+    {
+      "name": "ExchangeMainDB",
+      "type": "Microsoft.Compute/virtualMachines",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', 'ExchangeMainDBNic')]"
+      ],
+      "tags": {
+        "displayName": "ExchangeMainDB"
+      },
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "ExcMainDb01",
+          "adminUsername": "[parameters('vmAdminUserName')]",
+          "adminPassword": "[parameters('vmAdminPassword')]"
+        },
+
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('vmImagePublisher')]",
+            "offer": "[variables('vmImageOffer')]",
+            "sku": "[variables('vmSku')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "vmPrivateOSDisk",
+            "vhd": {
+              "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', parameters('vmStorageAccountName')), '2016-01-01').primaryEndpoints.blob, 'vhds', '/', 'vmWebDBOSDisk', '.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', 'ExchangeMainDBNic')]"
+            }
+
+
+          ]
+        }
+      },
+      "resources": [
+       
+      ]
+
+    }
+  ],
+  "outputs": {
+  }
+}

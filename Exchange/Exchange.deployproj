@@ -37,6 +37,8 @@
     <None Include="dsc\FileResourceDemo.zip" />
     <None Include="ps1\CreateFileShare.ps1" />
     <None Include="shared\BaseStorage.json" />
+    <None Include="shared\DBMain.json" />
+    <None Include="shared\DBWeb.json" />
     <None Include="shared\ManagementVM.json" />
     <None Include="shared\SBFarm.json" />
     <None Include="shared\ServicesVM.json" />
