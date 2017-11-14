@@ -15,7 +15,28 @@
       },
       "defaultValue": "no"
     },
-    "deploySBVM": {
+    "deployGENPOPSBVM": {
+      "type": "string",
+      "metadata": {
+        "description": "Controls if the SB VM Instances are Deployed"
+      },
+      "defaultValue": "no"
+    },
+    "deployCHASESBVM": {
+      "type": "string",
+      "metadata": {
+        "description": "Controls if the SB VM Instances are Deployed"
+      },
+      "defaultValue": "no"
+    },
+    "deployWFSBVM": {
+      "type": "string",
+      "metadata": {
+        "description": "Controls if the SB VM Instances are Deployed"
+      },
+      "defaultValue": "no"
+    },
+    "deployBACSBVM": {
       "type": "string",
       "metadata": {
         "description": "Controls if the SB VM Instances are Deployed"
@@ -302,8 +323,8 @@
     },
     {
       "apiVersion": "[variables('deploymentApiVersion')]",
-      "name": "SBDeployment",
-      "condition": "[equals(parameters('deploySBVM'),'yes')]",
+      "name": "GenPopSBDeployment",
+      "condition": "[equals(parameters('deployGENPOPSBVM'),'yes')]",
       "type": "Microsoft.Resources/deployments",
       "dependsOn": [
         "[concat('Microsoft.Resources/deployments/','StorageDeployment')]",
@@ -321,6 +342,87 @@
           "vmAdminUserName": { "value": "[parameters('vmManagementAdminUserName')]" },
           "vmAdminPassword": { "value": "[parameters('vmManagementAdminPassword')]" },
           "sbFarmNamePrefix": { "value": "GenPop" },
+          "vmSize": { "value": "[parameters('vmSBSize')]" },
+          "cfgServerCount": { "value": "[parameters('cfgSBServerCount')]" },
+          "appServerCount": { "value": "[parameters('appSBServerCount')]" }
+        }
+      }
+    },
+    {
+      "apiVersion": "[variables('deploymentApiVersion')]",
+      "name": "BACSBDeployment",
+      "condition": "[equals(parameters('deployBACSBVM'),'yes')]",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/','StorageDeployment')]",
+        "[concat('Microsoft.Resources/deployments/', 'VNetDeployment')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('baseTemplateUri'), '/shared/', 'SBFarm.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "subnetID": { "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vNetName'), 'subnet-Managment')]" },
+          "vmStorageAccountName": { "value": "[reference('StorageDeployment').outputs.storageAccountName.value]" },
+          "vmAdminUserName": { "value": "[parameters('vmManagementAdminUserName')]" },
+          "vmAdminPassword": { "value": "[parameters('vmManagementAdminPassword')]" },
+          "sbFarmNamePrefix": { "value": "BAC" },
+          "vmSize": { "value": "[parameters('vmSBSize')]" },
+          "cfgServerCount": { "value": "[parameters('cfgSBServerCount')]" },
+          "appServerCount": { "value": "[parameters('appSBServerCount')]" }
+        }
+      }
+    },
+    {
+      "apiVersion": "[variables('deploymentApiVersion')]",
+      "name": "WFSBDeployment",
+      "condition": "[equals(parameters('deployWFSBVM'),'yes')]",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/','StorageDeployment')]",
+        "[concat('Microsoft.Resources/deployments/', 'VNetDeployment')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('baseTemplateUri'), '/shared/', 'SBFarm.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "subnetID": { "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vNetName'), 'subnet-Managment')]" },
+          "vmStorageAccountName": { "value": "[reference('StorageDeployment').outputs.storageAccountName.value]" },
+          "vmAdminUserName": { "value": "[parameters('vmManagementAdminUserName')]" },
+          "vmAdminPassword": { "value": "[parameters('vmManagementAdminPassword')]" },
+          "sbFarmNamePrefix": { "value": "WF" },
+          "vmSize": { "value": "[parameters('vmSBSize')]" },
+          "cfgServerCount": { "value": "[parameters('cfgSBServerCount')]" },
+          "appServerCount": { "value": "[parameters('appSBServerCount')]" }
+        }
+      }
+    },
+    {
+      "apiVersion": "[variables('deploymentApiVersion')]",
+      "name": "ChaceGenPopSBDeployment",
+      "condition": "[equals(parameters('deployCHASESBVM'),'yes')]",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/','StorageDeployment')]",
+        "[concat('Microsoft.Resources/deployments/', 'VNetDeployment')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('baseTemplateUri'), '/shared/', 'SBFarm.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "subnetID": { "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vNetName'), 'subnet-Managment')]" },
+          "vmStorageAccountName": { "value": "[reference('StorageDeployment').outputs.storageAccountName.value]" },
+          "vmAdminUserName": { "value": "[parameters('vmManagementAdminUserName')]" },
+          "vmAdminPassword": { "value": "[parameters('vmManagementAdminPassword')]" },
+          "sbFarmNamePrefix": { "value": "CHASE" },
           "vmSize": { "value": "[parameters('vmSBSize')]" },
           "cfgServerCount": { "value": "[parameters('cfgSBServerCount')]" },
           "appServerCount": { "value": "[parameters('appSBServerCount')]" }

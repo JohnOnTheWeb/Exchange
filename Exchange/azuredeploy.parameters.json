@@ -12,9 +12,24 @@
       "value": "Standard_LRS"
     },
     "deploySRVVM": {
+      "value": "no"
+    },
+    "deployWebVM": {
       "value": "yes"
     },
     "deployAGSVM": {
+      "value": "no"
+    },
+    "deployGENPOPSBVM": {
+      "value": "yes"
+    },
+    "deployCHASESBVM": {
+      "value": "yes"
+    },
+    "deployBACSBVM": {
+      "value": "yes"
+    },
+    "deployWFSBAGSVM": {
       "value": "yes"
     },
     "vNetName": {
