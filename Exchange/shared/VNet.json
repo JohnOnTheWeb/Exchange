@@ -128,9 +128,9 @@
               "description": "Allow Web Subnet",
               "protocol": "*",
               "sourcePortRange": "*",
-              "destinationPortRange": "[parameters('subnetWebRange')]",
+              "destinationPortRange": "*",
               "sourceAddressPrefix": "*",
-              "destinationAddressPrefix": "*",
+              "destinationAddressPrefix": "[parameters('subnetWebRange')]",
               "access": "Allow",
               "priority": 200,
               "direction": "Outbound"
