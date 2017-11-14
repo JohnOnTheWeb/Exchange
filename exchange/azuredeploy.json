@@ -11,7 +11,49 @@
     "deployTestVM": {
       "type": "string",
       "metadata": {
-        "description": "Type of storage account."
+        "description": "Controls if the Test VM instances are deployed"
+      },
+      "defaultValue": "no"
+    },
+    "deploySBVM": {
+      "type": "string",
+      "metadata": {
+        "description": "Controls if the SB VM Instances are Deployed"
+      },
+      "defaultValue": "no"
+    },
+    "deploySRVVM": {
+      "type": "string",
+      "metadata": {
+        "description": "Controls if the Service VM Instances are Deployed"
+      },
+      "defaultValue": "no"
+    },
+    "deployWebVM": {
+      "type": "string",
+      "metadata": {
+        "description": "Controls if the Web VM Instances are Deployed"
+      },
+      "defaultValue": "no"
+    },
+    "deployAGSVM": {
+      "type": "string",
+      "metadata": {
+        "description": "Controls if the AGS Instance is Deployed"
+      },
+      "defaultValue": "no"
+    },
+    "deployMgtVM": {
+      "type": "string",
+      "metadata": {
+        "description": "Controls if the Managment VM Instance is Deployed"
+      },
+      "defaultValue": "no"
+    },
+    "deployDBVM": {
+      "type": "string",
+      "metadata": {
+        "description": "Controls if the DB Main VM Instance is Deployed"
       },
       "defaultValue": "no"
     },
@@ -76,6 +118,12 @@
       }
     },
     "subnetTstRange": {
+      "type": "string",
+      "metadata": {
+        "description": "IP range of second subnet."
+      }
+    },
+    "subnetAGSRange": {
       "type": "string",
       "metadata": {
         "description": "IP range of second subnet."
@@ -155,7 +203,8 @@
           "subnetSBRange": { "value": "[parameters('subnetSBRange')]" },
           "subnetSrvRange": { "value": "[parameters('subnetSrvRange')]" },
           "subnetMgtRange": { "value": "[parameters('subnetMgtRange')]" },
-          "subnetTstRange": { "value": "[parameters('subnetTstRange')]" }
+          "subnetTstRange": { "value": "[parameters('subnetTstRange')]" },
+          "subnetAGSRange": { "value": "[parameters('subnetAGSRange')]" }
         }
       }
     },
@@ -179,6 +228,7 @@
     {
       "apiVersion": "[variables('deploymentApiVersion')]",
       "name": "MainDBVMDeployment",
+      "condition": "[equals(parameters('deployDBVM'),'yes')]",
       "type": "Microsoft.Resources/deployments",
       "dependsOn": [
         "[concat('Microsoft.Resources/deployments/','StorageDeployment')]",
@@ -203,6 +253,7 @@
     {
       "apiVersion": "[variables('deploymentApiVersion')]",
       "name": "WebDBVMDeployment",
+      "condition": "[equals(parameters('deployWebVM'),'yes')]",
       "type": "Microsoft.Resources/deployments",
       "dependsOn": [
         "[concat('Microsoft.Resources/deployments/','StorageDeployment')]",
@@ -227,6 +278,7 @@
     {
       "apiVersion": "[variables('deploymentApiVersion')]",
       "name": "ManagmentVMDeployment",
+      "condition": "[equals(parameters('deployMgtVM'),'yes')]",
       "type": "Microsoft.Resources/deployments",
       "dependsOn": [
         "[concat('Microsoft.Resources/deployments/','StorageDeployment')]",
@@ -251,6 +303,7 @@
     {
       "apiVersion": "[variables('deploymentApiVersion')]",
       "name": "SBDeployment",
+      "condition": "[equals(parameters('deploySBVM'),'yes')]",
       "type": "Microsoft.Resources/deployments",
       "dependsOn": [
         "[concat('Microsoft.Resources/deployments/','StorageDeployment')]",
@@ -303,6 +356,7 @@
     {
       "apiVersion": "[variables('deploymentApiVersion')]",
       "name": "WebDeployment",
+      "condition": "[equals(parameters('deployWebVM'),'yes')]",
       "type": "Microsoft.Resources/deployments",
       "dependsOn": [
         "[concat('Microsoft.Resources/deployments/','StorageDeployment')]",
@@ -328,7 +382,29 @@
     },
     {
       "apiVersion": "[variables('deploymentApiVersion')]",
+      "name": "AGSDeployment",
+      "condition": "[equals(parameters('deployAGSVM'),'yes')]",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/','StorageDeployment')]",
+        "[concat('Microsoft.Resources/deployments/', 'VNetDeployment')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('baseTemplateUri'), '/shared/', 'AGS.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "subnetID": { "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vNetName'), 'subnet-Web')]" },
+          "baseTemplateUri": { "value": "[parameters('baseTemplateUri')]" }
+        }
+      }
+    },
+    {
+      "apiVersion": "[variables('deploymentApiVersion')]",
       "name": "ServicesDeployment",
+      "condition": "[equals(parameters('deploySRVVM'),'yes')]",
       "type": "Microsoft.Resources/deployments",
       "dependsOn": [
         "[concat('Microsoft.Resources/deployments/','StorageDeployment')]",

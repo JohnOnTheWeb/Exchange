@@ -101,21 +101,7 @@
               "protocol": "Tcp",
               "sourcePortRange": "Internet",
               "destinationPortRange": "1433,80",
-              "sourceAddressPrefix": "[parameters('subnetSrvRange')]",
-              "destinationAddressPrefix": "*",
-              "access": "Allow",
-              "priority": 100,
-              "direction": "Inbound"
-            }
-          },
-          {
-            "name": "allow-Internet",
-            "properties": {
-              "description": "Allow Service Subnet",
-              "protocol": "Tcp",
-              "sourcePortRange": "Internet",
-              "destinationPortRange": "1433,80",
-              "sourceAddressPrefix": "[parameters('subnetSrvRange')]",
+              "sourceAddressPrefix": "*",
               "destinationAddressPrefix": "*",
               "access": "Allow",
               "priority": 100,
