@@ -88,7 +88,7 @@
           "osDisk": {
             "name": "[concat('SBConfig','-',copyIndex(),'-osdisk')]",
             "vhd": {
-              "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', parameters('vmStorageAccountName')), '2016-01-01').primaryEndpoints.blob, 'vhds', '/', 'vmsbcfg-',copyIndex(),'-OSDisk', '.vhd')]"
+              "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', parameters('vmStorageAccountName')), '2016-01-01').primaryEndpoints.blob, 'vhds', '/',parameters('sbFarmNamePrefix'),'-', 'sbcfg-',copyIndex(),'-OSDisk', '.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -141,7 +141,7 @@
           "osDisk": {
             "name": "[concat('SBApp','-',copyIndex(),'-osdisk')]",
             "vhd": {
-              "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', parameters('vmStorageAccountName')), '2016-01-01').primaryEndpoints.blob, 'vhds', '/', 'vmsbapp-',copyIndex(),'-OSDisk', '.vhd')]"
+              "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', parameters('vmStorageAccountName')), '2016-01-01').primaryEndpoints.blob, 'vhds', '/',parameters('sbFarmNamePrefix'),'-', 'vmsbapp-',copyIndex(),'-OSDisk', '.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
