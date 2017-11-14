@@ -36,6 +36,7 @@
     <None Include="dsc\FileResourceDemo.ps1" />
     <None Include="dsc\FileResourceDemo.zip" />
     <None Include="ps1\CreateFileShare.ps1" />
+    <None Include="shared\AGS.json" />
     <None Include="shared\BaseStorage.json" />
     <None Include="shared\DBMain.json" />
     <None Include="shared\DBWeb.json" />

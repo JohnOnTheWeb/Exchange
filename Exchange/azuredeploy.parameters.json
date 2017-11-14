@@ -11,6 +11,12 @@
     "storageType": {
       "value": "Standard_LRS"
     },
+    "deploySRVVM": {
+      "value": "yes"
+    },
+    "deployAGSVM": {
+      "value": "yes"
+    },
     "vNetName": {
       "value": "exchangevnet"
     },
@@ -37,6 +43,9 @@
     },
     "subnetTstRange": {
       "value": "10.100.5.0/24"
+    },
+    "subnetAGSRange": {
+      "value": "10.100.6.0/24"
     },
     "vmManagementAdminUserName": {
       "value": "ExchangeAdmin"

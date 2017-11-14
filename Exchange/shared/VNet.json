@@ -20,6 +20,12 @@
         "description": "IP range of the virtual network."
       }
     },
+    "subnetAGSRange": {
+      "type": "string",
+      "metadata": {
+        "description": "IP range of first subnet."
+      }
+    },
     "subnetDBRange": {
       "type": "string",
       "metadata": {
@@ -58,12 +64,14 @@
     }
   },
   "variables": {
+    "subnetAGSName": "subnet-AGS",
     "subnetDBName": "subnet-DB",
     "subnetWebName": "subnet-Web",
     "subnetSBName": "subnet-ServiceBus",
     "subnetSRVName": "subnet-Service",
     "subnetMgtName": "subnet-Managment",
     "subnetTstName": "subnet-Test",
+    "nsgAGSName": "LimitAGS",
     "nsgDBName": "LimitDB",
     "nsgSrvName": "LimitSRV",
     "nsgTestName": "LimitTest",
@@ -74,6 +82,78 @@
     "subnetManagmentID": "[resourceId('Microsoft.Network/virtualNetworks/subnets',parameters('vNetName'), variables('subnetMgtName'))]"
   },
   "resources": [
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('nsgAGSName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+      ],
+      "tags": {
+        "displayName": "NSG AGS"
+      },
+      "properties": {
+        "securityRules": [
+          {
+            "name": "allow-Internet",
+            "properties": {
+              "description": "Allow Service Subnet",
+              "protocol": "Tcp",
+              "sourcePortRange": "Internet",
+              "destinationPortRange": "1433,80",
+              "sourceAddressPrefix": "[parameters('subnetSrvRange')]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "allow-Internet",
+            "properties": {
+              "description": "Allow Service Subnet",
+              "protocol": "Tcp",
+              "sourcePortRange": "Internet",
+              "destinationPortRange": "1433,80",
+              "sourceAddressPrefix": "[parameters('subnetSrvRange')]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "allow-Web",
+            "properties": {
+              "description": "Allow Web Subnet",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "[parameters('subnetWebRange')]",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 200,
+              "direction": "Outbound"
+            }
+          },
+          {
+            "name": "block-internet",
+            "properties": {
+              "description": "Block Internet",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "Internet",
+              "access": "Deny",
+              "priority": 201,
+              "direction": "Outbound"
+            }
+          }
+
+        ]
+      }
+    },
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkSecurityGroups",
@@ -526,7 +606,8 @@
         "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgSBName'))]",
         "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgSrvName'))]",
         "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgWebName'))]",
-        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgDBName'))]"
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgDBName'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgAGSName'))]"
       ],
       "location": "[resourceGroup().location]",
       "name": "[parameters('vNetName')]",
@@ -537,6 +618,15 @@
           ]
         },
         "subnets": [
+          {
+            "name": "[variables('subnetAGSName')]",
+            "properties": {
+              "addressPrefix": "[parameters('subnetAGSRange')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgAGSName'))]"
+              }
+            }
+          },
           {
             "name": "[variables('subnetDBName')]",
             "properties": {
