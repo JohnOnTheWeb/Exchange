@@ -41,6 +41,31 @@
   },
   "resources": [
     {
+      "name": "ExchangeWebDBNic",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-03-30",
+      "dependsOn": [
+
+      ],
+      "tags": {
+        "displayName": "ExchangeManagmentNic"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[parameters('subnetID')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
       "name": "ExchangeWebDB",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[resourceGroup().location]",
@@ -88,7 +113,7 @@
         }
       },
       "resources": [
-       
+
       ]
 
     }
