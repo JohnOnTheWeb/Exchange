@@ -99,9 +99,9 @@
             "properties": {
               "description": "Allow Service Subnet",
               "protocol": "Tcp",
-              "sourcePortRange": "Internet",
+              "sourcePortRange": "*",
               "destinationPortRange": "1433,80",
-              "sourceAddressPrefix": "*",
+              "sourceAddressPrefix": "Internet",
               "destinationAddressPrefix": "*",
               "access": "Allow",
               "priority": 100,
