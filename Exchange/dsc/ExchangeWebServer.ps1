@@ -7,6 +7,11 @@
 
   Node localhost
   {
+	  LocalConfigurationManager
+    {
+      RebootNodeIfNeeded = $true
+		}
+    }
     #Install the IIS Role
 
     WindowsFeature IIS
