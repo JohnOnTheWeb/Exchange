@@ -146,7 +146,7 @@
             "[resourceId('Microsoft.Compute/virtualMachines', 'ExchangeManagmentVM')]"
           ],
           "tags": {
-            "displayName": "ExchangeWebServer"
+            "displayName": "ExchangeSB"
           },
           "properties": {
             "publisher": "Microsoft.Powershell",
@@ -155,12 +155,12 @@
             "autoUpgradeMinorVersion": true,
             "settings": {
               "configuration": {
-                "url": "[concat(parameters('baseTemplateUri'), '/dsc/', 'ExchangeWebServer.zip')]",
-                "script": "ExchangeWebServer.ps1",
-                "function": "ExchangeWebServer"
+                "url": "[concat(parameters('baseTemplateUri'), '/dsc/', 'ExchangeSB.zip')]",
+                "script": "ExchangeSB.ps1",
+                "function": "ExchangeSB"
               },
               "configurationArguments": {
-                "MachineName": "ExchangeManagmentVM"
+                //"MachineName": "ExchangeManagmentVM"
               }
             },
             "protectedSettings": {
