@@ -5,7 +5,7 @@
  #Import-DscResource -ModuleName PSDesiredStateConfiguration
 	#Write-Verbose "Desired state module loaded"
 
-  Node ($MachineName)
+  Node "localhost"
   {
 	 # LocalConfigurationManager
   #  {
