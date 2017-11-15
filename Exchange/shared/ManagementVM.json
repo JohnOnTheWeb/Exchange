@@ -138,7 +138,7 @@
       },
       "resources": [
         {
-          "name": "FileResourceDemo",
+          "name": "FileResorceDemo",
           "type": "extensions",
           "location": "[resourceGroup().location]",
           "apiVersion": "2015-06-15",
@@ -155,15 +155,13 @@
             "autoUpgradeMinorVersion": true,
             "settings": {
               "configuration": {
-                "url": "[concat(parameters('baseTemplateUri'), '/dsc/', 'ExchangeWebServer.zip')]",
-                "script": "ExchangeWebServer.ps1",
-                "function": "ExchangeWebServer"
+                "url": "[concat(parameters('baseTemplateUri'), '/dsc/', 'FileResourceDemo.zip')]",
+                "script": "FileResourceDemo.ps1",
+                "function": "FileResourceDemo"
               },
               "configurationArguments": {
                 "MachineName": "ExchangeManagmentVM"
-              },
-              "modulesUrl": "",
-              "configurationFunction": ""
+              }
             },
             "protectedSettings": {
 
