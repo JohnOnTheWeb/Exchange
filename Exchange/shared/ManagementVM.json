@@ -158,10 +158,10 @@
                 "url": "[concat(parameters('baseTemplateUri'), '/dsc/', 'FileResourceDemo.zip')]",
                 "script": "FileResourceDemo.ps1",
                 "function": "FileResourceDemo"
-              //},
-              //"configurationArguments": {
-              //  "MachineName": "ExchangeManagmentVM"
-              //}
+              },
+              "configurationArguments": {
+                //"MachineName": "ExchangeManagmentVM"
+              }
             },
             "protectedSettings": {
 
