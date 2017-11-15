@@ -14,23 +14,26 @@
     "deploySRVVM": {
       "value": "no"
     },
-    "deployWebVM": {
+    "deployMgtVM": {
       "value": "yes"
+    },
+    "deployWebVM": {
+      "value": "no"
     },
     "deployAGSVM": {
       "value": "no"
     },
     "deployGENPOPSBVM": {
-      "value": "yes"
+      "value": "no"
     },
     "deployCHASESBVM": {
-      "value": "yes"
+      "value": "no"
     },
     "deployBACSBVM": {
-      "value": "yes"
+      "value": "no"
     },
     "deployWFSBVM": {
-      "value": "yes"
+      "value": "no"
     },
     "vNetName": {
       "value": "exchangevnet"
