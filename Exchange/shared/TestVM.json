@@ -8,6 +8,13 @@
         "description": "Base URI of template resources."
       }
     },
+    "vmCount": {
+      "type": "int",
+      "defaultValue": 2,
+      "metadata": {
+        "description": "Virtual network subnet reference."
+      }
+    },
     "subnetID": {
       "type": "string",
       "metadata": {
@@ -51,7 +58,7 @@
       "location": "[resourceGroup().location]",
       "apiVersion": "2015-06-15",
       "copy": {
-        "count": 2,
+        "count": "[parameters('vmCount')]",
         "name": "vmTestCopy"
       },
       "dependsOn": [
@@ -99,7 +106,7 @@
       },
         "resources": [
           {
-            "name": "IIS",
+            "name": "FileResource",
             "type": "extensions",
             "location": "[resourceGroup().location]",
             "apiVersion": "2015-06-15",
@@ -141,7 +148,7 @@
       "apiVersion": "2016-03-30",
       "copy": {
         "count": "[parameters('testServerCount')]",
-        "name": "vmAppNicCopy"
+        "name": "[parameters('vmCount')]"
       },
       "dependsOn": [
       ],

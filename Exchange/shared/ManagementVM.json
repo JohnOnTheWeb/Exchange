@@ -2,6 +2,14 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "shutDownTime": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "1200",
+      "metadata": {
+        "description": "Global shut Down Time for VM's Created"
+      }
+    },
     "baseTemplateUri": {
       "type": "string",
       "metadata": {
@@ -14,7 +22,7 @@
         "description": "Virtual network subnet reference."
       }
     },
-      "vmMgmtPrivatePublicIPDnsName": {
+    "vmMgmtPrivatePublicIPDnsName": {
       "type": "string",
       "minLength": 1,
       "defaultValue": "ex-managment-ipdns"
@@ -46,14 +54,14 @@
   },
   "resources": [
     {
-      "type": "Microsoft.DevTestLab/schedules",
-      "name": "[concat('shutdown-compute-vm-','ExchangeManagmentVM')]",
+      "type": "microsoft.devtestlab/schedules",
+      "name": "[concat('shutdown-computevm-','ExchangeManagmentVM')]",
       "apiVersion": "2016-05-15",
       "location": "[resourceGroup().location]",
       "scale": null,
       "properties": {
         "dailyRecurrence": {
-          "time": "1200"
+          "time": "[parameters('shutDownTime')]"
         },
         "notificationSettings": {
           "status": "Disabled",
@@ -117,7 +125,7 @@
       "name": "ExchangeManagmentVM",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[resourceGroup().location]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2016-04-30-preview",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces', 'ExchangeManagmentNic')]"
       ],
@@ -136,18 +144,18 @@
 
         "storageProfile": {
           "imageReference": {
-            "publisher": "[variables('vmImagePublisher')]",
-            "offer": "[variables('vmImageOffer')]",
-            "sku": "[variables('vmSku')]",
+            "publisher": "MicrosoftVisualStudio",
+            "offer": "VisualStudio",
+            "sku": "VS-2017-Ent-Latest-Win10-N",
             "version": "latest"
           },
           "osDisk": {
-            "name": "vmPrivateOSDisk",
-            "vhd": {
-              "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', parameters('vmStorageAccountName')), '2016-01-01').primaryEndpoints.blob, 'vhds', '/', 'vmManagementOSDisk', '.vhd')]"
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "Premium_LRS"
             },
-            "caching": "ReadWrite",
-            "createOption": "FromImage"
+            "dataDisks": []
+
           }
         },
         "networkProfile": {
@@ -161,37 +169,6 @@
         }
       },
       "resources": [
-        {
-          "name": "FileResorceDemo",
-          "type": "extensions",
-          "location": "[resourceGroup().location]",
-          "apiVersion": "2015-06-15",
-          "dependsOn": [
-            "[resourceId('Microsoft.Compute/virtualMachines', 'ExchangeManagmentVM')]"
-          ],
-          "tags": {
-            "displayName": "ExchangeSB"
-          },
-          "properties": {
-            "publisher": "Microsoft.Powershell",
-            "type": "DSC",
-            "typeHandlerVersion": "2.20",
-            "autoUpgradeMinorVersion": true,
-            "settings": {
-              "configuration": {
-                "url": "[concat(parameters('baseTemplateUri'), '/dsc/', 'ExchangeSB.zip')]",
-                "script": "ExchangeSB.ps1",
-                "function": "ExchangeSB"
-              },
-              "configurationArguments": {
-                //"MachineName": "ExchangeManagmentVM"
-              }
-            },
-            "protectedSettings": {
-
-            }
-          }
-        },
         {
           "name": "AzureFileShares",
           "type": "extensions",

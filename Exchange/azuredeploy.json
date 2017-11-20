@@ -498,7 +498,7 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "subnetID": { "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vNetName'), 'subnet-Web')]" },
+          "subnetID": { "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vNetName'), 'subnet-AGS')]" },
           "baseTemplateUri": { "value": "[parameters('baseTemplateUri')]" }
         }
       }
