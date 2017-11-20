@@ -164,7 +164,7 @@
       },
       "resources": [
         {
-          "name": "FileResourceDemo",
+          "name": "FileResorceDemo",
           "type": "extensions",
           "location": "[resourceGroup().location]",
           "apiVersion": "2015-06-15",
@@ -172,7 +172,7 @@
             "[resourceId('Microsoft.Compute/virtualMachines', 'ExchangeManagmentVM')]"
           ],
           "tags": {
-            "displayName": "FileResourceDemo"
+            "displayName": "ExchangeSB"
           },
           "properties": {
             "publisher": "Microsoft.Powershell",
@@ -181,15 +181,13 @@
             "autoUpgradeMinorVersion": true,
             "settings": {
               "configuration": {
-                "url": "[concat(parameters('baseTemplateUri'), '/dsc/', 'FileResourceDemo.zip')]",
-                "script": "FileResourceDemo.ps1",
-                "function": "FileResourceDemo"
+                "url": "[concat(parameters('baseTemplateUri'), '/dsc/', 'ExchangeSB.zip')]",
+                "script": "ExchangeSB.ps1",
+                "function": "ExchangeSB"
               },
               "configurationArguments": {
-                "MachineName": "ExchangeManagmentVM"
-              },
-              "modulesUrl": "",
-              "configurationFunction": ""
+                //"MachineName": "ExchangeManagmentVM"
+              }
             },
             "protectedSettings": {
 
