@@ -152,7 +152,7 @@
           "osDisk": {
             "name": "[concat('ExchangeManagmentVM','-osdisk')]",
             "vhd": {
-              "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', parameters('vmStorageAccountName')), '2016-01-01').primaryEndpoints.blob, 'vhds', '/', 'test-',copyIndex(),'-OSDisk', '.vhd')]"
+              "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', parameters('vmStorageAccountName')), '2016-01-01').primaryEndpoints.blob, 'vhds', '/', 'ExchangeManagmentVM-','-OSDisk', '.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"

@@ -39,7 +39,6 @@
     }
   },
   "variables": {
-    "testAvailabilitySet": "TestappAvSet",
     "vmImagePublisher": "MicrosoftWindowsServer",
     "vmImageOffer": "WindowsServer",
     "vmSku": "2012-R2-Datacenter"
@@ -55,8 +54,7 @@
         "name": "vmTestCopy"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces', concat('Test','-',copyIndex(),'-nic-0'))]",
-        "[resourceId('Microsoft.Compute/availabilitySets',  variables('testAvailabilitySet'))]"
+        "[resourceId('Microsoft.Network/networkInterfaces', concat('Test','-',copyIndex(),'-nic-0'))]"
       ],
       "tags": {
         "displayName": "vmTest"
