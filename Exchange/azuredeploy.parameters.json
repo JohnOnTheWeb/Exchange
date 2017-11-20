@@ -15,37 +15,37 @@
       "value": "Standard_LRS"
     },
     "testServerCount": { "value": 3 },
-    "deployVNET": { "value": "no" },
-    "deployStorage": { "value": "no" },
+    "deployVNET": { "value": "yes" },
+    "deployStorage": { "value": "yes" },
     "deploySRVVM": {
-      "value": "no"
+      "value": "yes"
     },
     "deployMgtVM": {
       "value": "yes"
     },
     "deployDBVM": {
-      "value": "no"
+      "value": "yes"
     },
     "deployWebVM": {
-      "value": "no"
+      "value": "yes"
     },
     "deployAGSVM": {
-      "value": "no"
+      "value": "yes"
     },
     "deployTestVM": {
       "value": "yes"
     },
     "deployGENPOPSBVM": {
-      "value": "no"
+      "value": "yes"
     },
     "deployCHASESBVM": {
-      "value": "no"
+      "value": "yes"
     },
     "deployBACSBVM": {
-      "value": "no"
+      "value": "yes"
     },
     "deployWFSBVM": {
-      "value": "no"
+      "value": "yes"
     },
     "vNetName": {
       "value": "exchangevnet"
