@@ -23,6 +23,20 @@
       },
       "defaultValue": "no"
     },
+    "deployVNET": {
+      "type": "string",
+      "metadata": {
+        "description": "Controls if the SB VMVnet Instance is deployed Instances are Deployed"
+      },
+      "defaultValue": "no"
+    },
+    "deployStorage": {
+      "type": "string",
+      "metadata": {
+        "description": "Controls if the Storage is deployed"
+      },
+      "defaultValue": "no"
+    },
     "deployGENPOPSBVM": {
       "type": "string",
       "metadata": {
@@ -186,7 +200,7 @@
     },
     "testServerCount": {
       "type": "int",
-      "defaultValue": 2
+      "defaultValue": 1
     },
     "vmWebSize": {
       "type": "string",
