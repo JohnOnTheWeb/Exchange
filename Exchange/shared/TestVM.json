@@ -51,7 +51,7 @@
       "location": "[resourceGroup().location]",
       "apiVersion": "2015-06-15",
       "copy": {
-        "count": 2,
+        "count": "[parameters('testServerCount')]",
         "name": "vmTestCopy"
       },
       "dependsOn": [
@@ -65,9 +65,7 @@
         "hardwareProfile": {
           "vmSize": "[parameters('vmSize')]"
         },
-        "availabilitySet": {
-          "id": "[resourceId('Microsoft.Compute/availabilitySets',variables('testAvailabilitySet'))]"
-        },
+       
         "osProfile": {
           "computerName": "[concat('vmTest-',copyIndex())]",
           "adminUsername": "[parameters('vmAdminUserName')]",
@@ -160,20 +158,6 @@
             }
           }
         ]
-      }
-    },
-    {
-      "name": "[variables('testAvailabilitySet')]",
-      "type": "Microsoft.Compute/availabilitySets",
-      "apiVersion": "2015-06-15",
-      "dependsOn": [],
-      "location": "[resourceGroup().location]",
-      "properties": {
-        "platformUpdateDomainCount": 2,
-        "platformFaultDomainCount": 2
-      },
-      "tags": {
-        "displayName": "TestAvailabilitySet"
       }
     }
   ],

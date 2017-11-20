@@ -2,6 +2,14 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "shutDownTime": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "1200",
+      "metadata": {
+        "description": "Global shut Down Time for VM's Created"
+      }
+    },
     "baseTemplateUri": {
       "type": "string",
       "metadata": {
@@ -12,6 +20,20 @@
       "type": "string",
       "metadata": {
         "description": "Controls if the Test VM instances are deployed"
+      },
+      "defaultValue": "no"
+    },
+    "deployVNET": {
+      "type": "string",
+      "metadata": {
+        "description": "Controls if the SB VMVnet Instance is deployed Instances are Deployed"
+      },
+      "defaultValue": "no"
+    },
+    "deployStorage": {
+      "type": "string",
+      "metadata": {
+        "description": "Controls if the Storage is deployed"
       },
       "defaultValue": "no"
     },
@@ -178,7 +200,7 @@
     },
     "testServerCount": {
       "type": "int",
-      "defaultValue": 2
+      "defaultValue": 1
     },
     "vmWebSize": {
       "type": "string",
