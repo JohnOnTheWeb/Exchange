@@ -14,8 +14,9 @@
     "storageType": {
       "value": "Standard_LRS"
     },
+    "testServerCount": { "value": "3" },
     "deployVNET": { "value": "no" },
-    "deployStorage": {"value": "no"},
+    "deployStorage": { "value": "no" },
     "deploySRVVM": {
       "value": "no"
     },

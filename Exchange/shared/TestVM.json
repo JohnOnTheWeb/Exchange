@@ -2,6 +2,14 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "shutDownTime": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "1200",
+      "metadata": {
+        "description": "Global shut Down Time for VM's Created"
+      }
+    },
     "baseTemplateUri": {
       "type": "string",
       "metadata": {
@@ -93,41 +101,65 @@
           ]
         }
       },
-        "resources": [
-          {
-            "name": "IIS",
-            "type": "extensions",
-            "location": "[resourceGroup().location]",
-            "apiVersion": "2015-06-15",
-            "dependsOn": [
-              "[resourceId('Microsoft.Compute/virtualMachines', concat('vmTest','-',copyIndex()))]"
-            ],
-            "tags": {
-              "displayName": "FileResourceDemo"
+      "resources": [
+        {
+          "type": "microsoft.devtestlab/schedules",
+          "name": "[concat('shutdown-computevm-','vmTest',copyIndex())]",
+          "apiVersion": "2016-05-15",
+          "location": "[resourceGroup().location]",
+          "scale": null,
+          "properties": {
+            "dailyRecurrence": {
+              "time": "[parameters('shutDownTime')]"
             },
-            "properties": {
+            "notificationSettings": {
+              "status": "Disabled",
+              "timeInMinutes": 30
+            },
+            "provisioningState": "Succeeded",
+            "status": "Enabled",
+            "targetResourceId": "[resourceId('Microsoft.Compute/virtualMachines', 'vmTest',copyIndex())]",
+            "taskType": "ComputeVmShutdownTask",
+            "timeZoneId": "UTC"
+          },
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', concat('vmTest','-',copyIndex()))]"
+          ]
+        },
+        {
+          "name": "IIS",
+          "type": "extensions",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2015-06-15",
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', concat('vmTest','-',copyIndex()))]"
+          ],
+          "tags": {
+            "displayName": "FileResourceDemo"
+          },
+          "properties": {
             "publisher": "Microsoft.Powershell",
             "type": "DSC",
             "typeHandlerVersion": "2.20",
             "autoUpgradeMinorVersion": true,
-              "settings": {
-                "configuration": {
-                  "url": "[concat(parameters('baseTemplateUri'), '/dsc/', 'FileResourceDemo.zip')]",
-                  "script": "FileResourceDemo.ps1",
-                  "function": "FileResourceDemo"
-                },
-                "configurationArguments": {
-                  "MachineName": "concat('vmTest','-',copyIndex())"
-                },
-                "modulesUrl": "",
-                "configurationFunction": ""
+            "settings": {
+              "configuration": {
+                "url": "[concat(parameters('baseTemplateUri'), '/dsc/', 'FileResourceDemo.zip')]",
+                "script": "FileResourceDemo.ps1",
+                "function": "FileResourceDemo"
               },
+              "configurationArguments": {
+                "MachineName": "concat('vmTest','-',copyIndex())"
+              },
+              "modulesUrl": "",
+              "configurationFunction": ""
+            },
             "protectedSettings": {
 
             }
           }
-          }
-        ]
+        }
+      ]
       
     },
     {
