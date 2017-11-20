@@ -288,8 +288,8 @@
           "vmStorageAccountName": { "value": "[reference('StorageDeployment').outputs.storageAccountName.value]" },
           "vmAdminUserName": { "value": "[parameters('vmManagementAdminUserName')]" },
           "vmAdminPassword": { "value": "[parameters('vmManagementAdminPassword')]" },
-          "baseTemplateUri": { "value": "[parameters('baseTemplateUri')]" }
-
+          "baseTemplateUri": { "value": "[parameters('baseTemplateUri')]" },
+          "shutDownTime": { "value": "[parameters('shutDownTime')]" }
         }
       }
     },
@@ -313,8 +313,8 @@
           "vmStorageAccountName": { "value": "[reference('StorageDeployment').outputs.storageAccountName.value]" },
           "vmAdminUserName": { "value": "[parameters('vmManagementAdminUserName')]" },
           "vmAdminPassword": { "value": "[parameters('vmManagementAdminPassword')]" },
-          "baseTemplateUri": { "value": "[parameters('baseTemplateUri')]" }
-
+          "baseTemplateUri": { "value": "[parameters('baseTemplateUri')]" },
+          "shutDownTime": { "value": "[parameters('shutDownTime')]" }
         }
       }
     },
@@ -339,7 +339,8 @@
           "vmAdminUserName": { "value": "[parameters('vmManagementAdminUserName')]" },
           "vmAdminPassword": { "value": "[parameters('vmManagementAdminPassword')]" },
           "baseTemplateUri": { "value": "[parameters('baseTemplateUri')]" },
-          "vmMgmtPrivatePublicIPDnsName": { "value": "ex-managment-ipdns" }
+          "vmMgmtPrivatePublicIPDnsName": { "value": "ex-managment-ipdns" },
+          "shutDownTime": { "value": "[parameters('shutDownTime')]" }
         }
       }
     },
@@ -366,7 +367,8 @@
           "sbFarmNamePrefix": { "value": "GenPop" },
           "vmSize": { "value": "[parameters('vmSBSize')]" },
           "cfgServerCount": { "value": "[parameters('cfgSBServerCount')]" },
-          "appServerCount": { "value": "[parameters('appSBServerCount')]" }
+          "appServerCount": { "value": "[parameters('appSBServerCount')]" },
+          "shutDownTime": { "value": "[parameters('shutDownTime')]" }
         }
       }
     },
@@ -393,7 +395,8 @@
           "sbFarmNamePrefix": { "value": "BAC" },
           "vmSize": { "value": "[parameters('vmSBSize')]" },
           "cfgServerCount": { "value": "[parameters('cfgSBServerCount')]" },
-          "appServerCount": { "value": "[parameters('appSBServerCount')]" }
+          "appServerCount": { "value": "[parameters('appSBServerCount')]" },
+          "shutDownTime": { "value": "[parameters('shutDownTime')]" }
         }
       }
     },
@@ -420,7 +423,8 @@
           "sbFarmNamePrefix": { "value": "WF" },
           "vmSize": { "value": "[parameters('vmSBSize')]" },
           "cfgServerCount": { "value": "[parameters('cfgSBServerCount')]" },
-          "appServerCount": { "value": "[parameters('appSBServerCount')]" }
+          "appServerCount": { "value": "[parameters('appSBServerCount')]" },
+          "shutDownTime": { "value": "[parameters('shutDownTime')]" }
         }
       }
     },
@@ -447,7 +451,8 @@
           "sbFarmNamePrefix": { "value": "CHASE" },
           "vmSize": { "value": "[parameters('vmSBSize')]" },
           "cfgServerCount": { "value": "[parameters('cfgSBServerCount')]" },
-          "appServerCount": { "value": "[parameters('appSBServerCount')]" }
+          "appServerCount": { "value": "[parameters('appSBServerCount')]" },
+          "shutDownTime": { "value": "[parameters('shutDownTime')]" }
         }
       }
     },
@@ -473,7 +478,9 @@
           "vmAdminPassword": { "value": "[parameters('vmManagementAdminPassword')]" },
           "vmSize": { "value": "[parameters('vmTestSize')]" },
           "testServerCount": { "value": "[parameters('testServerCount')]" },
-          "baseTemplateUri": { "value": "[parameters('baseTemplateUri')]" }
+          "baseTemplateUri": { "value": "[parameters('baseTemplateUri')]" },
+          "shutDownTime": { "value": "[parameters('shutDownTime')]" }
+
         }
       }
     },
@@ -500,7 +507,8 @@
           "vmSize": { "value": "[parameters('vmWebSize')]" },
           "webServerCount": { "value": "[parameters('webServerCount')]" },
           "webLBIP": { "value": "[parameters('webLBIP')]" },
-          "baseTemplateUri": { "value": "[parameters('baseTemplateUri')]" }
+          "baseTemplateUri": { "value": "[parameters('baseTemplateUri')]" },
+          "shutDownTime": { "value": "[parameters('shutDownTime')]" }
         }
       }
     },
@@ -546,7 +554,8 @@
           "vmAdminUserName": { "value": "[parameters('vmManagementAdminUserName')]" },
           "vmAdminPassword": { "value": "[parameters('vmManagementAdminPassword')]" },
           "vmSize": { "value": "[parameters('vmServicesSize')]" },
-          "ServicesServerCount": { "value": "[parameters('servicesServerCount')]" }
+          "ServicesServerCount": { "value": "[parameters('servicesServerCount')]" },
+          "shutDownTime": { "value": "[parameters('shutDownTime')]" }
         }
       }
     }

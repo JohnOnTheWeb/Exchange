@@ -118,7 +118,7 @@
             },
             "provisioningState": "Succeeded",
             "status": "Enabled",
-            "targetResourceId": "[resourceId('Microsoft.Compute/virtualMachines',concat( 'vmTest',copyIndex()))]",
+            "targetResourceId": "[resourceId('Microsoft.Compute/virtualMachines',concat( 'vmTest-',copyIndex()))]",
             "taskType": "ComputeVmShutdownTask",
             "timeZoneId": "UTC"
           },
