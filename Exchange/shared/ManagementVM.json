@@ -47,7 +47,7 @@
   "resources": [
     {
       "type": "Microsoft.DevTestLab/schedules",
-      "name": "VMShutDown",
+      "name": "[concat('shutdown-compute-vm-','ExchangeManagmentVM')]",
       "apiVersion": "2016-05-15",
       "location": "[resourceGroup().location]",
       "scale": null,
@@ -63,8 +63,7 @@
         "status": "Enabled",
         "targetResourceId": "[resourceId('Microsoft.Compute/virtualMachines', 'ExchangeManagmentVM')]",
         "taskType": "ComputeVmShutdownTask",
-        "timeZoneId": "UTC",
-        "uniqueIdentifier": "52808a50-1f7f-47a3-8bdc-c659ffd5d4a2"
+        "timeZoneId": "UTC"
       },
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', 'ExchangeManagmentVM')]"
