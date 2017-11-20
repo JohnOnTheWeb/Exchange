@@ -46,29 +46,28 @@
   },
   "resources": [
     {
-      "comments": "Generalized from resource: '/subscriptions/d83263b3-3062-4a76-b89d-b1e9916717d5/resourcegroups/ether/providers/microsoft.devtestlab/schedules/shutdown-computevm-estudio'.",
-      "type": "microsoft.devtestlab/schedules",
-      "name": "ExMgtPubIPName",
+      "type": "Microsoft.DevTestLab/schedules",
+      "name": "VMShutDown",
       "apiVersion": "2016-05-15",
       "location": "[resourceGroup().location]",
       "scale": null,
       "properties": {
-        "status": "Enabled",
-        "taskType": "ComputeVmShutdownTask",
         "dailyRecurrence": {
           "time": "1200"
         },
-        "timeZoneId": "UTC",
         "notificationSettings": {
           "status": "Disabled",
           "timeInMinutes": 30
         },
-        "targetResourceId": "[resourceId('Microsoft.Compute/virtualMachines', 'ExMgtPubIPName')]",
         "provisioningState": "Succeeded",
+        "status": "Enabled",
+        "targetResourceId": "[resourceId('Microsoft.Compute/virtualMachines', 'ExchangeManagmentVM')]",
+        "taskType": "ComputeVmShutdownTask",
+        "timeZoneId": "UTC",
         "uniqueIdentifier": "52808a50-1f7f-47a3-8bdc-c659ffd5d4a2"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines', 'ExMgtPubIPName')]"
+        "[resourceId('Microsoft.Compute/virtualMachines', 'ExchangeManagmentVM')]"
       ]
     },
     {
