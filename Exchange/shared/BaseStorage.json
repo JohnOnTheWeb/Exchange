@@ -34,9 +34,22 @@
       "type": "Microsoft.Storage/storageAccounts",
       "location": "[resourceGroup().location]",
       "apiVersion": "[parameters('storageApiVersion')]",
-      "dependsOn": [ ],
+      "dependsOn": [],
       "tags": {
         "displayName": "[variables('storageName')]"
+      },
+      "properties": {
+        "accountType": "[parameters('storageType')]"
+      }
+    },
+    {
+      "name": "[Concat('diag',variables('storageName'))]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "[parameters('storageApiVersion')]",
+      "dependsOn": [],
+      "tags": {
+        "displayName": "Diagnostic Storage"
       },
       "properties": {
         "accountType": "[parameters('storageType')]"
