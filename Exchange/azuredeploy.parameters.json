@@ -6,7 +6,7 @@
       "value": "https://raw.githubusercontent.com/JohnOnTheWeb/Exchange/master/Exchange"
     },
     "storageAccountNamePrefix": {
-      "value": "storage"
+      "value": "exch"
     },
     "shutDownTime": {
       "value": "0400"
