@@ -146,7 +146,7 @@
         {
           "type": "microsoft.devtestlab/schedules",
           "name": "[concat('startup-','vmTest-',copyIndex(), '/', 'LabVmAutoStart')]",
-          "apiVersion": "2016-05-15",
+          "apiVersion": "2017-04-26-preview",
           "location": "[resourceGroup().location]",
           "condition": "[equals(parameters('configureAutoStartStop'),'yes')]",
           "scale": null,
