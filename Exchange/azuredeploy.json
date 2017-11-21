@@ -5,9 +5,25 @@
     "shutDownTime": {
       "type": "string",
       "minLength": 1,
-      "defaultValue": "1200",
+      "defaultValue": "0400",
       "metadata": {
         "description": "Global shut Down Time for VM's Created"
+      }
+    },
+    "startUpTime": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "1200",
+      "metadata": {
+        "description": "Global Start Up Time for VM's Created"
+      }
+    },
+    "configureAutoStartStop": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "no",
+      "metadata": {
+        "description": "Determines if auto Start and Stop is configured on VMs"
       }
     },
     "baseTemplateUri": {

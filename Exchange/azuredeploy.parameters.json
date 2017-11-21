@@ -9,43 +9,49 @@
       "value": "storage"
     },
     "shutDownTime": {
+      "value": "0400"
+    },
+    "startUpTime": {
       "value": "1200"
+    },
+    "configureAutoStartStop": {
+      "value": "yes"
     },
     "storageType": {
       "value": "Standard_LRS"
     },
-    "testServerCount": { "value": 3 },
+    "testServerCount": { "value": 1 },
     "deployVNET": { "value": "yes" },
     "deployStorage": { "value": "yes" },
     "deploySRVVM": {
-      "value": "yes"
+      "value": "no"
     },
     "deployMgtVM": {
-      "value": "yes"
+      "value": "no"
     },
     "deployDBVM": {
-      "value": "yes"
+      "value": "no"
     },
     "deployWebVM": {
-      "value": "yes"
+      "value": "no"
     },
     "deployAGSVM": {
-      "value": "yes"
+      "value": "no"
     },
     "deployTestVM": {
       "value": "yes"
     },
     "deployGENPOPSBVM": {
-      "value": "yes"
+      "value": "no"
     },
     "deployCHASESBVM": {
-      "value": "yes"
+      "value": "no"
     },
     "deployBACSBVM": {
-      "value": "yes"
+      "value": "no"
     },
     "deployWFSBVM": {
-      "value": "yes"
+      "value": "no"
     },
     "vNetName": {
       "value": "exchangevnet"
