@@ -10,6 +10,22 @@
         "description": "Global shut Down Time for VM's Created"
       }
     },
+    "startUpTime": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "1200",
+      "metadata": {
+        "description": "Global Start Up Time for VM's Created"
+      }
+    },
+    "configureAutoStartStop": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "no",
+      "metadata": {
+        "description": "Determines if auto Start and Stop is configured on VMs"
+      }
+    },
     "sbFarmNamePrefix": {
       "type": "string",
       "metadata": {
@@ -116,6 +132,7 @@
           "name": "[concat('shutdown-computevm-',concat(parameters('sbFarmNamePrefix'),'-','SBConfig','-',copyIndex()))]",
           "apiVersion": "2016-05-15",
           "location": "[resourceGroup().location]",
+          "condition": "[equals(parameters('configureAutoStartStop'),'yes')]",
           "scale": null,
           "properties": {
             "dailyRecurrence": {
@@ -129,6 +146,31 @@
             "status": "Enabled",
             "targetResourceId": "[resourceId('Microsoft.Compute/virtualMachines', concat(parameters('sbFarmNamePrefix'),'-','SBConfig','-',copyIndex()))]",
             "taskType": "ComputeVmShutdownTask",
+            "timeZoneId": "UTC"
+          },
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', concat(parameters('sbFarmNamePrefix'),'-','SBConfig','-',copyIndex()))]"
+          ]
+        },
+        {
+          "type": "microsoft.devtestlab/schedules",
+          "name": "[concat('startup-computevm-',concat(parameters('sbFarmNamePrefix'),'-','SBConfig','-',copyIndex()))]",
+          "apiVersion": "2016-05-15",
+          "location": "[resourceGroup().location]",
+          "condition": "[equals(parameters('configureAutoStartStop'),'yes')]",
+          "scale": null,
+          "properties": {
+            "dailyRecurrence": {
+              "time": "[parameters('startUpTime')]"
+            },
+            "notificationSettings": {
+              "status": "Disabled",
+              "timeInMinutes": 30
+            },
+            "provisioningState": "Succeeded",
+            "status": "Enabled",
+            "targetResourceId": "[resourceId('Microsoft.Compute/virtualMachines', concat(parameters('sbFarmNamePrefix'),'-','SBConfig','-',copyIndex()))]",
+            "taskType": "LabVmsStartupTask",
             "timeZoneId": "UTC"
           },
           "dependsOn": [
@@ -196,6 +238,7 @@
           "name": "[concat('shutdown-computevm-',concat(parameters('sbFarmNamePrefix'),'-','SBApp','-',copyIndex()))]",
           "apiVersion": "2016-05-15",
           "location": "[resourceGroup().location]",
+          "condition": "[equals(parameters('configureAutoStartStop'),'yes')]",
           "scale": null,
           "properties": {
             "dailyRecurrence": {
@@ -214,8 +257,32 @@
           "dependsOn": [
             "[resourceId('Microsoft.Compute/virtualMachines', concat(parameters('sbFarmNamePrefix'),'-','SBApp','-',copyIndex()))]"
           ]
+        },
+        {
+          "type": "microsoft.devtestlab/schedules",
+          "name": "[concat('startup-computevm-',concat(parameters('sbFarmNamePrefix'),'-','SBApp','-',copyIndex()))]",
+          "apiVersion": "2016-05-15",
+          "location": "[resourceGroup().location]",
+          "condition": "[equals(parameters('configureAutoStartStop'),'yes')]",
+          "scale": null,
+          "properties": {
+            "dailyRecurrence": {
+              "time": "[parameters('startUpTime')]"
+            },
+            "notificationSettings": {
+              "status": "Disabled",
+              "timeInMinutes": 30
+            },
+            "provisioningState": "Succeeded",
+            "status": "Enabled",
+            "targetResourceId": "[resourceId('Microsoft.Compute/virtualMachines', concat(parameters('sbFarmNamePrefix'),'-','SBApp','-',copyIndex()))]",
+            "taskType": "LabVmsStartupTask",
+            "timeZoneId": "UTC"
+          },
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', concat(parameters('sbFarmNamePrefix'),'-','SBApp','-',copyIndex()))]"
+          ]
         }
-       
       ]
     },
     {

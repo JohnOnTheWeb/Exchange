@@ -10,6 +10,22 @@
         "description": "Global shut Down Time for VM's Created"
       }
     },
+    "startUpTime": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "1200",
+      "metadata": {
+        "description": "Global Start Up Time for VM's Created"
+      }
+    },
+    "configureAutoStartStop": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "no",
+      "metadata": {
+        "description": "Determines if auto Start and Stop is configured on VMs"
+      }
+    },
     "baseTemplateUri": {
       "type": "string",
       "metadata": {
@@ -126,6 +142,7 @@
           "name": "[concat('shutdown-computevm-','ExchangeWebDB')]",
           "apiVersion": "2016-05-15",
           "location": "[resourceGroup().location]",
+          "condition": "[equals(parameters('configureAutoStartStop'),'yes')]",
           "scale": null,
           "properties": {
             "dailyRecurrence": {
@@ -139,6 +156,31 @@
             "status": "Enabled",
             "targetResourceId": "[resourceId('Microsoft.Compute/virtualMachines', 'ExchangeWebDB')]",
             "taskType": "ComputeVmShutdownTask",
+            "timeZoneId": "UTC"
+          },
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', concat('ExchangeWebDB'))]"
+          ]
+        },
+        {
+          "type": "microsoft.devtestlab/schedules",
+          "name": "[concat('startup-computevm-','ExchangeWebDB')]",
+          "apiVersion": "2016-05-15",
+          "location": "[resourceGroup().location]",
+          "condition": "[equals(parameters('configureAutoStartStop'),'yes')]",
+          "scale": null,
+          "properties": {
+            "dailyRecurrence": {
+              "time": "[parameters('startUpTime')]"
+            },
+            "notificationSettings": {
+              "status": "Disabled",
+              "timeInMinutes": 30
+            },
+            "provisioningState": "Succeeded",
+            "status": "Enabled",
+            "targetResourceId": "[resourceId('Microsoft.Compute/virtualMachines', 'ExchangeWebDB')]",
+            "taskType": "LabVmsStartupTask",
             "timeZoneId": "UTC"
           },
           "dependsOn": [
