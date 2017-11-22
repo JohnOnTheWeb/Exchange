@@ -235,6 +235,18 @@
     "ServicesServerCount": {
       "type": "int",
       "defaultValue": 2
+    },
+    "existingdiagnosticsStorageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of an existing storage account to which diagnostics data will be transferred."
+      }
+    },
+    "existingdiagnosticsStorageResourceGroup": {
+      "type": "string",
+      "metadata": {
+        "description": "The resource group for the storage account specified in existingdiagnosticsStorageAccountName"
+      }
     }
   },
   "variables": {
