@@ -27,7 +27,7 @@
       "value": "no"
     },
     "deployMgtVM": {
-      "value": "no"
+      "value": "yes"
     },
     "deployDBVM": {
       "value": "no"
@@ -39,7 +39,7 @@
       "value": "no"
     },
     "deployTestVM": {
-      "value": "yes"
+      "value": "no"
     },
     "deployGENPOPSBVM": {
       "value": "no"
