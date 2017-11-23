@@ -187,32 +187,32 @@
         }
       },
       "resources": [
-        //{
-        //  "name": "AzureFileShares",
-        //  "type": "extensions",
-        //  "location": "[resourceGroup().location]",
-        //  "apiVersion": "2016-03-30",
-        //  "dependsOn": [
-        //    "[resourceId('Microsoft.Compute/virtualMachines', 'ExchangeManagmentVM')]"
-        //  ],
-        //  "tags": {
-        //    "displayName": "AzureFileShares"
-        //  },
-        //  "properties": {
-        //    "publisher": "Microsoft.Compute",
-        //    "type": "CustomScriptExtension",
-        //    "typeHandlerVersion": "1.4",
-        //    "autoUpgradeMinorVersion": true,
-        //    "settings": {
-        //      "fileUris": [
-        //        "[concat(parameters('baseTemplateUri'), '/ps1/', 'CreateFileShare.ps1')]"
-        //      ]
-        //    },
-        //    "protectedSettings": {
-        //      "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ','CreateFileShare.ps1 -SAName ',parameters('vmStorageAccountName'),'  -SAKey ', listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('vmStorageAccountName')), '2015-06-15').key1)]"
-        //    }
-        //  }
-        //}
+        {
+          "name": "AzureFileShares",
+          "type": "extensions",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2016-03-30",
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', 'ExchangeManagmentVM')]"
+          ],
+          "tags": {
+            "displayName": "AzureFileShares"
+          },
+          "properties": {
+            "publisher": "Microsoft.Compute",
+            "type": "CustomScriptExtension",
+            "typeHandlerVersion": "1.4",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "fileUris": [
+                "[concat(parameters('baseTemplateUri'), '/ps1/', 'CreateFileShare.ps1')]"
+              ]
+            },
+            "protectedSettings": {
+              "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ','CreateFileShare.ps1 -SAName ',parameters('vmStorageAccountName'),'  -SAKey ', listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('vmStorageAccountName')), '2015-06-15').key1)]"
+            }
+          }
+        }
       ]
 
     }
