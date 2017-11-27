@@ -102,7 +102,40 @@
       "tags": {
         "displayName": "vmTest"
       },
-      "properties":,
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+
+        "osProfile": {
+          "computerName": "[concat('vmTest-',copyIndex())]",
+          "adminUsername": "[parameters('vmAdminUserName')]",
+          "adminPassword": "[parameters('vmAdminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "offer": "[variables('vmImageOffer')]",
+            "publisher": "[variables('vmImagePublisher')]",
+            "sku": "[variables('vmSku')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat('Test','-',copyIndex(),'-osdisk')]",
+            "vhd": {
+              "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', parameters('vmStorageAccountName')), '2016-01-01').primaryEndpoints.blob, 'vhds', '/', 'test-',copyIndex(),'-OSDisk', '.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat('Test','-',copyIndex(),'-nic-0'))]"
+            }
+          ]
+        }
+      },
       "resources": [
         {
           "type": "microsoft.devtestlab/schedules",
