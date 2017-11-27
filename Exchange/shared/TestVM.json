@@ -102,40 +102,7 @@
       "tags": {
         "displayName": "vmTest"
       },
-      "properties": {
-        "hardwareProfile": {
-          "vmSize": "[parameters('vmSize')]"
-        },
-       
-        "osProfile": {
-          "computerName": "[concat('vmTest-',copyIndex())]",
-          "adminUsername": "[parameters('vmAdminUserName')]",
-          "adminPassword": "[parameters('vmAdminPassword')]"
-        },
-        "storageProfile": {
-          "imageReference": {
-            "offer": "[variables('vmImageOffer')]",
-            "publisher": "[variables('vmImagePublisher')]",
-            "sku": "[variables('vmSku')]",
-            "version": "latest"
-          },
-          "osDisk": {
-            "name": "[concat('Test','-',copyIndex(),'-osdisk')]",
-            "vhd": {
-              "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', parameters('vmStorageAccountName')), '2016-01-01').primaryEndpoints.blob, 'vhds', '/', 'test-',copyIndex(),'-OSDisk', '.vhd')]"
-            },
-            "caching": "ReadWrite",
-            "createOption": "FromImage"
-          }
-        },
-        "networkProfile": {
-          "networkInterfaces": [
-            {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat('Test','-',copyIndex(),'-nic-0'))]"
-            }
-          ]
-        }
-      },
+      "properties":,
       "resources": [
         {
           "type": "microsoft.devtestlab/schedules",
@@ -144,6 +111,9 @@
           "location": "[resourceGroup().location]",
           "condition": "[equals(parameters('configureAutoStartStop'),'yes')]",
           "scale": null,
+          "tags": {
+            "displayName": "Shutdown"
+          },
           "properties": {
             "dailyRecurrence": {
               "time": "[parameters('shutDownTime')]"
@@ -190,7 +160,7 @@
           }
         },
         {
-          "name": "IIS",
+          "name": "DSC",
           "type": "extensions",
           "location": "[resourceGroup().location]",
           "apiVersion": "2015-06-15",
@@ -198,7 +168,7 @@
             "[resourceId('Microsoft.Compute/virtualMachines', concat('vmTest','-',copyIndex()))]"
           ],
           "tags": {
-            "displayName": "FileResourceDemo"
+            "displayName": "DSCFileResourceDemo"
           },
           "properties": {
             "publisher": "Microsoft.Powershell",
@@ -223,7 +193,8 @@
           }
         }
       ]
-      
+
+
     },
     {
       "name": "[concat('Test','-',copyIndex(),'-nic-0')]",

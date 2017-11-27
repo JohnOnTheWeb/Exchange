@@ -159,6 +159,9 @@
           "location": "[resourceGroup().location]",
           "condition": "[equals(parameters('configureAutoStartStop'),'yes')]",
           "scale": null,
+          "tags": {
+            "displayName": "Shutdown"
+          },
           "properties": {
             "dailyRecurrence": {
               "time": "[parameters('shutDownTime')]"
@@ -171,31 +174,6 @@
             "status": "Enabled",
             "targetResourceId": "[resourceId('Microsoft.Compute/virtualMachines', 'vmRedisWeb')]",
             "taskType": "ComputeVmShutdownTask",
-            "timeZoneId": "UTC"
-          },
-          "dependsOn": [
-            "[resourceId('Microsoft.Compute/virtualMachines', 'vmRedisWeb')]"
-          ]
-        },
-        {
-          "type": "microsoft.devtestlab/schedules",
-          "name": "[concat('startup-computevm-','vmRedisWeb')]",
-          "apiVersion": "2016-05-15",
-          "location": "[resourceGroup().location]",
-          "condition": "[equals(parameters('configureAutoStartStop'),'yes')]",
-          "scale": null,
-          "properties": {
-            "dailyRecurrence": {
-              "time": "[parameters('startUpTime')]"
-            },
-            "notificationSettings": {
-              "status": "Disabled",
-              "timeInMinutes": 30
-            },
-            "provisioningState": "Succeeded",
-            "status": "Enabled",
-            "targetResourceId": "[resourceId('Microsoft.Compute/virtualMachines', 'vmRedisWeb')]",
-            "taskType": "LabVmsStartupTask",
             "timeZoneId": "UTC"
           },
           "dependsOn": [
@@ -330,6 +308,9 @@
           "location": "[resourceGroup().location]",
           "condition": "[equals(parameters('configureAutoStartStop'),'yes')]",
           "scale": null,
+          "tags": {
+            "displayName": "Shutdown"
+          },
           "properties": {
             "dailyRecurrence": {
               "time": "[parameters('shutDownTime')]"
@@ -342,31 +323,6 @@
             "status": "Enabled",
             "targetResourceId": "[resourceId('Microsoft.Compute/virtualMachines', concat('vmWeb','-',copyIndex()))]",
             "taskType": "ComputeVmShutdownTask",
-            "timeZoneId": "UTC"
-          },
-          "dependsOn": [
-            "[resourceId('Microsoft.Compute/virtualMachines', concat('vmWeb','-',copyIndex()))]"
-          ]
-        },
-        {
-          "type": "microsoft.devtestlab/schedules",
-          "name": "[concat('startup-computevm-',concat('vmWeb','-',copyIndex()))]",
-          "apiVersion": "2016-05-15",
-          "location": "[resourceGroup().location]",
-          "condition": "[equals(parameters('configureAutoStartStop'),'yes')]",
-          "scale": null,
-          "properties": {
-            "dailyRecurrence": {
-              "time": "[parameters('startUpTime')]"
-            },
-            "notificationSettings": {
-              "status": "Disabled",
-              "timeInMinutes": 30
-            },
-            "provisioningState": "Succeeded",
-            "status": "Enabled",
-            "targetResourceId": "[resourceId('Microsoft.Compute/virtualMachines', concat('vmWeb','-',copyIndex()))]",
-            "taskType": "LabVmsStartupTask",
             "timeZoneId": "UTC"
           },
           "dependsOn": [
