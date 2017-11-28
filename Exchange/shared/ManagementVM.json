@@ -70,31 +70,6 @@
   },
   "resources": [
     {
-      "type": "microsoft.devtestlab/schedules",
-      "name": "[concat('shutdown-computevm-','ExchangeManagmentVM')]",
-      "apiVersion": "2016-05-15",
-      "location": "[resourceGroup().location]",
-      "condition": "[equals(parameters('configureAutoStartStop'),'yes')]",
-      "scale": null,
-      "properties": {
-        "dailyRecurrence": {
-          "time": "[parameters('shutDownTime')]"
-        },
-        "notificationSettings": {
-          "status": "Disabled",
-          "timeInMinutes": 30
-        },
-        "provisioningState": "Succeeded",
-        "status": "Enabled",
-        "targetResourceId": "[resourceId('Microsoft.Compute/virtualMachines', 'ExchangeManagmentVM')]",
-        "taskType": "ComputeVmShutdownTask",
-        "timeZoneId": "UTC"
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines', 'ExchangeManagmentVM')]"
-      ]
-    },
-    {
       "name": "ExMgtPubIPName",
       "type": "Microsoft.Network/publicIPAddresses",
       "location": "[resourceGroup().location]",
