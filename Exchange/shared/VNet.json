@@ -123,17 +123,20 @@
       "properties": {
         "securityRules": [
           {
-            "name": "allow-Internet-80",
+            "name": "PtoSVPN",
+            "etag": "W/\"03badc70-7794-4dc0-9db7-1c249aac0bc7\"",
             "properties": {
-              "description": "Allow Internet Subnet",
-              "protocol": "Tcp",
+              "provisioningState": "Succeeded",
+              "protocol": "*",
               "sourcePortRange": "*",
-              "destinationPortRange": "80",
-              "sourceAddressPrefix": "Internet",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "10.100.7.0/24",
               "destinationAddressPrefix": "*",
               "access": "Allow",
-              "priority": 100,
-              "direction": "Inbound"
+              "priority": 99,
+              "direction": "Inbound",
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
             }
           },
           {
@@ -195,6 +198,23 @@
       "properties": {
         "securityRules": [
           {
+            "name": "PtoSVPN",
+            "etag": "W/\"03badc70-7794-4dc0-9db7-1c249aac0bc7\"",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "10.100.7.0/24",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 99,
+              "direction": "Inbound",
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
             "name": "allow-Service",
             "properties": {
               "description": "Allow Service Subnet",
@@ -253,6 +273,23 @@
       "properties": {
         "securityRules": [
           {
+            "name": "PtoSVPN",
+            "etag": "W/\"03badc70-7794-4dc0-9db7-1c249aac0bc7\"",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "10.100.7.0/24",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 99,
+              "direction": "Inbound",
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
             "name": "allow-Web",
             "properties": {
               "description": "Allow Web Subnet",
@@ -262,7 +299,7 @@
               "sourceAddressPrefix": "[parameters('subnetWebRange')]",
               "destinationAddressPrefix": "*",
               "access": "Allow",
-              "priority": 100,
+              "priority": 110,
               "direction": "Inbound"
             }
           },
@@ -324,6 +361,23 @@
       },
       "properties": {
         "securityRules": [
+          {
+            "name": "PtoSVPN",
+            "etag": "W/\"03badc70-7794-4dc0-9db7-1c249aac0bc7\"",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "10.100.7.0/24",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 99,
+              "direction": "Inbound",
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
           {
             "name": "allow-mgmt",
             "properties": {
@@ -410,6 +464,23 @@
       "properties": {
         "securityRules": [
           {
+            "name": "PtoSVPN",
+            "etag": "W/\"03badc70-7794-4dc0-9db7-1c249aac0bc7\"",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "10.100.7.0/24",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 99,
+              "direction": "Inbound",
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
             "name": "allow-Service",
             "properties": {
               "description": "Allow Service Subnet",
@@ -482,9 +553,26 @@
       "properties": {
         "securityRules": [
           {
+            "name": "PtoSVPN",
+            "etag": "W/\"03badc70-7794-4dc0-9db7-1c249aac0bc7\"",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "10.100.7.0/24",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 99,
+              "direction": "Inbound",
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
             "name": "allow-mgmt",
             "properties": {
-              "description": "Allow Managment Subnet",
+              "description": "Allow Management Subnet",
               "protocol": "*",
               "sourcePortRange": "*",
               "destinationPortRange": "*",
@@ -536,7 +624,7 @@
               "sourceAddressPrefix": "10.100.7.0/24",
               "destinationAddressPrefix": "*",
               "access": "Allow",
-              "priority": 100,
+              "priority": 99,
               "direction": "Inbound",
               "sourceAddressPrefixes": [],
               "destinationAddressPrefixes": []
