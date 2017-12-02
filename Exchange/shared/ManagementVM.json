@@ -38,7 +38,11 @@
         "description": "Virtual network subnet reference."
       }
     },
-   
+    "vmMgmtPrivatePublicIPDnsName": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "ex-managment-ipdns"
+    },
     "vmStorageAccountName": {
       "type": "string",
       "metadata": {
@@ -65,14 +69,13 @@
     "vmSku": "2012-R2-Datacenter"
   },
   "resources": [
-    
     {
       "name": "ExchangeManagmentNic",
       "type": "Microsoft.Network/networkInterfaces",
       "location": "[resourceGroup().location]",
       "apiVersion": "2016-03-30",
       "dependsOn": [
-        
+        "[resourceId('Microsoft.Network/publicIPAddresses', 'ExMgtPubIPName')]"
       ],
       "tags": {
         "displayName": "ExchangeManagmentNic"
@@ -95,7 +98,7 @@
       "name": "ExchangeManagmentVM",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[resourceGroup().location]",
-      "apiVersion": "2016-04-30-preview",
+      "apiVersion": "2015-06-15",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces', 'ExchangeManagmentNic')]"
       ],
@@ -140,32 +143,6 @@
         }
       },
       "resources": [
-        //{
-        //  "name": "AzureFileShares",
-        //  "type": "extensions",
-        //  "location": "[resourceGroup().location]",
-        //  "apiVersion": "2016-03-30",
-        //  "dependsOn": [
-        //    "[resourceId('Microsoft.Compute/virtualMachines', 'ExchangeManagmentVM')]"
-        //  ],
-        //  "tags": {
-        //    "displayName": "AzureFileShares"
-        //  },
-        //  "properties": {
-        //    "publisher": "Microsoft.Compute",
-        //    "type": "CustomScriptExtension",
-        //    "typeHandlerVersion": "1.4",
-        //    "autoUpgradeMinorVersion": true,
-        //    "settings": {
-        //      "fileUris": [
-        //        "[concat(parameters('baseTemplateUri'), '/ps1/', 'CreateFileShare.ps1')]"
-        //      ]
-        //    },
-        //    "protectedSettings": {
-        //      "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ','CreateFileShare.ps1 -SAName ',parameters('vmStorageAccountName'),'  -SAKey ', listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('vmStorageAccountName')), '2015-06-15').key1)]"
-        //    }
-        //  }
-        //},
         {
           "type": "microsoft.devtestlab/schedules",
           "name": "[concat('shutdown-computevm-','ExchangeManagmentVM')]",
