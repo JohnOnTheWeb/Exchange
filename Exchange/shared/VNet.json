@@ -745,7 +745,7 @@
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses', 'ExMgtPubIPName')]"
               },
               "subnet": {
-                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vNetName'), variables('subnetVPNName'))]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets',  variables('subnetVPNName'))]"
               }
             }
           }
