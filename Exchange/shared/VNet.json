@@ -5,7 +5,7 @@
     "vmMgmtPrivatePublicIPDnsName": {
       "type": "string",
       "minLength": 1,
-      "defaultValue": "ex-management-ipdns"
+      "defaultValue": "ex-managment-ipdns"
     },
     "vNetName": {
       "type": "string",
@@ -81,7 +81,7 @@
     "subnetWebName": "subnet-Web",
     "subnetSBName": "subnet-ServiceBus",
     "subnetSRVName": "subnet-Service",
-    "subnetMgtName": "subnet-Management",
+    "subnetMgtName": "subnet-Managment",
     "subnetTstName": "subnet-Test",
     "nsgAGSName": "LimitAGS",
     "nsgDBName": "LimitDB",
@@ -283,7 +283,7 @@
           {
             "name": "allow-mgmt",
             "properties": {
-              "description": "Allow Management Subnet",
+              "description": "Allow Managment Subnet",
               "protocol": "*",
               "sourcePortRange": "*",
               "destinationPortRange": "*",
@@ -440,7 +440,7 @@
           {
             "name": "allow-mgmt",
             "properties": {
-              "description": "Allow Management Subnet",
+              "description": "Allow Managment Subnet",
               "protocol": "*",
               "sourcePortRange": "*",
               "destinationPortRange": "*",
@@ -484,7 +484,7 @@
           {
             "name": "allow-mgmt",
             "properties": {
-              "description": "Allow Management Subnet",
+              "description": "Allow Managment Subnet",
               "protocol": "*",
               "sourcePortRange": "*",
               "destinationPortRange": "*",
@@ -745,7 +745,7 @@
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses', 'ExMgtPubIPName')]"
               },
               "subnet": {
-                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets',  variables('subnetVPNName'))]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vNetName'), variables('subnetVPNName'))]"
               }
             }
           }
@@ -788,7 +788,7 @@
       },
       "dependsOn": [
         "[resourceId('Microsoft.Network/publicIPAddresses', 'ExMgtPubIPName')]",
-        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vNetName'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vNetName'), variables('subnetVPNName'))]"
       ]
     }
   ],
