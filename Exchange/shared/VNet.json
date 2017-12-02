@@ -75,13 +75,13 @@
     }
   },
   "variables": {
-    "subnetVPNName": "subnet-VPN",
+    "subnetVPNName": "GatewaySubnet",
     "subnetAGSName": "subnet-AGS",
     "subnetDBName": "subnet-DB",
     "subnetWebName": "subnet-Web",
     "subnetSBName": "subnet-ServiceBus",
     "subnetSRVName": "subnet-Service",
-    "subnetMgtName": "subnet-Managment",
+    "subnetMgtName": "subnet-Management",
     "subnetTstName": "subnet-Test",
     "nsgAGSName": "LimitAGS",
     "nsgDBName": "LimitDB",
