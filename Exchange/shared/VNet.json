@@ -788,7 +788,7 @@
       },
       "dependsOn": [
         "[resourceId('Microsoft.Network/publicIPAddresses', 'ExMgtPubIPName')]",
-        "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vNetName'), variables('subnetVPNName'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vNetName'))]"
       ]
     }
   ],
