@@ -75,7 +75,7 @@
       "location": "[resourceGroup().location]",
       "apiVersion": "2016-03-30",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/publicIPAddresses', 'ExMgtPubIPName')]"
+       
       ],
       "tags": {
         "displayName": "ExchangeManagmentNic"
