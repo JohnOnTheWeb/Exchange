@@ -133,7 +133,7 @@
               "sourceAddressPrefix": "10.100.7.0/24",
               "destinationAddressPrefix": "*",
               "access": "Allow",
-              "priority": 99,
+              "priority": 100,
               "direction": "Inbound",
               "sourceAddressPrefixes": [],
               "destinationAddressPrefixes": []
@@ -208,7 +208,7 @@
               "sourceAddressPrefix": "10.100.7.0/24",
               "destinationAddressPrefix": "*",
               "access": "Allow",
-              "priority": 99,
+              "priority": 100,
               "direction": "Inbound",
               "sourceAddressPrefixes": [],
               "destinationAddressPrefixes": []
@@ -224,7 +224,7 @@
               "sourceAddressPrefix": "[parameters('subnetSrvRange')]",
               "destinationAddressPrefix": "*",
               "access": "Allow",
-              "priority": 100,
+              "priority": 101,
               "direction": "Inbound"
             }
           },
@@ -238,7 +238,7 @@
               "sourceAddressPrefix": "[parameters('subnetMgtRange')]",
               "destinationAddressPrefix": "*",
               "access": "Allow",
-              "priority": 101,
+              "priority": 102,
               "direction": "Inbound"
             }
           },
@@ -283,7 +283,7 @@
               "sourceAddressPrefix": "10.100.7.0/24",
               "destinationAddressPrefix": "*",
               "access": "Allow",
-              "priority": 99,
+              "priority": 100,
               "direction": "Inbound",
               "sourceAddressPrefixes": [],
               "destinationAddressPrefixes": []
@@ -299,7 +299,7 @@
               "sourceAddressPrefix": "[parameters('subnetWebRange')]",
               "destinationAddressPrefix": "*",
               "access": "Allow",
-              "priority": 110,
+              "priority": 101,
               "direction": "Inbound"
             }
           },
@@ -313,7 +313,7 @@
               "sourceAddressPrefix": "[parameters('subnetSBRange')]",
               "destinationAddressPrefix": "*",
               "access": "Allow",
-              "priority": 101,
+              "priority": 102,
               "direction": "Inbound"
             }
           },
@@ -327,7 +327,7 @@
               "sourceAddressPrefix": "[parameters('subnetMgtRange')]",
               "destinationAddressPrefix": "*",
               "access": "Allow",
-              "priority": 102,
+              "priority": 103,
               "direction": "Inbound"
             }
           },
@@ -372,7 +372,7 @@
               "sourceAddressPrefix": "10.100.7.0/24",
               "destinationAddressPrefix": "*",
               "access": "Allow",
-              "priority": 99,
+              "priority": 100,
               "direction": "Inbound",
               "sourceAddressPrefixes": [],
               "destinationAddressPrefixes": []
@@ -388,7 +388,7 @@
               "sourceAddressPrefix": "[parameters('subnetMgtRange')]",
               "destinationAddressPrefix": "*",
               "access": "Allow",
-              "priority": 102,
+              "priority": 101,
               "direction": "Inbound"
             }
           },
@@ -474,7 +474,7 @@
               "sourceAddressPrefix": "10.100.7.0/24",
               "destinationAddressPrefix": "*",
               "access": "Allow",
-              "priority": 99,
+              "priority": 100,
               "direction": "Inbound",
               "sourceAddressPrefixes": [],
               "destinationAddressPrefixes": []
@@ -563,7 +563,7 @@
               "sourceAddressPrefix": "10.100.7.0/24",
               "destinationAddressPrefix": "*",
               "access": "Allow",
-              "priority": 99,
+              "priority": 100,
               "direction": "Inbound",
               "sourceAddressPrefixes": [],
               "destinationAddressPrefixes": []
@@ -624,7 +624,7 @@
               "sourceAddressPrefix": "10.100.7.0/24",
               "destinationAddressPrefix": "*",
               "access": "Allow",
-              "priority": 99,
+              "priority": 100,
               "direction": "Inbound",
               "sourceAddressPrefixes": [],
               "destinationAddressPrefixes": []
