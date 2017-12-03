@@ -67,7 +67,7 @@
       "value": "10.100.7.0/24"
     },
     "ExternalVPNRange": {
-      "value": "10.100.8.0/24"
+      "value": "10.101.0.0/24"
     },
     "vmManagementAdminUserName": {
       "value": "ExchangeAdmin"
