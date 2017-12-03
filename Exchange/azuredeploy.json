@@ -140,6 +140,12 @@
         "description": "IP range of the virtual network."
       }
     },
+    "ExternalVPNRange": {
+      "type": "string",
+      "metadata": {
+        "description": "IP range of first subnet."
+      }
+    },
     "subnetDBRange": {
       "type": "string",
       "metadata": {
@@ -283,6 +289,7 @@
           "subnetTstRange": { "value": "[parameters('subnetTstRange')]" },
           "subnetAGSRange": { "value": "[parameters('subnetAGSRange')]" },
           "subnetVPNRange": { "value": "[parameters('subnetVPNRange')]" },
+          "ExternalVPNRange": { "value": "[parameters('ExternalVPNRange')]" },
           "vmMgmtPrivatePublicIPDnsName": { "value": "ex-managment-ipdns" }
         }
       }
@@ -380,7 +387,6 @@
           "vmAdminUserName": { "value": "[parameters('vmManagementAdminUserName')]" },
           "vmAdminPassword": { "value": "[parameters('vmManagementAdminPassword')]" },
           "baseTemplateUri": { "value": "[parameters('baseTemplateUri')]" },
-         
           "shutDownTime": { "value": "[parameters('shutDownTime')]" },
           "startUpTime": { "value": "[parameters('startUpTime')]" },
           "configureAutoStartStop": { "value": "[parameters('configureAutoStartStop')]" }

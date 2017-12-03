@@ -37,6 +37,12 @@
         "description": "IP range of VPN subnet."
       }
     },
+    "ExternalVPNRange": {
+      "type": "string",
+      "metadata": {
+        "description": "IP range of first subnet."
+      }
+    },
     "subnetDBRange": {
       "type": "string",
       "metadata": {
@@ -621,7 +627,7 @@
               "protocol": "*",
               "sourcePortRange": "*",
               "destinationPortRange": "*",
-              "sourceAddressPrefix": "10.100.7.0/24",
+              "sourceAddressPrefix": "[parameters('ExternalVPNRange')]",
               "destinationAddressPrefix": "*",
               "access": "Allow",
               "priority": 100,
@@ -640,7 +646,7 @@
               "sourceAddressPrefix": "[parameters('subnetWebRange')]",
               "destinationAddressPrefix": "*",
               "access": "Allow",
-              "priority": 101,
+              "priority": 201,
               "direction": "Outbound"
             }
           },
@@ -654,7 +660,7 @@
               "sourceAddressPrefix": "[parameters('subnetSBRange')]",
               "destinationAddressPrefix": "*",
               "access": "Allow",
-              "priority": 102,
+              "priority": 202,
               "direction": "Outbound"
             }
           },
@@ -668,7 +674,7 @@
               "sourceAddressPrefix": "[parameters('subnetDBRange')]",
               "destinationAddressPrefix": "*",
               "access": "Allow",
-              "priority": 103,
+              "priority": 203,
               "direction": "Outbound"
             }
           },
@@ -682,7 +688,7 @@
               "sourceAddressPrefix": "[parameters('subnetSRVRange')]",
               "destinationAddressPrefix": "*",
               "access": "Allow",
-              "priority": 104,
+              "priority": 204,
               "direction": "Outbound"
             }
           },
@@ -696,7 +702,7 @@
               "sourceAddressPrefix": "[parameters('subnetTstRange')]",
               "destinationAddressPrefix": "*",
               "access": "Allow",
-              "priority": 105,
+              "priority": 205,
               "direction": "Outbound"
             }
           },
@@ -850,7 +856,7 @@
         "vpnClientConfiguration": {
           "vpnClientAddressPool": {
             "addressPrefixes": [
-              "172.20.20.0/24"
+              "[parameters('ExternalVPNRange')]"
             ]
           },
           "vpnClientProtocols": [

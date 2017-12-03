@@ -25,7 +25,7 @@
     "deployStorage": { "value": "yes" },
     "deploySRVVM": { "value": "no" },
     "deployMgtVM": { "value": "yes" },
-    "deployDBVM": { "value": "no" },
+    "deployDBVM": { "value": "yes" },
     "deployWebVM": { "value": "no" },
     "deployAGSVM": { "value": "no" },
     "deployTestVM": { "value": "no" },
@@ -65,6 +65,9 @@
     },
     "subnetVPNRange": {
       "value": "10.100.7.0/24"
+    },
+    "ExternalVPNRange": {
+      "value": "10.100.8.0/24"
     },
     "vmManagementAdminUserName": {
       "value": "ExchangeAdmin"
