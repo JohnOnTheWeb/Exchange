@@ -66,7 +66,8 @@
   "variables": {
     "vmImagePublisher": "MicrosoftWindowsServer",
     "vmImageOffer": "WindowsServer",
-    "vmSku": "2012-R2-Datacenter"
+    "vmSku": "2012-R2-Datacenter",
+    "AzureFilesStorageName": "2012-R2-Datacenter"
   },
   "resources": [
     {
@@ -144,6 +145,32 @@
       },
       "resources": [
         {
+          "name": "AzureFileShares",
+          "type": "extensions",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2016-03-30",
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', 'ExchangeManagmentVM')]"
+          ],
+          "tags": {
+            "displayName": "AzureFileShares"
+          },
+          "properties": {
+            "publisher": "Microsoft.Compute",
+            "type": "CustomScriptExtension",
+            "typeHandlerVersion": "1.4",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "fileUris": [
+                "https://raw.githubusercontent.com/JohnOnTheWeb/Exchange/master/Exchange/ps1/azurefiles.ps1"
+              ]
+            },
+            "protectedSettings": {
+              "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ','azurefiles.ps1 -SAName ',parameters('AzureFilesStorageName'),'  -SAKey ', listKeys(resourceId(variables('AzureFilesStorageAccountResourceGroup'),'Microsoft.Storage/storageAccounts', parameters('AzureFilesStorageName')), '2015-06-15').key1)]"
+            }
+          }
+        },
+        {
           "type": "microsoft.devtestlab/schedules",
           "name": "[concat('shutdown-computevm-','ExchangeManagmentVM')]",
           "apiVersion": "2016-05-15",
@@ -168,7 +195,7 @@
             "timeZoneId": "UTC"
           },
           "dependsOn": [
-            "[resourceId('Microsoft.Compute/virtualMachines', concat('ExchangeManagmentVM'))]"
+            "[resourceId('Microsoft.Compute/virtualMachines', 'ExchangeManagmentVM')]"
           ]
         }
       ]

@@ -2,14 +2,15 @@
 
 Param(
     [string] [Parameter(Mandatory=$true)] $ResourceGroupLocation,
-    [string] $ResourceGroupName = 'Exchange',
+    [string] $ResourceGroupName = 'Exchange3',
     [switch] $UploadArtifacts,
-    [string] $StorageAccountName,
+    [string] $StorageAccountName ,
     [string] $StorageContainerName = $ResourceGroupName.ToLowerInvariant() + '-stageartifacts',
     [string] $TemplateFile = 'azuredeploy.json',
     [string] $TemplateParametersFile = 'azuredeploy.parameters.json',
     [string] $ArtifactStagingDirectory = '.',
-    [string] $DSCSourceFolder = 'DSC',
+    [string] $DSCSourceFolder = 'dsc',
+	[string] $PSSSourceFolder = 'ps1',
     [switch] $ValidateOnly
 )
 
@@ -51,6 +52,15 @@ if ($UploadArtifacts) {
         foreach ($DSCSourceFilePath in $DSCSourceFilePaths) {
             $DSCArchiveFilePath = $DSCSourceFilePath.Substring(0, $DSCSourceFilePath.Length - 4) + '.zip'
             Publish-AzureRmVMDscConfiguration $DSCSourceFilePath -OutputArchivePath $DSCArchiveFilePath -Force -Verbose
+        }
+    }
+
+	# Create Power Shell Script archive
+    if (Test-Path $PSSSourceFolder) {
+        $PSSSourceFilePaths = @(Get-ChildItem $PSSSourceFolder -File -Filter '*.ps1' | ForEach-Object -Process {$_.FullName})
+        foreach ($PSSSourceFilePath in $PSSSourceFilePaths) {
+            $PSSArchiveFilePath = $PSSSourceFilePath.Substring(0, $PSSSourceFilePath.Length - 4) + '.zip'
+            Publish-AzureRmVMDscConfiguration $PSSSourceFilePath -OutputArchivePath $PSSArchiveFilePath -Force -Verbose
         }
     }
 
