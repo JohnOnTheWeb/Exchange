@@ -1,0 +1,28 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "storageType": {
+      "value": "Standard_LRS"
+    },
+    "storageAccountNamePrefix": {
+      "value": "central"
+    },
+    "vNetRange": {
+      "value": "10.110.0.0/20"
+    },
+    "DeploymentInfo": {
+      "value": { "value": "" }
+
+    },
+    "ExternalVPNRange": {
+      "value": "10.111.0.0/24"
+    },
+    "subnetVPNRange": {
+      "value": "10.110.0.0/24"
+    },
+    "vmMgmtPrivatePublicIPDnsName": {
+      "value": "ex-managment-ipdns1"
+    }
+  }
+  }

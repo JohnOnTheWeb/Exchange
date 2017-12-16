@@ -1,0 +1,224 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "storageAccountNamePrefix": {"value": "exch"},
+    "shutDownTime": {"value": "0400"},
+    "configureAutoStartStop": {"value": "yes"},
+    "DeploymentID": {"value": "02"},
+    "storageType": {"value": "Standard_LRS"},
+    "vNetRangePrefix": {"value": "10.119."},
+    "vmManagementAdminUserName": {"value": "ExchangeAdmin"},
+    "vmManagementAdminPassword": { "value": "ExchangeDev1"},
+    "existingdiagnosticsStorageAccountName": {"value": "centraldiag1"},
+    "existingdiagnosticsStorageResourceGroup": {"value": "Central"},
+
+    "DeploymentInfo": {
+      "value": {
+        "SBAPPLBRULES": [
+          {
+            "ASName": "SERVICEHOST.STATUS.PORT-Rule",
+            "protocol": "Tcp",
+            "frontendPort": "47995",
+            "backendPort": "47995",
+            "idleTimeoutInMinutes": "15"
+          },
+          {
+            "ASName": "SP.CORE.WCF.CHANNEL1.PORT-Rule",
+            "protocol": "Tcp",
+            "frontendPort": "47202",
+            "backendPort": "47202",
+            "idleTimeoutInMinutes": "15"
+          },
+          {
+            "ASName": "SP.CORE.WCF.CHANNEL2.PORT-Rule",
+            "protocol": "Tcp",
+            "frontendPort": "47203",
+            "backendPort": "47203",
+            "idleTimeoutInMinutes": "15"
+          },
+          {
+            "ASName": "SP.DELIVERY.WCF.CHANNEL1.PORT-Rule",
+            "protocol": "Tcp",
+            "frontendPort": "47206",
+            "backendPort": "47206",
+            "idleTimeoutInMinutes": "15"
+          },
+          {
+            "ASName": "SP.DELIVERY.WCF.CHANNEL2.PORT-Rule",
+            "protocol": "Tcp",
+            "frontendPort": "47207",
+            "backendPort": "47207",
+            "idleTimeoutInMinutes": "15"
+          },
+          {
+            "ASName": "SP.DOCUMENTSERVICES.WCF.CHANNEL1.PORT-Rule",
+            "protocol": "Tcp",
+            "frontendPort": "47204",
+            "backendPort": "47204",
+            "idleTimeoutInMinutes": "15"
+          },
+          {
+            "ASName": "SP.DOCUMENTSERVICES.WCF.CHANNEL2.PORT-Rule",
+            "protocol": "Tcp",
+            "frontendPort": "47205",
+            "backendPort": "47205",
+            "idleTimeoutInMinutes": "15"
+          },
+          {
+            "ASName": "SP.INSTRUMENTATION.WCF.CHANNEL1.PORT-Rule",
+            "protocol": "Tcp",
+            "frontendPort": "47200",
+            "backendPort": "47200",
+            "idleTimeoutInMinutes": "15"
+          },
+          {
+            "ASName": "SP.INSTRUMENTATION.WCF.CHANNEL2.PORT-Rule",
+            "protocol": "Tcp",
+            "frontendPort": "47201",
+            "backendPort": "47201",
+            "idleTimeoutInMinutes": "15"
+          },
+          {
+            "ASName": "SP.LOGGING.WCF1.PORT-Rule",
+            "protocol": "Tcp",
+            "frontendPort": "47110",
+            "backendPort": "47110",
+            "idleTimeoutInMinutes": "15"
+          },
+          {
+            "ASName": "SP.LOGGING.WCF2.PORT-Rule",
+            "protocol": "Tcp",
+            "frontendPort": "47111",
+            "backendPort": "47111",
+            "idleTimeoutInMinutes": "15"
+          },
+          {
+            "ASName": "SP.MONITOR.WCF.CHANNEL1.PORT-Rule",
+            "protocol": "Tcp",
+            "frontendPort": "47208",
+            "backendPort": "47208",
+            "idleTimeoutInMinutes": "15"
+          },
+          {
+            "ASName": "SP.MONITOR.WCF.CHANNEL2.PORT-Rule",
+            "protocol": "Tcp",
+            "frontendPort": "47209",
+            "backendPort": "47209",
+            "idleTimeoutInMinutes": "15"
+          },
+          {
+            "ASName": "SP.PROVIDER.WCF.CHANNEL1.PORT-Rule",
+            "protocol": "Tcp",
+            "frontendPort": "47210",
+            "backendPort": "47210",
+            "idleTimeoutInMinutes": "15"
+          },
+          {
+            "ASName": "SP.PROVIDER.WCF.CHANNEL2.PORT-Rule",
+            "protocol": "Tcp",
+            "frontendPort": "47211",
+            "backendPort": "47211",
+            "idleTimeoutInMinutes": "15"
+          },
+          {
+            "ASName": "SP.STANDARD.WCF1.PORT-Rule",
+            "protocol": "Tcp",
+            "frontendPort": "47102",
+            "backendPort": "47102",
+            "idleTimeoutInMinutes": "15"
+          },
+          {
+            "ASName": "SP.STANDARD.WCF2.PORT-Rule",
+            "protocol": "Tcp",
+            "frontendPort": "47103",
+            "backendPort": "47103",
+            "idleTimeoutInMinutes": "15"
+          },
+          {
+            "ASName": "SP.SYSTEM.WCF1.PORT-Rule",
+            "protocol": "Tcp",
+            "frontendPort": "47100",
+            "backendPort": "47100",
+            "idleTimeoutInMinutes": "15"
+          },
+          {
+            "ASName": "SP.SYSTEM.WCF2.PORT-Rule",
+            "protocol": "Tcp",
+            "frontendPort": "47101",
+            "backendPort": "47101",
+            "idleTimeoutInMinutes": "15"
+          },
+          {
+            "ASName": "SP.SYSTEM.WCFSERVICEENDPOINT.PORT-Rule",
+            "protocol": "Tcp",
+            "frontendPort": "47999",
+            "backendPort": "47999",
+            "idleTimeoutInMinutes": "15"
+          }
+        ],
+        "NSGLIS": [
+          { "ASName": "LimitAGS" },
+          { "ASName": "LimitDB" },
+          { "ASName": "LimitSRV" },
+          { "ASName": "LimitTest" },
+          { "ASName": "LimitWeb" },
+          { "ASName": "LimitSB" },
+          { "ASName": "LimitMgt" }
+        ],
+        "VMFSMQ": [
+          {
+            "VMName": "FSMQ01",
+            "DataDCount": "STD"
+          }
+        ],
+        "VMSBSQL": [
+          {"VMName": "AZEX-SB-SQL01", "DataDCount": "STD"}
+        ],
+        "VMSEXWS": [
+          {
+            "VMName": "EXWS01",
+            "DataDCount": "STD",
+            "ASName": "SB_CFG",
+            "StorageTier": "Standard_LRS"
+          },
+          {
+            "VMName": "EXWS02",
+            "DataDCount": "STD",
+            "ASName": "SB_CFG",
+            "StorageTier": "Standard_LRS"
+          }
+        ],
+        "VMSBCFG": [
+          {
+            "VMName": "SBCFG01",
+            "DataDCount": "STD",
+            "ASName": "SB_CFG",
+            "StorageTier": "Standard_LRS"
+          },
+          {
+            "VMName": "SBCFG02",
+            "DataDCount": "STD",
+            "ASName": "SB_CFG",
+            "StorageTier": "Standard_LRS"
+          }
+        ],
+        "VMSBAPP": [
+          {
+            "VMName": "SBAPP01",
+            "DataDCount": "STD",
+            "ASName": "SB_APP",
+            "StorageTier": "Standard_LRS"
+          },
+          {
+            "VMName": "SBAPP02",
+            "DataDCount": "STD",
+            "ASName": "SB_APP",
+            "StorageTier": "Standard_LRS"
+          }
+        ]
+
+      }
+    }
+  }
+}

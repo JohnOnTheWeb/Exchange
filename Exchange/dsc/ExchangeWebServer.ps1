@@ -15,17 +15,10 @@
     #Install the IIS Role
 
     WindowsFeature WebServerRole
-
         {
-
-           
-
             Name = "Web-Server"
-
             Ensure = "Present"
-
-
-            }
+        }
 
 	 
         WindowsFeature WebAppDev

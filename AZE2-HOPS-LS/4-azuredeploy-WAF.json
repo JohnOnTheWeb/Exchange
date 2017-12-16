@@ -1,0 +1,380 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    // Global
+    "DeploymentID": {
+      "type": "string",
+      "defaultValue": "01",
+      "maxLength": 1
+    },
+    "Prefix": {
+      "type": "string",
+      "defaultValue": "AZE2",
+      "minLength": 1,
+      "allowedValues": [
+        "AZE2",
+        "AZE",
+        "AZW2",
+        "AZW"
+      ]
+    },
+    "Environment": {
+      "type": "string",
+      "defaultValue": "D",
+      "allowedValues": [
+        "D",
+        "Q",
+        "T",
+        "U",
+        "Z",
+        "P"
+      ]
+    },
+    "Stage": {
+      "type": "object",
+      "defaultValue": {
+        "OMS": 1,
+        "VNet": 1,
+        "AD": 1,
+        "PLB": 0,
+        "ILB": 0,
+        "SQL": 0,
+        "VMPublic": 1,
+        "VMPrivate": 1,
+        "WAF": 0
+      }
+    },
+
+    // Used for all VM's, local and Domain Admin Password
+    "vmAdminPassword": {
+      "type": "securestring"
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "Auto-generated container in staging storage account to receive post-build staging folder upload"
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Auto-generated token to access artifactsLocation"
+      }
+    },
+    "WildcardCertBase64": {
+      "type": "securestring"
+    },
+    "DSCUpdateTagVersion": {
+      "type": "string",
+      "defaultValue": "1.0",
+      "metadata": {
+        "description": "This value must be changed from a previous deployment to ensure the DSC extensions will re-run"
+      }
+    },
+    "StorageAccountKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Used for copying source files to DSC from Azure Files storage"
+      }
+    },
+    "Extensions": {
+      "type": "object",
+      "defaultValue": {
+        "Antimalware": 1,
+        "MonitoringAgent": 1,
+        "IaaSDiagnostics": 1
+      }
+    },
+    "DeploymentInfo": {
+      "type": "object",
+      "metadata": {
+        "description": "Can be used to input LB/VM Etc objects from Parameters file"
+      }
+    },
+    "Global": {
+      "type": "object"
+    }
+  },
+  "variables": {
+    // Global  BRWDev101
+    "Deployment": "[concat(parameters('Prefix'),'-',parameters('Environment'),parameters('DeploymentID'),'-', parameters('Global').AppName)]",
+
+    // Update these later to reference a VNet in alternate subscription or resourceGroup
+    // subscriptionId
+    "subscriptionId": "[subscription().subscriptionId]",
+    // rgName
+    "resourceGroupName": "[resourceGroup().name]",
+
+    // Note if the deployment is into a VNET in a different subscription or resource group, this needs to be updated.
+    "VnetID": "[resourceId('Microsoft.Network/virtualNetworks', concat(Variables('Deployment'),'-vn'))]",
+    "snWAF01Name": "[concat(variables('Deployment'),'-snWAF01')]",
+    "SubnetRefGW": "[concat(variables('VNetID'), '/subnets/', variables('snWAF01Name'))]",
+
+    "networkId": "[concat('10.144.',string(sub(144,int(parameters('DeploymentID')))))]",
+    "WAFInfo": "[parameters('DeploymentInfo').WAFInfo]",
+
+    "OMSworkspaceID": "[resourceId('Microsoft.OperationalInsights/workspaces',concat(replace(variables('Deployment'),'-',''),'OMSLogAnalytics'))]"
+
+  },
+  "resources": [
+    {
+      "apiVersion": "2017-03-01",
+      "name": "[concat(variables('Deployment'),'-waf',variables('WAFInfo')[copyIndex(0)].WAFName)]",
+      "type": "Microsoft.Network/applicationGateways",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "WAFLoop",
+        "count": "[length( variables('WAFInfo') )]"
+      },
+      "tags": {
+        "displayName": "WAF"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', concat(variables('Deployment'),'-publicipWAF',variables('WAFInfo')[copyIndex(0)].WAFName))]"
+      ],
+      "properties": {
+        "sku": {
+          "name": "[variables('WAFInfo')[copyIndex(0)].WAFSize]",
+          "tier": "WAF",
+          "capacity": "[variables('WAFInfo')[copyIndex(0)].WAFCapacity]"
+        },
+        "authenticationCertificates": [
+          {
+            "properties": {
+              "data": "MIIDUjCCAjqgAwIBAgIQZQuBSnK+YZpJZS/tv1C8bDANBgkqhkiG9w0BAQsFADAcMRowGAYDVQQDDBEqLnRpdGxlZWRpdG9yLmNvbTAeFw0xNzAzMDMyMjU0MjBaFw0xODAzMDMyMzE0MjBaMBwxGjAYBgNVBAMMESoudGl0bGVlZGl0b3IuY29tMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAsI1+BDdGbm27+IQTl7LTiPPQxuQTbNxgeqxTkkGRaDyD3reTdwHkhGfFVOGJfw18JsZAGM/FQI3mPy3/hxGsaAz3y82euYTDeOxFrDogy0O7gT3nmW3TKBd71tdcKWdjVYDn7rQTwNMjIQwUjqzE98QzaJAFunaBgYaXiwz/GjqUak+dzEBnmCi3pIt0RpKhkh4LcF6gjB+wJWTqkeTxOqH8x+RmGhfincks5SpL2KkHEuSO81cTv+VWGCeo3LSDqT6Wu7BENAOoJulA4eppJmRX7v8Kq3Ut8q13CPRHsmRMZ94/03Jq2jOk6GoD67fJqNPjqmNC1OxQ9DW1T0Or4QIDAQABo4GPMIGMMA4GA1UdDwEB/wQEAwIFoDAdBgNVHSUEFjAUBggrBgEFBQcDAgYIKwYBBQUHAwEwPAYDVR0RBDUwM4IRKi50aXRsZWVkaXRvci5jb22CDyoudGl0bGVlZGdlLmNvbYINKi5OZXh0YWNlLmNvbTAdBgNVHQ4EFgQUMq70rQ5Wml7NnOqN3aMDHKVaiDQwDQYJKoZIhvcNAQELBQADggEBAGDIxB/vLOif8Fi9nd9FnQUA/7Dvh88qI2aBkAUXKQjEueQxRDHri2ilaxY5GMVcOG3Byhqgyq24UDSvF7UrfJ6Y8ofQqKP6WGehn8pX9qGgM3PXq+qKidtS7xUuYIQZk2+xNJZ5Sq8K+AxuzaN4yw9qLe/juhycV/2pgYvGYCUcxYf7Q8F3i28ca60SP0xOUYty01teIvd3zqBDG72M3/noyeRtcPAIaPppSTDrHPTBObPVQ8nkGX9cEcGiecwAEtOiw0t65vM8R6Q9VyC24HsXHii0QehVTc+JU3wo05eYsVlgXmPhk49IbzQCJmWzW6hfrDUQTbpAgWXRHzq91P4="
+            },
+            "name": "contosowildcardMulti"
+          }
+        ],
+        "sslCertificates": [
+          {
+            "properties": {
+              "data": "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",
+              "password": "[parameters('vmAdminPassword')]",
+              "publicCertData": "MIIDgQYJKoZIhvcNAQcCoIIDcjCCA24CAQExADALBgkqhkiG9w0BBwGgggNWMIIDUjCCAjqgAwIBAgIQZQuBSnK+YZpJZS/tv1C8bDANBgkqhkiG9w0BAQsFADAcMRowGAYDVQQDDBEqLnRpdGxlZWRpdG9yLmNvbTAeFw0xNzAzMDMyMjU0MjBaFw0xODAzMDMyMzE0MjBaMBwxGjAYBgNVBAMMESoudGl0bGVlZGl0b3IuY29tMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAsI1+BDdGbm27+IQTl7LTiPPQxuQTbNxgeqxTkkGRaDyD3reTdwHkhGfFVOGJfw18JsZAGM/FQI3mPy3/hxGsaAz3y82euYTDeOxFrDogy0O7gT3nmW3TKBd71tdcKWdjVYDn7rQTwNMjIQwUjqzE98QzaJAFunaBgYaXiwz/GjqUak+dzEBnmCi3pIt0RpKhkh4LcF6gjB+wJWTqkeTxOqH8x+RmGhfincks5SpL2KkHEuSO81cTv+VWGCeo3LSDqT6Wu7BENAOoJulA4eppJmRX7v8Kq3Ut8q13CPRHsmRMZ94/03Jq2jOk6GoD67fJqNPjqmNC1OxQ9DW1T0Or4QIDAQABo4GPMIGMMA4GA1UdDwEB/wQEAwIFoDAdBgNVHSUEFjAUBggrBgEFBQcDAgYIKwYBBQUHAwEwPAYDVR0RBDUwM4IRKi50aXRsZWVkaXRvci5jb22CDyoudGl0bGVlZGdlLmNvbYINKi5OZXh0YWNlLmNvbTAdBgNVHQ4EFgQUMq70rQ5Wml7NnOqN3aMDHKVaiDQwDQYJKoZIhvcNAQELBQADggEBAGDIxB/vLOif8Fi9nd9FnQUA/7Dvh88qI2aBkAUXKQjEueQxRDHri2ilaxY5GMVcOG3Byhqgyq24UDSvF7UrfJ6Y8ofQqKP6WGehn8pX9qGgM3PXq+qKidtS7xUuYIQZk2+xNJZ5Sq8K+AxuzaN4yw9qLe/juhycV/2pgYvGYCUcxYf7Q8F3i28ca60SP0xOUYty01teIvd3zqBDG72M3/noyeRtcPAIaPppSTDrHPTBObPVQ8nkGX9cEcGiecwAEtOiw0t65vM8R6Q9VyC24HsXHii0QehVTc+JU3wo05eYsVlgXmPhk49IbzQCJmWzW6hfrDUQTbpAgWXRHzq91P4xAA=="
+            },
+            "name": "contosowildcardMulti"
+          }
+        ],
+        "gatewayIPConfigurations": [
+          {
+            "name": "appGatewayIpConfig",
+            "properties": {
+              "subnet": {
+                "id": "[variables('subnetRefGW')]"
+              }
+            }
+          }
+        ],
+        "frontendIPConfigurations": [
+          {
+            "name": "appGatewayFrontendIP",
+            "properties": {
+              "privateIPAddress": "[concat(variables('networkId'),'.',variables('WAFInfo')[copyIndex(0)].PrivateIP)]",
+              "privateIPAllocationMethod": "Static",
+              "PublicIPAddress": {
+
+                "id": "[concat(resourceId('Microsoft.Network/publicIPAddresses/', concat(variables('Deployment'),'-publicipwaf', variables('WAFInfo')[copyIndex(0)].WAFName)) )]"
+              }
+            }
+          }
+        ],
+        "frontendPorts": [
+          {
+            "name": "appGatewayFrontendPort80",
+            "properties": {
+              "Port": 80
+            }
+          },
+          {
+            "name": "appGatewayFrontendPort443",
+            "properties": {
+              "Port": 443
+
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "appGatewayBackendPool",
+            "properties": {
+              "BackendAddresses": "[take(variables('WAFInfo')[copyIndex(0)].FQDNs, length(variables('WAFInfo')[copyIndex(0)].FQDNs))]"
+            }
+          }
+        ],
+        "backendHttpSettingsCollection": [
+          {
+            "name": "appGatewayBackendHttpSettings80",
+            "properties": {
+              "Port": 80,
+              "Protocol": "Http",
+              "CookieBasedAffinity": "Disabled",
+              "RequestTimeout": 600
+            }
+
+          },
+          {
+            "name": "appGatewayBackendHttpSettings443",
+            "properties": {
+              "Port": 443,
+              "Protocol": "Https",
+              "CookieBasedAffinity": "Disabled",
+              "RequestTimeout": 600,
+              "authenticationCertificates": [
+                {
+                  "id": "[concat(resourceId('Microsoft.Network/applicationGateways/', concat(variables('Deployment'),'-waf',variables('WAFInfo')[copyIndex(0)].WAFName)),'/authenticationCertificates/contosowildcardMulti' )]"
+                }
+              ]
+            }
+
+          }
+        ],
+        "httpListeners": [
+          {
+            "name": "appGatewayHttpListener80",
+            "properties": {
+              "FrontendIPConfiguration": {
+                "id": "[concat(resourceId('Microsoft.Network/applicationGateways/', concat(variables('Deployment'),'-waf',variables('WAFInfo')[copyIndex(0)].WAFName)),'/frontendIPConfigurations/appGatewayFrontendIP' )]"
+              },
+              "FrontendPort": {
+                "id": "[concat(resourceId('Microsoft.Network/applicationGateways/', concat(variables('Deployment'),'-waf',variables('WAFInfo')[copyIndex(0)].WAFName)),'/frontendPorts/appGatewayFrontendPort80' )]"
+              },
+              "Protocol": "Http"
+            }
+          },
+          {
+            "name": "appGatewayHttpListener443",
+            "properties": {
+              "FrontendIPConfiguration": {
+
+                "id": "[concat(resourceId('Microsoft.Network/applicationGateways/', concat(variables('Deployment'),'-waf',variables('WAFInfo')[copyIndex(0)].WAFName)),'/frontendIPConfigurations/appGatewayFrontendIP' )]"
+              },
+              "FrontendPort": {
+
+                "id": "[concat(resourceId('Microsoft.Network/applicationGateways/', concat(variables('Deployment'),'-waf',variables('WAFInfo')[copyIndex(0)].WAFName)),'/frontendPorts/appGatewayFrontendPort443' )]"
+              },
+              "Protocol": "Https",
+
+              "SslCertificate": {
+                "id": "[concat(resourceId('Microsoft.Network/applicationGateways/', concat(variables('Deployment'),'-waf',variables('WAFInfo')[copyIndex(0)].WAFName)),'/sslCertificates/contosowildcardMulti' )]"
+              }
+            }
+          }
+        ],
+        "requestRoutingRules": [
+          {
+            "Name": "rule80",
+            "properties": {
+              "RuleType": "Basic",
+              "httpListener": {
+                "id": "[concat(resourceId('Microsoft.Network/applicationGateways/', concat(variables('Deployment'),'-waf',variables('WAFInfo')[copyIndex(0)].WAFName)),'/httpListeners/appGatewayHttpListener80' )]"
+              },
+              "backendAddressPool": {
+                "id": "[concat(resourceId('Microsoft.Network/applicationGateways/', concat(variables('Deployment'),'-waf',variables('WAFInfo')[copyIndex(0)].WAFName)),'/backendAddressPools/appGatewayBackendPool' )]"
+              },
+              "backendHttpSettings": {
+                "id": "[concat(resourceId('Microsoft.Network/applicationGateways/', concat(variables('Deployment'),'-waf',variables('WAFInfo')[copyIndex(0)].WAFName)),'/backendHttpSettingsCollection/appGatewayBackendHttpSettings80' )]"
+              }
+            }
+          },
+          {
+            "Name": "rule443",
+            "properties": {
+              "RuleType": "Basic",
+              "httpListener": {
+
+                "id": "[concat(resourceId('Microsoft.Network/applicationGateways/', concat(variables('Deployment'),'-waf',variables('WAFInfo')[copyIndex(0)].WAFName)),'/httpListeners/appGatewayHttpListener443' )]"
+              },
+              "backendAddressPool": {
+
+                "id": "[concat(resourceId('Microsoft.Network/applicationGateways/', concat(variables('Deployment'),'-waf',variables('WAFInfo')[copyIndex(0)].WAFName)),'/backendAddressPools/appGatewayBackendPool' )]"
+              },
+              "backendHttpSettings": {
+
+                "id": "[concat(resourceId('Microsoft.Network/applicationGateways/', concat(variables('Deployment'),'-waf',variables('WAFInfo')[copyIndex(0)].WAFName)),'/backendHttpSettingsCollection/appGatewayBackendHttpSettings443' )]"
+              }
+            }
+          }
+        ],
+        "webApplicationFirewallConfiguration": {
+          "enabled": "[variables('WAFInfo')[copyIndex(0)].WAFEnabled]",
+          "firewallMode": "[variables('WAFInfo')[copyIndex(0)].WAFMode]",
+          "ruleSetType": "OWASP",
+          "ruleSetVersion": "3.0",
+          "disabledRuleGroups": []
+        }
+      },
+      "resources": [
+        {
+          "type": "providers/diagnosticSettings",
+          "name": "Microsoft.Insights/service",
+          "dependsOn": [
+            "[concat(variables('Deployment'),'-waf',variables('WAFInfo')[copyIndex(0)].WAFName)]"
+          ],
+          "apiVersion": "2015-07-01",
+          "properties": {
+            "workspaceId": "[variables('OMSworkspaceID')]",
+            "logs": [
+              {
+                "category": "ApplicationGatewayAccessLog",
+                "enabled": true,
+                "retentionPolicy": {
+                  "days": 30,
+                  "enabled": false
+                }
+              },
+              {
+                "category": "ApplicationGatewayPerformanceLog",
+                "enabled": true,
+                "retentionPolicy": {
+                  "days": 30,
+                  "enabled": false
+                }
+              },
+              {
+                "category": "ApplicationGatewayFirewallLog",
+                "enabled": true,
+                "retentionPolicy": {
+                  "days": 30,
+                  "enabled": false
+                }
+              }
+            ],
+            "metrics": [
+              {
+                "timeGrain": "PT5M",
+                "enabled": true,
+                "retentionPolicy": {
+                  "enabled": false,
+                  "days": 0
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-15",
+      "name": "[concat(variables('Deployment'),'-publicipWAF',variables('WAFInfo')[copyIndex(0)].WAFName)]",
+      "copy": {
+        "name": "PublicIPLoop",
+        "count": "[length( variables('WAFInfo') )]"
+      },
+
+      "dependsOn": [],
+      "tags": {
+        "displayName": "WAF_PublicIP"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic"
+      }
+    }
+
+  ],
+  "outputs": {
+  }
+}

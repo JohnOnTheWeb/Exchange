@@ -1,0 +1,145 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "Environment": {
+      "type": "string"
+    },
+    "DeploymentID": {
+      "type": "string"
+    },
+    "Deployment": {
+      "type": "string"
+    },
+    "DNSServers": {
+      "type": "array",
+      "defaultValue": [
+        "0"
+      ]
+    },
+    "Stage": {
+      "type": "object",
+      "defaultValue": {
+        "VNetPeering": 0
+      }
+    },
+    "DeploymentInfo": {
+      "type": "object",
+      "metadata": {
+        "description": "Can be used to input LB/VM Etc objects from Parameters file"
+      }
+    }
+  },
+
+  "variables": {
+
+    // Network
+    "networkId": "[concat('10.144.',string(sub(144,int(parameters('DeploymentID')))))]",
+
+    "addressPrefixes": [
+        "[concat(variables('networkId'),'.0/24')]"
+    ],
+
+    "SubnetInfo": "[parameters('DeploymentInfo').SubnetInfo]",
+
+    "DefaultDNS": [
+     "[concat(variables('networkId'),'.',parameters('DeploymentInfo').DC1PrivateIPAddress)]",
+     "[concat(variables('networkId'),'.',parameters('DeploymentInfo').DC2PrivateIPAddress)]"
+    ],
+
+    "DNSServers": "[if(equals(length(parameters('DNSServers')),1),variables('DefaultDNS'),parameters('DNSServers'))]",
+
+    // subscriptionId
+    "subscriptionId": "[subscription().subscriptionId]",
+    // rgName
+    "resourceGroupName": "[resourceGroup().name]",
+
+    // VNET peer at the Hub rgName
+    "hubVnetDeploymentName": "AZEUS2-PROD01",
+
+    "VNetID": "[resourceId(variables('subscriptionId'),variables('ResourceGroupName'), 'Microsoft.Network/VirtualNetworks', concat(parameters('Deployment'),'-vn'))]"
+  },
+  "resources": [
+    {
+      "name": "[concat(parameters('Deployment'),'-vn')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [],
+      "tags": {
+        "displayName": "vNet"
+      },
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": "[variables('addressPrefixes')]"
+
+        },
+        "dhcpOptions": {
+          "dnsServers": [
+            "[Parameters('DNSServers')[0]]",
+            "[Parameters('DNSServers')[1]]"
+          ]
+        },
+        "copy": [
+          {
+            "name": "subnets",
+            "count": "[length(variables('SubnetInfo'))]",
+            "input": {
+              "name": "[concat('sn',variables('SubnetInfo')[copyIndex('subnets')].name)]",
+              "properties": {
+                   "addressPrefix": "[concat(variables('networkId'),'.',variables('SubnetInfo')[copyIndex('subnets')].Prefix)]"
+              }
+            }
+          }
+        ]
+      },
+      "resources": [
+        {
+          "condition": "[equals(parameters('Stage').VNetPeering,1)]",
+          "name": "VNetPeering",
+          "type": "virtualNetworkPeerings",
+          "apiVersion": "2017-03-01",
+          "dependsOn": [
+            "[resourceId('Microsoft.Network/virtualNetworks',concat(parameters('Deployment'),'-vn'))]"
+          ],
+          "properties": {
+            "allowVirtualNetworkAccess": true,
+            "allowForwardedTraffic": true,
+            "allowGatewayTransit": true,
+            "useRemoteGateways": false,
+            "remoteVirtualNetwork": {
+              // if zero 1, if 1, zero
+              "id": "[resourceId('Microsoft.Network/virtualNetworks',concat(variables('hubVnetDeploymentName'),'-vn'))]"
+            }
+          }
+        }
+      ]
+    }
+  ],
+    "outputs": {
+        "VNet-AddressPrefixes": {
+            "value": "[reference(variables('VnetID'), '2015-06-15').addressSpace.addressPrefixes]",
+            "type": "array"
+        },
+        "VNet-dhcpOptions": {
+            "value": "[reference(variables('VnetID'), '2015-06-15').dhcpOptions.dnsServers]",
+            "type": "array"
+        },
+        "VNet-Subnets": {
+            "value": "[reference(variables('VnetID'), '2015-06-15').subnets]",
+            "type": "array"
+        },
+        "NetworkID": {
+            "value": "[resourceId(variables('resourceGroupName'), 'Microsoft.Network/VirtualNetworks', concat(parameters('Deployment'),'-vn'))]",
+            "type": "string"
+        },
+        "Subscription": {
+            "value": "[subscription()]",
+            "type": "object"
+        },
+        "VnetID": {
+            "value": "[resourceId(variables('subscriptionId'),variables('resourceGroupName'), 'Microsoft.Network/VirtualNetworks', concat(parameters('Deployment'),'-vn'))]",
+            "type": "string"
+        }
+    }
+}

@@ -1,0 +1,638 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    // Global
+    "DeploymentID": {
+      "type": "string",
+      "defaultValue": "01",
+      "minLength": 2
+    },
+    "Prefix": {
+      "type": "string",
+      "defaultValue": "DNARAP",
+      "minLength": 1,
+      "allowedValues": [
+        "AZEUS2",
+        "DNAAFT",
+        "DNARAP",
+        "AZWUS"
+      ]
+    },
+    "Environment": {
+      "type": "string",
+      "defaultValue": "DEV",
+      "allowedValues": [
+        "DEV",
+        "BETA",
+        "TEST",
+        "UAT",
+        "PROD"
+      ]
+    },
+    "Stage": {
+      "type": "object",
+      "defaultValue": {
+        "OMS": 1,
+        "VNet": 1,
+        "AD": 1,
+        "HDInsight": 1,
+        "VMPublic": 0,
+        "VMPrivateLinux": 1,
+        "VMPrivateWindows": 1,
+        "ILB": 0,
+        "SQL": 0,
+        "VNetPeering": 0
+      }
+    },
+    "HDInsightInfo": {
+      "type": "object",
+      "defaultValue": {
+        "customerName": "CustomerA",
+        "dataLakename": "azeu2dnarapglobaldatalake",
+        "tenantId": "87303efc-2819-4c1a-bc3d-ea1b1c3a68b9",
+        "ServicePrincipalApplicationId": "9baf1634-07e3-4c49-83cf-4c22b82241f9"
+      }
+    },
+    "vmStorageAccountType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "Premium_LRS"
+      ]
+    },
+    "AdminUserName": {
+      "type": "string",
+      "defaultValue": "fred",
+      "minLength": 3
+    },
+    // Used for all VM's, local and Domain Admin Password
+    "AdminPassword": {
+      "type": "securestring"
+    },
+    "sshUserName": {
+      "type": "string",
+      "defaultValue": "wilma",
+      "minLength": 3
+    },
+    "sshPassword": {
+      "type": "securestring"
+    },
+    "SPidentityCertificate": {
+      "type": "securestring"
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "Auto-generated container in staging storage account to receive post-build staging folder upload"
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Auto-generated token to access artifactsLocation"
+      }
+    },
+    "vaultName": {
+      "type": "string",
+      "defaultValue": "AZEU2-DNA-kvRAPGLOBAL",
+      "metadata": {
+        "description": "Name of the KeyVault, should choose keyvault in the same region as the deployment"
+      },
+      "allowedValues": [
+        "AZEU2-DNA-kvRAPGLOBAL",
+        "AZWU2-BKFS-kvAFTGLOBAL",
+        "kvPSObjectEastUS2MSDN"
+      ]
+    },
+    "vaultResourceGroup": {
+      "type": "string",
+      "defaultValue": "AZEU2-DNA-rgRAPGLOBAL",
+      "metadata": {
+        "description": "Resource Group of the KeyVault"
+      }
+    },
+    "WildcardCertBase64": {
+      "type": "securestring"
+    },
+    "DSCUpdateTagVersion": {
+      "type": "string",
+      "defaultValue": "1.0",
+      "metadata": {
+        "description": "This value must be changed from a previous deployment to ensure the DSC extensions will re-run"
+      }
+    },
+    "Global": {
+      "type": "object",
+      "defaultValue": {
+        "RgName": "AZEU2-DNA-rgRAPGLOBAL",
+        "SANameDiag": "azeu2dnarapglobaldiag",
+        "SAName": "azeu2dnarapglobal",
+        "domainName": "rap.local"
+      }
+    },
+    "Extensions": {
+      "type": "object",
+      "defaultValue": {
+        "Antimalware": 1,
+        "MonitoringAgent": 1,
+        "IaaSDiagnostics": 1
+      },
+      "allowedValues": [
+        {
+          "Antimalware": 0,
+          "MonitoringAgent": 0,
+          "IaaSDiagnostics": 0
+        },
+        {
+          "Antimalware": 1,
+          "MonitoringAgent": 0,
+          "IaaSDiagnostics": 1
+        },
+        {
+          "Antimalware": 1,
+          "MonitoringAgent": 1,
+          "IaaSDiagnostics": 1
+        },
+        {
+          "Antimalware": 0,
+          "MonitoringAgent": 1,
+          "IaaSDiagnostics": 1
+        }
+      ]
+    },
+    "DeploymentInfo": {
+      "type": "object",
+      "metadata": {
+        "description": "Can be used to input LB/VM Etc objects from Parameters file"
+      }
+    }
+  },
+  "variables": {
+    // Global  BRWDev101
+    "Deployment": "[concat(parameters('Prefix'),'-',parameters('Environment'),parameters('DeploymentID'))]",
+
+    // Update these later to reference a VNet in alternate subscription or resourceGroup
+    // subscriptionId
+    "subscriptionId": "[subscription().subscriptionId]",
+    // rgName
+    "resourceGroupName": "[resourceGroup().name]",
+
+    "AVAILABILITYSETS": [
+      { "ASName": "JUMPBOX" }
+    ],
+    "AppServers": [
+      {
+        "VMName": "JMP1",
+        "ASName": "JUMPBOX",
+        "Role": "BLANK",
+        "VMSize": "Standard_DS2_V2",
+        "Subnet": "snFE01",
+        "PublicIP": "Static"
+      }
+    ],
+
+    // Note if the deployment is into a VNET in a different subscription or resource group, use the variable VNetID instead
+    "VNetID": "[resourceId(variables('subscriptionId'),variables('ResourceGroupName'), 'Microsoft.Network/VirtualNetworks', concat(Variables('Deployment'),'-vn'))]",
+
+    // VM Global
+    //"vmSize": "Standard_D1",
+    "vmImagePublisher": "MicrosoftWindowsServer",
+    "vmImageOffer": "WindowsServer",
+    "vmWindowsOSVersion": "2016-Datacenter",
+
+    //DSC
+    "DSCArchiveFolder": "DSC",
+    "DSCAppRolesFileName": "DSCAppTier.ps1",
+    "DSCAppRolesFileNameArchive": "DSCAppTier.zip",
+
+    "ConfigDataFileNameBase": "ConfigurationData.psd1",
+    "ConfigDataPath": "[concat(parameters('_artifactsLocation'), '/CD/')]",
+
+    //Nested Templates
+    "NestedTemplateFolder": "nestedtemplates",
+
+    // Settings for Log Analytics
+    "OMSworkspaceID": "[concat('Microsoft.OperationalInsights/workspaces/',replace(variables('Deployment'),'-',''),'OMSLogAnalytics')]",
+
+    "defaultStorageAccountid": "[resourceId(subscription().subscriptionId,parameters('Global').RGName,'Microsoft.Storage/storageAccounts/',parameters('global').saName)]",
+
+    //Diagnostics settings
+    "accountid": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/',parameters('Global').RGName,'/providers/Microsoft.Storage/storageAccounts/', parameters('Global').SANameDiag)]",
+    "WadCfg": {
+      "DiagnosticMonitorConfiguration": {
+        "overallQuotaInMB": 10000,
+        "DiagnosticInfrastructureLogs": { "scheduledTransferLogLevelFilter": "Error" },
+        "PerformanceCounters": {
+          "scheduledTransferPeriod": "PT1M",
+          "PerformanceCounterConfiguration": [
+            {
+              "counterSpecifier": "\\Processor(_Total)\\% Processor Time",
+              "sampleRate": "PT15S",
+              "unit": "Percent"
+            },
+            {
+              "counterSpecifier": "\\Processor(_Total)\\% Privileged Time",
+              "sampleRate": "PT15S",
+              "unit": "Percent"
+            },
+            {
+              "counterSpecifier": "\\Processor(_Total)\\% User Time",
+              "sampleRate": "PT15S",
+              "unit": "Percent"
+            },
+            {
+              "counterSpecifier": "\\Processor Information(_Total)\\Processor Frequency",
+              "sampleRate": "PT15S",
+              "unit": "Count"
+            },
+            {
+              "counterSpecifier": "\\System\\Processes",
+              "sampleRate": "PT15S",
+              "unit": "Count"
+            },
+            {
+              "counterSpecifier": "\\Process(_Total)\\Thread Count",
+              "sampleRate": "PT15S",
+              "unit": "Count"
+            },
+            {
+              "counterSpecifier": "\\Process(_Total)\\Handle Count",
+              "sampleRate": "PT15S",
+              "unit": "Count"
+            },
+            {
+              "counterSpecifier": "\\Memory\\% Committed Bytes In Use",
+              "sampleRate": "PT15S",
+              "unit": "Percent"
+            },
+            {
+              "counterSpecifier": "\\Memory\\Available Bytes",
+              "sampleRate": "PT15S",
+              "unit": "Bytes"
+            },
+            {
+              "counterSpecifier": "\\Memory\\Committed Bytes",
+              "sampleRate": "PT15S",
+              "unit": "Bytes"
+            },
+            {
+              "counterSpecifier": "\\Memory\\Commit Limit",
+              "sampleRate": "PT15S",
+              "unit": "Bytes"
+            },
+            {
+              "counterSpecifier": "\\Memory\\Pool Paged Bytes",
+              "sampleRate": "PT15S",
+              "unit": "Bytes"
+            },
+            {
+              "counterSpecifier": "\\Memory\\Pool Nonpaged Bytes",
+              "sampleRate": "PT15S",
+              "unit": "Bytes"
+            },
+            {
+              "counterSpecifier": "\\PhysicalDisk(_Total)\\% Disk Time",
+              "sampleRate": "PT15S",
+              "unit": "Percent"
+            },
+            {
+              "counterSpecifier": "\\PhysicalDisk(_Total)\\% Disk Read Time",
+              "sampleRate": "PT15S",
+              "unit": "Percent"
+            },
+            {
+              "counterSpecifier": "\\PhysicalDisk(_Total)\\% Disk Write Time",
+              "sampleRate": "PT15S",
+              "unit": "Percent"
+            },
+            {
+              "counterSpecifier": "\\PhysicalDisk(_Total)\\Disk Transfers/sec",
+              "sampleRate": "PT15S",
+              "unit": "CountPerSecond"
+            },
+            {
+              "counterSpecifier": "\\PhysicalDisk(_Total)\\Disk Reads/sec",
+              "sampleRate": "PT15S",
+              "unit": "CountPerSecond"
+            },
+            {
+              "counterSpecifier": "\\PhysicalDisk(_Total)\\Disk Writes/sec",
+              "sampleRate": "PT15S",
+              "unit": "CountPerSecond"
+            },
+            {
+              "counterSpecifier": "\\PhysicalDisk(_Total)\\Disk Bytes/sec",
+              "sampleRate": "PT15S",
+              "unit": "BytesPerSecond"
+            },
+            {
+              "counterSpecifier": "\\PhysicalDisk(_Total)\\Disk Read Bytes/sec",
+              "sampleRate": "PT15S",
+              "unit": "BytesPerSecond"
+            },
+            {
+              "counterSpecifier": "\\PhysicalDisk(_Total)\\Disk Write Bytes/sec",
+              "sampleRate": "PT15S",
+              "unit": "BytesPerSecond"
+            },
+            {
+              "counterSpecifier": "\\PhysicalDisk(_Total)\\Avg. Disk Queue Length",
+              "sampleRate": "PT15S",
+              "unit": "Count"
+            },
+            {
+              "counterSpecifier": "\\PhysicalDisk(_Total)\\Avg. Disk Read Queue Length",
+              "sampleRate": "PT15S",
+              "unit": "Count"
+            },
+            {
+              "counterSpecifier": "\\PhysicalDisk(_Total)\\Avg. Disk Write Queue Length",
+              "sampleRate": "PT15S",
+              "unit": "Count"
+            },
+            {
+              "counterSpecifier": "\\LogicalDisk(_Total)\\% Free Space",
+              "sampleRate": "PT15S",
+              "unit": "Percent"
+            },
+            {
+              "counterSpecifier": "\\LogicalDisk(_Total)\\Free Megabytes",
+              "sampleRate": "PT15S",
+              "unit": "Count"
+            }
+          ]
+        },
+        "WindowsEventLog": {
+          "scheduledTransferPeriod": "PT5M",
+          "DataSource": [
+            { "name": "Application!*[System[(Level = 1 or Level = 2)]]" },
+            { "name": "Security!*[System[(Level = 1 or Level = 2)]" },
+            { "name": "System!*[System[(Level = 1 or Level = 2)]]" },
+            { "name": "Microsoft-Windows-DSC/Operational!*[System[(EventID=4249 or EventID=4097)]]" }
+          ]
+        }
+      }
+    }
+  },
+  "resources": [
+    {
+      "name": "[concat(variables('Deployment'),'-as',variables('AVAILABILITYSETS')[copyIndex()].ASName)]",
+      "type": "Microsoft.Compute/availabilitySets",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-04-30-preview",
+      "dependsOn": [],
+      "sku": {
+        "name": "Aligned"
+      },
+      "copy": {
+        "name": "asLoop",
+        "count": "[length( variables('AVAILABILITYSETS') )]"
+      },
+      "tags": {
+        "displayName": "availabilitySet"
+      },
+      "properties": {
+        "platformUpdateDomainCount": 5,
+        "platformFaultDomainCount": 3
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[resourceGroup().location]",
+      "name": "[concat(variables('Deployment'),'-nic',variables('AppServers')[copyIndex(0)].VMName)]",
+      "copy": {
+        "name": "nicLoop",
+        "count": "[length( variables('AppServers') )]"
+      },
+      "dependsOn": [
+        // Do not include dependencies in other deployments
+        //"[variables('VnetID')]",
+        "[concat(variables('Deployment'),'-publicip',variables('AppServers')[copyIndex(0)].VMName)]"
+      ],
+      "tags": {
+        "displayName": "vmAZX20X_NIC"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[concat(variables('VNetID'), '/subnets/',variables('AppServers')[copyIndex(0)].Subnet)]"
+              },
+              "publicIPAddress": {
+                "id": "[resourceId( 'Microsoft.Network/publicIPAddresses', concat(variables('Deployment'),'-publicip',variables('AppServers')[copyIndex(0)].VMName) )]"
+
+              }
+            }
+          }
+        ]
+      }
+    },
+    // MidTier VM Loop
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2017-03-30",
+      "name": "[concat(variables('Deployment'), '-vm', variables('AppServers')[copyIndex(0)].VMName)]",
+      "copy": {
+        "name": "vmLoop",
+        "count": "[length(variables('AppServers'))]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/', concat(variables('Deployment'),'-nic',variables('AppServers')[copyIndex(0)].VMName))]",
+        "[concat('Microsoft.Network/publicIPAddresses/', concat(variables('Deployment'),'-publicip',variables('AppServers')[copyIndex(0)].VMName))]",
+        "[concat('Microsoft.Compute/availabilitySets/', concat(variables('Deployment'), '-as',variables('AppServers')[copyIndex(0)].ASName))]"
+      ],
+      "tags": {
+        "displayName": "vmAZX20X",
+        "Environment": "[parameters('Environment')]"
+      },
+      "properties": {
+        "licenseType": "Windows_Server",
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', concat(variables('Deployment'), '-as',variables('AppServers')[copyIndex(0)].ASName))]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[variables('AppServers')[copyIndex(0)].VMSize]"
+        },
+        "osProfile": {
+          "computerName": "[variables('AppServers')[copyIndex(0)].VMName]",
+          "adminUsername": "[parameters('AdminUsername')]",
+          "adminPassword": "[parameters('AdminPassword')]",
+          "secrets": []
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('vmImagePublisher')]",
+            "offer": "[variables('vmImageOffer')]",
+            "sku": "[variables('vmWindowsOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(variables('Deployment'),variables('AppServers')[copyIndex(0)].VMName, '-OSDisk')]",
+            "caching": "ReadWrite",
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "[parameters('vmStorageAccountType')]"
+            }
+          },
+          "dataDisks": [
+            {
+              "name": "[concat(variables('Deployment'),'-',variables('AppServers')[copyIndex(0)].VMName, '-DataDisk')]",
+              "lun": 0,
+              "caching": "ReadWrite",
+              "diskSizeGB": "127",
+              "createOption": "Empty",
+              "managedDisk": {
+                "storageAccountType": "[parameters('vmStorageAccountType')]"
+              }
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('Deployment'),'-nic',variables('AppServers')[copyIndex(0)].VMName))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": "true",
+            "storageUri": "[concat('http://', parameters('Global').SANameDiag, '.blob.core.windows.net')]"
+          }
+        }
+      },
+      "resources": [
+        {
+          "name": "Microsoft.Powershell.DSC",
+          "type": "extensions",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2015-06-15",
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', concat(variables('Deployment'), '-vm', variables('AppServers')[copyIndex(0)].VMName))]"
+          ],
+          "tags": {
+            "displayName": "PowershellDSC"
+          },
+          "properties": {
+            "publisher": "Microsoft.Powershell",
+            "type": "DSC",
+            "typeHandlerVersion": "2.24",
+            "autoUpgradeMinorVersion": true,
+            "forceUpdateTag": "[parameters('DSCUpdateTagVersion')]",
+            "settings": {
+              "wmfVersion": "latest",
+              "configuration": {
+                "url": "[concat(parameters('_artifactsLocation'), '/', variables('DSCArchiveFolder'), '/', variables('DSCAppRolesFileNameArchive'))]",
+                "script": "[variables('DSCAppRolesFileName')]",
+                "function": "Main"
+              },
+              "configurationArguments": {
+                "DomainName": "[parameters('Global').domainName]",
+                "storageAccountName": "[parameters('Global').SAName]",
+                "StorageAccountKeySource": "[string(listKeys(variables('defaultStorageAccountid'),'2017-06-01').keys[0].value)]"
+              },
+              "configurationData": {
+                "url": "[concat(variables('ConfigDataPath'),variables('AppServers')[copyIndex(0)].Role,'-',variables('ConfigDataFileNameBase'))]"
+              }
+            },
+            "protectedSettings": {
+              "configurationArguments": {
+                "AdminCreds": {
+                  "UserName": "[parameters('AdminUserName')]",
+                  "Password": "[parameters('AdminPassword')]"
+                }
+              },
+              "configurationUrlSasToken": "[parameters('_artifactsLocationSasToken')]",
+              "configurationDataUrlSasToken": "[parameters('_artifactsLocationSasToken')]"
+            }
+          }
+        },
+        {
+          "condition": "[equals(parameters('Extensions').OMSAgent,1)]",
+          "type": "extensions",
+          "name": "MonitoringAgent",
+          "apiVersion": "2015-06-15",
+          "location": "[resourceGroup().location]",
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', concat(variables('Deployment'), '-vm', variables('AppServers')[copyIndex(0)].VMName))]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.EnterpriseCloud.Monitoring",
+            "type": "MicrosoftMonitoringAgent",
+            "typeHandlerVersion": "1.0",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "workspaceId": "[reference(variables('OMSworkspaceID'), '2017-04-26-preview').CustomerId]"
+            },
+            "protectedSettings": {
+              "workspaceKey": "[listKeys(variables('OMSworkspaceID'), '2015-11-01-preview').primarySharedKey]"
+            }
+          }
+        },
+        {
+          "condition": "[equals(parameters('Extensions').IaaSDiagnostics,1)]",
+          "type": "extensions",
+          "name": "IaaSDiagnostics",
+          "tags": {
+            "displayName": "IaaSDiagnostics"
+          },
+          "apiVersion": "2015-05-01-preview",
+          "location": "[resourceGroup().location]",
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', concat(variables('Deployment'), '-vm', variables('AppServers')[copyIndex(0)].VMName))]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.Azure.Diagnostics",
+            "type": "IaaSDiagnostics",
+            "typeHandlerVersion": "1.9",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "WadCfg": "[variables('WadCfg')]",
+              "StorageAccount": "[parameters('Global').SANameDiag]",
+              "StorageType": "TableAndBlob"
+            },
+            "protectedSettings": {
+              "storageAccountName": "[parameters('Global').SANameDiag]",
+              "storageAccountKey": "[listKeys(variables('accountid'),'2015-05-01-preview').key1]",
+              "storageAccountEndPoint": "https://core.windows.net/"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-15",
+      "name": "[concat(variables('Deployment'),'-publicip',variables('AppServers')[copyIndex(0)].VMName)]",
+      "copy": {
+        "name": "PublicIPLoop",
+        "count": "[length( variables('AppServers') )]"
+      },
+
+      "dependsOn": [],
+      "tags": {
+        "displayName": "vmMTX_PublicIP"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "[variables('AppServers')[copyIndex(0)].PublicIP]",
+        "dnsSettings": {
+          "domainNameLabel": "[toLower( concat(replace(parameters('Global').domainName,'.',''), variables('Deployment'), '-vm', variables('AppServers')[copyIndex(0)].VMName ) ) ]"
+        }
+      }
+    }
+  ],
+  "outputs": {
+    //"MT1-fqdn": {
+    //  "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses','PublicIP_vm',variables('AppServers')[0].VMName), '2016-07-01').dnsSettings.fqdn]",
+    //  "type": "string"
+    //}
+  }
+}

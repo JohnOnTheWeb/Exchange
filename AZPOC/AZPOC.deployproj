@@ -11,7 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>d387ab71-5871-4693-bef0-bffdb8ee3c43</ProjectGuid>
+    <ProjectGuid>89c95002-ed94-42bf-9946-57272a7f3deb</ProjectGuid>
   </PropertyGroup>
   <PropertyGroup>
     <TargetFrameworkIdentifier>Deployment</TargetFrameworkIdentifier>
@@ -27,29 +27,31 @@
   <ItemGroup>
     <Content Include="azuredeploy.json" />
     <Content Include="azuredeploy.parameters.json" />
-    <Content Include="CustomScripts\csexFileShare.ps1" />
+    <None Include="cert\AzureVpnClientCert.pfx" />
+    <None Include="cert\AzureVpnRootCert" />
+    <None Include="cert\AzureVpnRootCertBase64.cer" />
+    <None Include="cert\AzureVpnRootCertBase64.txt" />
+    <None Include="cert\GW-MGMT.zip" />
+    <Content Include="CustomScripts\CreateNAS.ps1" />
     <None Include="Deployment.targets">
       <Visible>False</Visible>
     </None>
     <Content Include="Deploy-AzureResourceGroup.ps1" />
-    <None Include="dsc\ExchangeSB.ps1" />
-    <None Include="dsc\ExchangeWebServer.ps1" />
-    <None Include="dsc\ExchangeWebServer.zip" />
-    <None Include="dsc\FileResourceDemo.ps1" />
-    <None Include="dsc\FileResourceDemo.zip" />
-    <None Include="ps1\azurefiles.ps1" />
-    <None Include="ps1\CreateFileShare.ps1" />
-    <None Include="shared\AGS.json" />
-    <None Include="shared\azuredeploy.json" />
-    <None Include="shared\BaseStorage.json" />
-    <None Include="shared\DBMain.json" />
-    <None Include="shared\DBWeb.json" />
-    <None Include="shared\ManagementVM.json" />
-    <None Include="shared\SBFarm.json" />
-    <None Include="shared\ServicesVM.json" />
-    <None Include="shared\TestVM.json" />
-    <None Include="shared\VNet.json" />
-    <None Include="shared\WebVM.json" />
+    <Content Include="shared\vnet.json" />
+    <Content Include="shared\storage.json" />
+    <Content Include="sqlscripts\Script_ServiceBusConfiguration.sql" />
+    <Content Include="sqlscripts\Script_ServiceBusLogging.sql" />
+    <Content Include="sqlscripts\Script_ServiceBusMetering.sql" />
+    <Content Include="sqlscripts\Script_ServiceBusPubSub.sql" />
+    <Content Include="sqlscripts\Script_ServiceBusServiceHost.sql" />
+    <Content Include="shared\SB_FARM.json" />
+    <Content Include="DSC\SB-SQL-DSC1.ps1" />
+    <Content Include="DSC\SB-APP-DSC1.ps1" />
+    <Content Include="shared\ManagementVM.json" />
+    <Content Include="shared\SB_SQL.json" />
+    <Content Include="shared\FileServerVM.json" />
+    <Content Include="shared\EXServices.json" />
+    <Content Include="DSC\BaseAppConfigure.ps1" />
   </ItemGroup>
   <Target Name="GetReferenceAssemblyPaths" />
 </Project>

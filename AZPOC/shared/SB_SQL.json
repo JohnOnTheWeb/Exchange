@@ -1,0 +1,434 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmStorageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Virtual Network Storage reference for VM "
+      }
+    },
+    "shutDownTime": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "1200",
+      "metadata": {
+        "description": "Global shut Down Time for VM's Created"
+      }
+    },
+    "configureAutoStartStop": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "no",
+      "metadata": {
+        "description": "Determines if auto Start and Stop is configured on VMs"
+      }
+    },
+    "vmAdminUserName": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "ManangementAdmin"
+    },
+    "vmAdminPassword": {
+      "type": "securestring"
+    },
+    "sqlsubnetID": {
+      "type": "string",
+      "metadata": {
+        "description": "Virtual network subnet reference."
+      }
+    },
+    "DeploymentID": {
+      "type": "string",
+      "defaultValue": "01",
+      "minLength": 2
+    },
+    "Prefix": {
+      "type": "string",
+      "defaultValue": "AZPOC",
+      "minLength": 1
+
+    },
+    "DeploymentInfo": {
+      "type": "object",
+      "metadata": {
+        "description": "Can be used to input LB/VM Etc objects from Parameters file"
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "Auto-generated container in staging storage account to receive post-build staging folder upload"
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Auto-generated token to access _artifactsLocation"
+      }
+    }
+  },
+  "variables": {
+    "Deployment": "[concat(parameters('Prefix'),'-',parameters('DeploymentID'))]",
+    "DeploymentID": {
+      "type": "string",
+      "defaultValue": "01",
+      "minLength": 2
+    },
+    "Prefix": {
+      "type": "string",
+      "defaultValue": "AZPOC",
+      "minLength": 1
+
+    },
+    "vmSize": "Standard_D2_v2",
+    "vmImagePublisher": "MicrosoftWindowsServer",
+    "vmImageOffer": "WindowsServer",
+    "vmWindowsOSVersion": "2012-R2-Datacenter",
+    "vmSQLImagePublisher": "MicrosoftSQLServer",
+    "vmSQLImageOffer": "SQL2016SP1-WS2016",
+    "vmSku": "Standard",
+    "SB-SQLServers": "[parameters('DeploymentInfo').VMSBSQL]",
+    "SB-SQL-DSC1ArchiveFolder": "DSC",
+    "SB-SQL-DSC1ArchiveFileName": "SB-SQL-DSC1.zip",
+    "DataDiskInfo": {
+
+      "STD": [
+        {
+          "name": "-data-DATA00",
+          "lun": 0,
+          "caching": "ReadOnly",
+          "diskSizeGB": "127",
+          "createOption": "Empty"
+        },
+        {
+          "name": "-data-LOGS01",
+          "lun": 4,
+          "caching": "None",
+          "diskSizeGB": "127",
+          "createOption": "Empty"
+        },
+        {
+          "name": "-data-TEMPDB01",
+          "lun": 5,
+          "caching": "ReadOnly",
+          "diskSizeGB": "127",
+          "createOption": "Empty"
+        },
+        {
+          "name": "-data-BACKUP00",
+          "lun": 6,
+          "caching": "None",
+          "diskSizeGB": "127",
+          "createOption": "Empty"
+        }
+      ],
+
+      "2": [
+        {
+          "name": "-data-DATA00",
+          "lun": 0,
+          "caching": "ReadOnly",
+          "diskSizeGB": "1023",
+          "createOption": "Empty"
+        },
+        {
+          "name": "-data-DATA01",
+          "lun": 1,
+          "caching": "ReadOnly",
+          "diskSizeGB": "1023",
+          "createOption": "Empty"
+        }
+      ]
+    }
+  },
+  "resources": [
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[resourceGroup().location]",
+      "name": "[concat(variables('Deployment'),'-nic',variables('SB-SQLServers')[copyIndex(0)].VMName)]",
+      "copy": {
+        "name": "nicLoop",
+        "count": "[length( variables('SB-SQLServers') )]"
+      },
+      "tags": {
+        "displayName": "vmSB-SQL_NIC"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[parameters('sqlsubnetID')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[concat(variables('Deployment'),'-asSQLSBDB')]",
+      "type": "Microsoft.Compute/availabilitySets",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-04-30-preview",
+      "dependsOn": [],
+      "sku": {
+        "name": "Aligned"
+      },
+      
+      "tags": {
+        "displayName": "SQLAvailabilitySet"
+      },
+      "properties": {
+        "platformUpdateDomainCount": 5,
+        "platformFaultDomainCount": 3
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2017-03-30",
+      "name": "[concat(variables('Deployment'), '-vm', variables('SB-SQLServers')[copyIndex(0)].VMName)]",
+      "copy": {
+        "name": "vmLoop",
+        "count": "[length(variables('SB-SQLServers'))]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/', concat(variables('Deployment'),'-nic',variables('SB-SQLServers')[copyIndex(0)].VMName))]",
+        "[concat('Microsoft.Compute/availabilitySets/', concat(variables('Deployment'),'-asSQLSBDB'))]"
+      ],
+      "tags": {
+        "displayName": "vmSB-SQL"
+
+      },
+      "properties": {
+        "licenseType": "Windows_Server",
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', concat(variables('Deployment'),'-asSQLSBDB'))]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[variables('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('SB-SQLServers')[copyIndex(0)].VMName]",
+          "adminUsername": "[parameters('vmAdminUsername')]",
+          "adminPassword": "[parameters('vmAdminPassword')]",
+          "secrets": []
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('vmImagePublisher')]",
+            "offer": "[variables('vmImageOffer')]",
+            "sku": "[variables('vmWindowsOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(variables('Deployment'),variables('SB-SQLServers')[copyIndex(0)].VMName, '-OSDisk')]",
+            "caching": "ReadWrite",
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "Standard_LRS"
+
+            }
+          },
+          "copy": [
+            {
+              "name": "dataDisks",
+              "count": "[length(variables('DataDiskInfo')[variables('SB-SQLServers')[copyIndex(0)].DataDCount])]",
+              "input": {
+                "name": "[concat(variables('Deployment'),variables('SB-SQLServers')[copyIndex(0)].VMName, variables('DataDiskInfo')[variables('SB-SQLServers')[copyIndex(0)].DataDCount][copyIndex('dataDisks')].name)]",
+                "lun": "[variables('DataDiskInfo')[variables('SB-SQLServers')[copyIndex(0)].DataDCount][copyIndex('dataDisks')].lun]",
+                "caching": "[variables('DataDiskInfo')[variables('SB-SQLServers')[copyIndex(0)].DataDCount][copyIndex('dataDisks')].caching]",
+                "diskSizeGB": "[variables('DataDiskInfo')[variables('SB-SQLServers')[copyIndex(0)].DataDCount][copyIndex('dataDisks')].diskSizeGB]",
+                "createOption": "[variables('DataDiskInfo')[variables('SB-SQLServers')[copyIndex(0)].DataDCount][copyIndex('dataDisks')].createOption]",
+                "managedDisk": {
+                  "storageAccountType": "Standard_LRS"
+                }
+              }
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('Deployment'),'-nic',variables('SB-SQLServers')[copyIndex(0)].VMName))]"
+            }
+          ]
+        }
+
+
+      },
+      "resources": [
+        {
+          "type": "microsoft.devtestlab/schedules",
+          "name": "[concat('shutdown-computevm-',variables('Deployment'), '-vm', variables('SB-SQLServers')[copyIndex(0)].VMName)]",
+          "apiVersion": "2016-05-15",
+          "location": "[resourceGroup().location]",
+          "condition": "[equals(parameters('configureAutoStartStop'),'yes')]",
+          "scale": null,
+          "tags": {
+            "displayName": "Shutdown"
+          },
+          "properties": {
+            "dailyRecurrence": {
+              "time": "[parameters('shutDownTime')]"
+            },
+            "notificationSettings": {
+              "status": "Disabled",
+              "timeInMinutes": 30
+            },
+            "provisioningState": "Succeeded",
+            "status": "Enabled",
+            "targetResourceId": "[resourceId('Microsoft.Compute/virtualMachines', concat(variables('Deployment'), '-vm', variables('SB-SQLServers')[copyIndex(0)].VMName))]",
+            "taskType": "ComputeVmShutdownTask",
+            "timeZoneId": "UTC"
+          },
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', concat(variables('Deployment'), '-vm', variables('SB-SQLServers')[copyIndex(0)].VMName))]"
+          ]
+        }//,
+        //{
+        //  "name": "Microsoft.Powershell.DSC",
+        //  "type": "extensions",
+        //  "location": "[resourceGroup().location]",
+        //  "apiVersion": "2016-03-30",
+        //  "dependsOn": [
+        //    "[resourceId('Microsoft.Compute/virtualMachines', concat(variables('Deployment'), '-vm', variables('SB-SQLServers')[copyIndex(0)].VMName))]"
+        //  ],
+        //  "tags": {
+        //    "displayName": "SB-SQL-DSC1"
+        //  },
+        //  "properties": {
+        //    "publisher": "Microsoft.Powershell",
+        //    "type": "DSC",
+        //    "typeHandlerVersion": "2.9",
+        //    "autoUpgradeMinorVersion": true,
+        //    "settings": {
+        //      "configuration": {
+        //        "url": "[concat(parameters('_artifactsLocation'), '/', variables('SB-SQL-DSC1ArchiveFolder'), '/', variables('SB-SQL-DSC1ArchiveFileName'))]",
+        //        "script": "SB-SQL-DSC1.ps1",
+        //        "function": "Main"
+        //      },
+        //      "configurationArguments": {
+        //        "nodeName": "[concat(variables('Deployment'), '-vm', variables('SB-SQLServers')[copyIndex(0)].VMName)]"
+        //      }
+        //    },
+        //    "protectedSettings": {
+        //      "configurationUrlSasToken": "[parameters('_artifactsLocationSasToken')]"
+        //    }
+        //  }
+        //}
+
+      ]
+    },
+    {
+      "name": "ExchangeMainDBNic",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-03-30",
+      "dependsOn": [
+
+      ],
+      "tags": {
+        "displayName": "ExchangeMainDBNic"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[parameters('sqlsubnetID')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "ExchangeMainDB",
+      "type": "Microsoft.Compute/virtualMachines",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', 'ExchangeMainDBNic')]"
+      ],
+      "tags": {
+        "displayName": "ExchangeMainDB"
+      },
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "ExcMainDb01",
+          "adminUsername": "[parameters('vmAdminUserName')]",
+          "adminPassword": "[parameters('vmAdminPassword')]"
+        },
+
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('vmSQLImagePublisher')]",
+            "offer": "[variables('vmSQLImageOffer')]",
+            "sku": "[variables('vmSku')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "vmPrivateOSDisk",
+            "vhd": {
+              "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', parameters('vmStorageAccountName')), '2016-01-01').primaryEndpoints.blob, 'vhds', '/', 'vmMainDBOSDisk', '.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', 'ExchangeMainDBNic')]"
+            }
+
+
+          ]
+        }
+      },
+      "resources": [
+        {
+          "type": "microsoft.devtestlab/schedules",
+          "name": "[concat('shutdown-computevm-','ExchangeMainDB')]",
+          "apiVersion": "2016-05-15",
+          "location": "[resourceGroup().location]",
+          "condition": "[equals(parameters('configureAutoStartStop'),'yes')]",
+          "scale": null,
+          "tags": {
+            "displayName": "Shutdown"
+          },
+          "properties": {
+            "dailyRecurrence": {
+              "time": "[parameters('shutDownTime')]"
+            },
+            "notificationSettings": {
+              "status": "Disabled",
+              "timeInMinutes": 30
+            },
+            "provisioningState": "Succeeded",
+            "status": "Enabled",
+            "targetResourceId": "[resourceId('Microsoft.Compute/virtualMachines', 'ExchangeMainDB')]",
+            "taskType": "ComputeVmShutdownTask",
+            "timeZoneId": "UTC"
+          },
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', 'ExchangeMainDB')]"
+          ]
+        }
+      ]
+
+    }
+  ],
+  "outputs": {
+  }
+}

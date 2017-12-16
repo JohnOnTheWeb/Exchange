@@ -1,0 +1,230 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    // Global
+    "DeploymentID": {
+      "type": "string",
+      "defaultValue": "01",
+      "maxLength": 1
+    },
+    "Prefix": {
+      "type": "string",
+      "defaultValue": "AZE2",
+      "minLength": 1,
+      "allowedValues": [
+        "AZE2",
+        "AZE",
+        "AZW2",
+        "AZW"
+      ]
+    },
+    "Environment": {
+      "type": "string",
+      "defaultValue": "D",
+      "allowedValues": [
+        "D",
+        "Q",
+        "T",
+        "U",
+        "Z",
+        "P"
+      ]
+    },
+    "Stage": {
+      "type": "object",
+      "defaultValue": {
+        "OMS": 1,
+        "VNet": 1,
+        "AD": 1,
+        "PLB": 0,
+        "ILB": 0,
+        "SQL": 0,
+        "VMPublic": 1,
+        "VMPrivate": 1,
+        "WAF": 0
+      }
+    },
+
+    // Used for all VM's, local and Domain Admin Password
+    "vmAdminPassword": {
+      "type": "securestring"
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "Auto-generated container in staging storage account to receive post-build staging folder upload"
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Auto-generated token to access artifactsLocation"
+      }
+    },
+    "WildcardCertBase64": {
+      "type": "securestring"
+    },
+    "DSCUpdateTagVersion": {
+      "type": "string",
+      "defaultValue": "1.0",
+      "metadata": {
+        "description": "This value must be changed from a previous deployment to ensure the DSC extensions will re-run"
+      }
+    },
+    "StorageAccountKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Used for copying source files to DSC from Azure Files storage"
+      }
+    },
+    "Extensions": {
+      "type": "object",
+      "defaultValue": {
+        "Antimalware": 1,
+        "MonitoringAgent": 1,
+        "IaaSDiagnostics": 1
+      }
+    },
+    "DeploymentInfo": {
+      "type": "object",
+      "metadata": {
+        "description": "Can be used to input LB/VM Etc objects from Parameters file"
+      }
+    },
+    "Global": {
+      "type": "object"
+    }
+  },
+  "variables": {
+    // Global  BRWDev101
+    "Deployment": "[concat(parameters('Prefix'),'-',parameters('Environment'),parameters('DeploymentID'),'-', parameters('Global').AppName)]",
+
+    // subscriptionId
+    "subscriptionId": "[subscription().subscriptionId]",
+
+    // rgName
+    "resourceGroupName": "[resourceGroup().name]",
+
+    // Subnet info for load balancers
+    //"snNameBE01": "[concat(variables('Deployment'),'-snBE01')]",
+    //"snNameFE01": "[concat(variables('Deployment'),'-snFE01')]",
+    //"snNameMT01": "[concat(variables('Deployment'),'-snMT01')]",
+
+    "VNetID": "[resourceId(variables('subscriptionId'),variables('ResourceGroupName'), 'Microsoft.Network/VirtualNetworks', concat(Variables('Deployment'),'-vn'))]",
+
+    "Subnet": {
+      "BE01": "[concat(variables('VNetID'), '/subnets/', 'snBE01')]",
+      "FE01": "[concat(variables('VNetID'), '/subnets/', 'snFE01')]",
+      "MT01": "[concat(variables('VNetID'), '/subnets/', 'snMT01')]"
+    },
+    // Network
+    "networkId": "[concat('10.144.',string(sub(144,int(parameters('DeploymentID')))))]",
+
+    "LBInfo": "[parameters('DeploymentInfo').LBInfo]",
+
+    "OMSworkspaceID": "[resourceId('Microsoft.OperationalInsights/workspaces',concat(replace(variables('Deployment'),'-',''),'OMSLogAnalytics'))]"
+
+  },
+  "resources": [
+    {
+      "apiVersion": "2017-08-01",
+      "name": "[concat(variables('Deployment'),variables('LBInfo')[copyIndex()].LBName)]",
+      "type": "Microsoft.Network/loadBalancers",
+      "location": "[resourceGroup().location]",
+      "sku": {
+        "name": "Standard"
+      },
+      "copy": {
+        "name": "ilbLoop",
+        "count": "[length(variables('LBInfo'))]"
+      },
+      "tags": {
+        "displayName": "ILB_Deploy"
+      },
+      "properties": {
+        "backendAddressPools": [
+          {
+            "name": "[variables('LBInfo')[copyIndex()].ASName]"
+          }
+        ],
+        "copy": [
+          {
+            "name": "frontendIPConfigurations",
+            "count": "[length(variables('LBInfo')[copyIndex()].Services)]",
+            "input": {
+              "name": "[variables('LBInfo')[copyIndex()].Services[copyIndex('frontendIPConfigurations')].LBFEName]",
+              "properties": {
+                "privateIPAllocationMethod": "Static",
+                "privateIPAddress": "[concat(variables('networkId'),'.',variables('LBInfo')[copyIndex()].Services[copyIndex('frontendIPConfigurations')].LBFEIP)]",
+                "subnet": {
+                  "id": "[variables('Subnet')[variables('LBInfo')[copyIndex()].SNName]]"
+                }
+              }
+            }
+          },
+          {
+            "name": "loadBalancingRules",
+            "count": "[length(variables('LBInfo')[copyIndex()].Services)]",
+            "input": {
+              "name": "[variables('LBInfo')[copyIndex()].Services[copyIndex('loadBalancingRules')].LBFEName]",
+              "properties": {
+                "frontendIPConfiguration": {
+                  "id": "[concat(resourceId('Microsoft.Network/loadBalancers/',concat(variables('Deployment'),variables('LBInfo')[copyIndex()].LBName)),'/frontendIPConfigurations/',variables('LBInfo')[copyIndex()].Services[copyIndex('loadBalancingRules')].LBFEName)]"
+                },
+                "backendAddressPool": {
+                  "id": "[concat(resourceId('Microsoft.Network/loadBalancers/',concat(variables('Deployment'),variables('LBInfo')[copyIndex()].LBName)),'/backendAddressPools/',variables('LBInfo')[copyIndex()].ASName)]"
+                },
+                "probe": {
+                  "id": "[concat(resourceId('Microsoft.Network/loadBalancers/',concat(variables('Deployment'),variables('LBInfo')[copyIndex()].LBName)),'/probes/',variables('LBInfo')[copyIndex()].Services[copyIndex('loadBalancingRules')].LBFEName)]"
+                },
+                "protocol": "Tcp",
+                "frontendPort": "[variables('LBInfo')[copyIndex()].Services[copyIndex('loadBalancingRules')].LBFEPort]",
+                "backendPort": "[variables('LBInfo')[copyIndex()].Services[copyIndex('loadBalancingRules')].LBBEPort]",
+                "enableFloatingIP": true
+              }
+            }
+          },
+          {
+            "name": "probes",
+            "count": "[length(variables('LBInfo')[copyIndex()].Services)]",
+            "input": {
+              "name": "[variables('LBInfo')[copyIndex()].Services[copyIndex('probes')].LBFEName]",
+              "properties": {
+                "protocol": "Tcp",
+                "port": "[variables('LBInfo')[copyIndex()].Services[copyIndex('probes')].LBBEProbePort]",
+                "intervalInSeconds": 5,
+                "numberOfProbes": 2
+              }
+            }
+          }
+        ]
+      },
+      "resources": [
+        {
+          "type": "providers/diagnosticSettings",
+          "name": "Microsoft.Insights/service",
+          "dependsOn": [
+                "[concat(variables('Deployment'),variables('LBInfo')[copyIndex()].LBName)]"          ],
+          "apiVersion": "2015-07-01",
+          "properties": {
+            "workspaceId": "[variables('OMSworkspaceID')]",
+            "logs": [],
+            "metrics": [
+              {
+                "timeGrain": "PT5M",
+                "enabled": true,
+                "retentionPolicy": {
+                  "enabled": false,
+                  "days": 0
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "outputs": {
+  }
+}

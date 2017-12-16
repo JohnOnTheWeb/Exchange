@@ -1,0 +1,153 @@
+{"$schema":"https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#","contentVersion":"1.0.0.0",
+    
+        "parameters":{
+            "Environment":{"value":"Dev"},
+            "Extensions":{"value":{
+                            "Antimalware": 1,
+                            "OMSAgent": 1,
+                            "IaaSDiagnostics": 1,
+                            "Dependency": 0,
+                            "Backup": 0
+                          }},
+            "WildcardCertBase64":{"reference":{"keyVault":{"id":"/subscriptions/b8f402aa-20f7-4888-b45c-3cf086dad9c3/resourceGroups/rgGlobal/providers/Microsoft.KeyVault/vaults/kvContosoEastUS2"},
+            "secretName":"MultiDomainwildcardBase64"}},
+            "vmAdminPassword":{"reference":{"keyVault":{"id":"/subscriptions/b8f402aa-20f7-4888-b45c-3cf086dad9c3/resourceGroups/rgGlobal/providers/Microsoft.KeyVault/vaults/kvContosoEastUS2"},"secretName":"BRW"}},
+            "StorageAccountKey":{"reference":{"keyVault":{"id":"/subscriptions/b8f402aa-20f7-4888-b45c-3cf086dad9c3/resourceGroups/rgGlobal/providers/Microsoft.KeyVault/vaults/kvContosoEastUS2"},"secretName":"StorageAccountKeySource"}},
+            "DSCUpdateTagVersion":{"value":"1.0"},
+            "DeploymentID":{"value":"1"},
+            "Stage":{"value":{
+                       "OMS": 1,
+                       "VNet": 1,
+                       "AD": 1,
+                       "PLB": 0,
+                       "ILB": 0,
+                       "SQL": 0,
+                       "VMPublic": 1,
+                       "VMPrivate": 0,
+                       "VMLinux": 1,
+                       "WAF": 0
+                     }},
+            "Global":{
+                "value":{
+                    "AppName":"AIDF",
+                    "RGName":"rgGlobal",
+                    "SADiagName":"saeus2globaldiag",
+                    "SAName":"saeastus2",
+                    "KVName":"kvContosoEastUS2",
+                    "DomainName":"contoso.com",
+                  "AdminUserName": "localadmin",
+                  "ProxyServer": "RHL02",
+                    "certificateUrl":"https://kvcontosoeastus2.vault.azure.net:443/secrets/MultiDomainwildcard/07534e07585c4f6ba3ffd1769af55d01",
+                    "certificateThumbprint":"78F957B6738273FA67C9756944E52FA0C1AAF307"
+                }
+            },
+                
+            "DeploymentInfo":{
+                "value":{
+                    "DC1PrivateIPAddress":"230",
+                    "DC2PrivateIPAddress":"231",
+                    "DC1HostName":"AD01",
+                    "DC2HostName":"AD02",
+    
+                  "computeSize": {
+                    "AD": "Standard_A2m_v2",
+                    "SQL": "Standard_DS4_v2",
+                    "FIL": "Standard_DS1",
+                    "JMP": "Standard_DS2_V2",
+                    "RHEL": "Standard_DS2_V2"
+                  },
+                    
+                    "vmStorageAccountType":"Standard_LRS",
+                    
+                    "DataDiskInfo":{
+                        "STD1":[
+                            {"name":"-data-DATA00","lun":0,"caching":"ReadOnly","diskSizeGB":"127","createOption":"Empty"}
+                        ],  
+                        "STD2":[
+                            {"name":"-data-DATA00","lun":0,"caching":"ReadOnly","diskSizeGB":"127","createOption":"Empty"},
+                            {"name":"-data-DATA01","lun":1,"caching":"ReadOnly","diskSizeGB":"127","createOption":"Empty"}
+                        ],
+                        "SQL1":[
+                            {"name":"-DATA-DATA00","lun":0,"caching":"ReadOnly","diskSizeGB":"1023","createOption":"Empty"},
+                            {"name":"-DATA-DATA01","lun":1,"caching":"ReadOnly","diskSizeGB":"1023","createOption":"Empty"},
+                            {"name":"-DATA-DATA02","lun":2,"caching":"ReadOnly","diskSizeGB":"1023","createOption":"Empty"},
+                            {"name":"-DATA-DATA03","lun":3,"caching":"ReadOnly","diskSizeGB":"1023","createOption":"Empty"},
+                            {"name":"-DATA-LOGS01","lun":8,"caching":"None","diskSizeGB":"1023","createOption":"Empty"},
+                            {"name":"-DATA-TEMPDB01","lun":12,"caching":"ReadOnly","diskSizeGB":"1023","createOption":"Empty"},
+                            {"name":"-DATA-BACKUP00","lun":15,"caching":"None","diskSizeGB":"1023","createOption":"Empty"}
+                        ]
+                    },
+                    
+                    "SUBNETS":"128 + 64 + 32 + 16 + 16",
+                    "SubnetInfo":[
+                        {"name":"MT01","prefix":"0/25"},
+                        {"name":"FE01","prefix":"128/26"},
+                        {"name":"BE01","prefix":"192/27"},
+                        {"name":"AD01","prefix":"224/28"},
+                        {"name":"WAF01","prefix":"240/28"}
+                    ],
+                    
+                    "LBInfo":[
+                        {"LBName":"-ilbSQL","ASName":"SQL","SNName":"BE01",
+                            "Services":[
+                                {"LBFEName":"SQLEDG01","LBFEIP":"219","LBFEPort":1433,"LBBEPort":1433,"LBBEProbePort":59999},
+                                {"LBFEName":"SQLEDG02","LBFEIP":"218","LBFEPort":1433,"LBBEPort":1432,"LBBEProbePort":59998},
+                                {"LBFEName":"SQLOCR01","LBFEIP":"217","LBFEPort":1433,"LBBEPort":1431,"LBBEProbePort":59997}
+                            ]
+                        },
+                        {"LBName":"-ilbCMB","ASName":"CMB","SNName":"MT01",
+                            "Services":[
+                                {"LBFEName":"CMB","LBFEIP":"126","LBFEPort":80,"LBBEPort":80,"LBBEProbePort":80}
+                            ]
+                        }
+                    ],
+                    
+                    "WAFInfo":[
+                        {"WAFName":"CONNECTS","WAFEnabled":true,"WAFMode":"Detection","WAFSize":"WAF_Medium","WAFCapacity":2,"PrivateIP":"252",
+                            "FQDNs":[
+                                {"fqdn":"WebTier01.Contoso.com"},
+                                {"fqdn":"WebTier02.Contoso.com"},
+                                {"fqdn":"WebTier03.Contoso.com"},
+                                {"fqdn":"WebTier04.Contoso.com"},
+                                {"fqdn":"WebTier05.Contoso.com"},
+                                {"fqdn":"WebTier06.Contoso.com"}
+                            ]
+                        }
+                    ],
+                    
+                    "JMPServersAS":["JMP"],
+                    "SQLServersAS":["SQL"],
+                    "APPServersAS":["FIL"],
+                    "LINServersAS":["RHEL"],
+                    
+                    "JMPServers":[
+                        {"VMName":"JMP03","Role":"JMP","DDRole":"STD1","ASName":"JMP","Subnet":"FE01","LB":0,"PublicIP":"Static"},
+                        {"VMName":"JMP04","Role":"JMP","DDRole":"STD1","ASName":"JMP","Subnet":"FE01","LB":0,"PublicIP":"Static"}
+                    ],
+                        
+                    "SQLServers":[
+                        {"VMName":"SQL01","CLNAME":"CLST01","CLIP":"216","InstanceName":"MSSQLSERVER","DDRole":"SQL1","ASName":"SQL","Role":"SQLp","Subnet":"BE01","LB":1,"FastNic":1},
+                        {"VMName":"SQL02","CLNAME":"CLST01","CLIP":"216","InstanceName":"MSSQLSERVER","DDRole":"SQL1","ASName":"SQL","Role":"SQLs","Subnet":"BE01","LB":1,"FastNic":1}
+                    ],
+                    
+                    "APPServers":[
+                        {"VMName":"FIL01","Role":"FIL","DDRole":"STD1","ASName":"FIL","Subnet":"BE01","LB":0,"FastNic":1},
+                        {"VMName":"FIL02","Role":"FIL","DDRole":"STD1","ASName":"FIL","Subnet":"BE01","LB":0,"FastNic":1}
+                    ],
+                    
+                    "LINServers":[
+                        {"VMName":"RHL01","Role":"RHEL","DDRole":"STD1","ASName":"RHEL","Subnet":"MT01","LB":0},
+                        {"VMName":"RHL02","Role":"PROXYRHEL","DDRole":"STD1","ASName":"RHEL","Subnet":"MT01","LB":0}
+                    ]
+                }
+            },
+          "vmAdminPasswordDev": {
+            "reference": {
+              "keyVault": {
+                "id": "/subscriptions/b8f402aa-20f7-4888-b45c-3cf086dad9c3/resourceGroups/rgGlobal/providers/Microsoft.KeyVault/vaults/kvContosoEastUS2"
+              },
+              "secretName": "BRW"
+            }
+          }
+        }
+    }

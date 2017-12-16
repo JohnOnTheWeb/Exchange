@@ -1,0 +1,40 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmAdminPasswordDev": {
+      "type": "securestring"
+    },
+    "vmAdminPassword": {
+      "type": "securestring"
+    },
+    "Environment": {
+      "type": "string",
+      "defaultValue": "D",
+      "allowedValues": [
+        "Prod",
+        "Dev"
+      ]
+    }
+  },
+  "variables": {
+
+    "Secret": {
+      "Dev": "vmAdminPasswordDev",
+      "Prod": "vmAdminPassword"
+    },
+
+    "MySecret": "[variables('Secret')[parameters('Environment')]]"
+
+  },
+  "resources": [
+
+  ],
+  "outputs": {
+    //"foo": {
+    //  "value": "[parameters(variables('MySecret'))]",
+    //  "type": "string"
+    //}
+  }
+
+}

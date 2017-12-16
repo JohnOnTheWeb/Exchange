@@ -1,0 +1,272 @@
+﻿{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        // Global
+        "DeploymentID": {
+            "type": "string",
+            "defaultValue": "1",
+            "maxLength": 1
+        },
+        "Prefix": {
+            "type": "string",
+            "defaultValue": "AZE2",
+            "minLength": 1,
+            "allowedValues": [
+                "AZE2",
+                "AZE",
+                "AZW2",
+                "AZW"
+            ]
+        },
+        "Environment": {
+            "type": "string",
+            "defaultValue": "D",
+            "allowedValues": [
+                "D",
+                "Q",
+                "T",
+                "U",
+                "Z",
+                "P"
+            ]
+        },
+        "Stage": {
+            "type": "object",
+            "defaultValue": {
+                "OMS": 1,
+                "VNet": 1,
+                "AD": 1,
+                "PLB": 0,
+                "ILB": 0,
+                "SQL": 0,
+                "VMPublic": 1,
+                "VMPrivate": 1,
+                "WAF": 0
+            }
+        },
+        
+        // Used for all VM's, local and Domain Admin Password
+        "vmAdminPassword": {
+            "type": "securestring"
+        },
+        "_artifactsLocation": {
+            "type": "string",
+            "metadata": {
+                "description": "Auto-generated container in staging storage account to receive post-build staging folder upload"
+            }
+        },
+        "_artifactsLocationSasToken": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Auto-generated token to access artifactsLocation"
+            }
+        },
+        "WildcardCertBase64": {
+            "type": "securestring"
+        },
+        "DSCUpdateTagVersion": {
+            "type": "string",
+            "defaultValue": "1.0",
+            "metadata": {
+                "description": "This value must be changed from a previous deployment to ensure the DSC extensions will re-run"
+            }
+        },
+        "StorageAccountKey": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Used for copying source files to DSC from Azure Files storage"
+            }
+        },
+        "Extensions": {
+            "type": "object",
+            "defaultValue": {
+                "Antimalware": 1,
+                "MonitoringAgent": 1,
+                "IaaSDiagnostics": 1
+            }
+        },
+        "DeploymentInfo": {
+            "type": "object",
+            "metadata": {
+                "description": "Can be used to input LB/VM Etc objects from Parameters file"
+            }
+        },
+        "Global": {
+            "type": "object"
+        }
+    },
+    "variables": {
+        "Deployment": "[concat(parameters('Prefix'),'-',parameters('Environment'),parameters('DeploymentID'),'-', parameters('Global').AppName)]",
+
+        "DeploymentInfoObject": {
+            "OMS": "1-azuredeploy-LogAnalytics.json",
+            "VNet": "2-azuredeploy-VNet.json",
+            "AD": "3-azuredeploy-VMDirectoryNew.json",
+            "ILB": "4-azuredeploy-ILBalancer.json",
+            "PLB": "4-azuredeploy-PLBalancerLoop.json",
+            "WAF": "4-azuredeploy-WAF.json",
+            "VMPublic": "5-azuredeploy-VMPublic.json",
+            "VMSQLPrivate": "6-azuredeploy-VMSQLPrivate.json",
+          "VMPrivate": "7-azuredeploy-VMPrivate.json",
+          "VMLinux": "7-azuredeploy-VMPrivateLinux.json"
+        }
+
+    },
+    "resources": [
+        {
+            "condition": "[equals(parameters('Stage').OMS,1)]",
+            "name": "[concat('dp', variables('Deployment'), 'OMS')]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2016-09-01",
+          "dependsOn": [],
+          "properties": {
+            
+            "mode": "Incremental",
+            "templateLink": {
+              "uri": "[concat(parameters('_artifactsLocation'), '/', variables('DeploymentInfoObject').OMS, parameters('_artifactsLocationSasToken'))]",
+              "contentVersion": "1.0.0.0"
+            },
+            "parameters": "[deployment().properties.parameters]"
+          }
+        },
+        {
+            "condition": "[equals(parameters('Stage').VNET,1)]",
+            "name": "[concat('dp', variables('Deployment'), 'VNET')]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2016-09-01",
+            "dependsOn": [],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[concat(parameters('_artifactsLocation'), '/', variables('DeploymentInfoObject').VNET, parameters('_artifactsLocationSasToken'))]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": "[deployment().properties.parameters]"
+            }
+        },
+        {
+            "condition": "[equals(parameters('Stage').ILB,1)]",
+            "name": "[concat('dp', variables('Deployment'), 'ILB')]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2016-09-01",
+            "dependsOn": [
+                "[concat('dp', variables('Deployment'), 'VNET')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[concat(parameters('_artifactsLocation'), '/', variables('DeploymentInfoObject').ILB, parameters('_artifactsLocationSasToken'))]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": "[deployment().properties.parameters]"
+            }
+        },
+        {
+            "condition": "[equals(parameters('Stage').AD,1)]",
+            "name": "[concat('dp', variables('Deployment'), 'AD')]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2016-09-01",
+            "dependsOn": [
+                "[concat('dp', variables('Deployment'), 'VNET')]",
+                "[concat('dp', variables('Deployment'), 'OMS')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[concat(parameters('_artifactsLocation'), '/', variables('DeploymentInfoObject').AD, parameters('_artifactsLocationSasToken'))]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": "[deployment().properties.parameters]"
+            }
+        },
+        {
+            "condition": "[equals(parameters('Stage').VMPublic,1)]",
+            "name": "[concat('dp', variables('Deployment'), 'VMPublic')]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2016-09-01",
+            "dependsOn": [
+                "[concat('dp', variables('Deployment'), 'AD')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[concat(parameters('_artifactsLocation'), '/', variables('DeploymentInfoObject').VMPublic, parameters('_artifactsLocationSasToken'))]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": "[deployment().properties.parameters]"
+            }
+        },
+        {
+            "condition": "[equals(parameters('Stage').SQL,1)]",
+            "name": "[concat('dp', variables('Deployment'), 'SQL')]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2016-09-01",
+            "dependsOn": [
+                "[concat('dp', variables('Deployment'), 'AD')]",
+                "[concat('dp', variables('Deployment'), 'ILB')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[concat(parameters('_artifactsLocation'), '/', variables('DeploymentInfoObject').VMSQLPrivate, parameters('_artifactsLocationSasToken'))]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": "[deployment().properties.parameters]"
+            }
+        },
+      {
+        "condition": "[equals(parameters('Stage').VMPrivate,1)]",
+        "name": "[concat('dp', variables('Deployment'), 'VMPrivate')]",
+        "type": "Microsoft.Resources/deployments",
+        "apiVersion": "2016-09-01",
+        "dependsOn": [
+          "[concat('dp', variables('Deployment'), 'AD')]"
+        ],
+        "properties": {
+          "mode": "Incremental",
+          "templateLink": {
+            "uri": "[concat(parameters('_artifactsLocation'), '/', variables('DeploymentInfoObject').VMPrivate, parameters('_artifactsLocationSasToken'))]",
+            "contentVersion": "1.0.0.0"
+          },
+          "parameters": "[deployment().properties.parameters]"
+        }
+      },
+      {
+            "condition": "[equals(parameters('Stage').VMLinux,1)]",
+            "name": "[concat('dp', variables('Deployment'), 'VMLinux')]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2016-09-01",
+            "dependsOn": [
+                "[concat('dp', variables('Deployment'), 'AD')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[concat(parameters('_artifactsLocation'), '/', variables('DeploymentInfoObject').VMLinux, parameters('_artifactsLocationSasToken'))]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": "[deployment().properties.parameters]"
+            }
+        },
+        {
+            "condition": "[equals(parameters('Stage').WAF,1)]",
+            "name": "[concat('dp', variables('Deployment'), 'WAF')]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2016-09-01",
+            "dependsOn": [
+                "[concat('dp', variables('Deployment'), 'VNET')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[concat(parameters('_artifactsLocation'), '/', variables('DeploymentInfoObject').WAF, parameters('_artifactsLocationSasToken'))]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": "[deployment().properties.parameters]"
+            }
+        }
+    ],
+    "outputs": {
+    }
+}

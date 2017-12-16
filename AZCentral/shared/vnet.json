@@ -1,0 +1,157 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmMgmtPrivatePublicIPDnsName": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "ex-managment-ipdns"
+    },
+    "DeploymentID": {
+      "type": "string",
+      "defaultValue": "01",
+      "minLength": 2
+    },
+    "subnetVPNRange": {
+      "type": "string",
+      "metadata": {
+        "description": "IP range of VPN subnet."
+      }
+    },
+    "Prefix": {
+      "type": "string",
+      "defaultValue": "AZPOC",
+      "minLength": 1
+
+    },
+    "vNetRange": {
+      "type": "string",
+      "metadata": {
+        "description": "IP range of the virtual network."
+      }
+    },
+    "ExternalVPNRange": {
+      "type": "string",
+      "metadata": {
+        "description": "IP range of first subnet."
+      }
+    }
+
+  },
+  "variables": {
+    "vNetName": "[concat(parameters('Prefix'),'-',parameters('DeploymentID'),'-vn')]"
+  },
+  "resources": [
+    {
+      "name": "ExMgtPubIPName",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-03-30",
+      "dependsOn": [],
+      "tags": {
+        "displayName": "ExMgtPubIPName"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('vmMgmtPrivatePublicIPDnsName')]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "dependsOn": [
+
+      ],
+      "location": "[resourceGroup().location]",
+      "name": "[variables('vNetName')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('vNetRange')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "GatewaySubnet",
+            "properties": {
+              "addressPrefix": "[parameters('subnetVPNRange')]"
+
+            }
+          }
+        ]
+      },
+      "tags": {
+        "displayName": "VirtualNetwork"
+      },
+      "type": "Microsoft.Network/virtualNetworks"
+    },
+    {
+      "comments": "VPN Gateway",
+      "type": "Microsoft.Network/virtualNetworkGateways",
+      "name": "ExchangeVPNGateway",
+      "apiVersion": "2017-06-01",
+      "location": "[resourceGroup().location]",
+      "scale": null,
+      "properties": {
+        "resourceGuid": "c6888b46-4b36-4c53-94ef-b5f0d75808e7",
+        "ipConfigurations": [
+          {
+            "name": "default",
+            "etag": "W/\"938f80cb-720f-44ec-b490-91731eed1ea5\"",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', 'ExMgtPubIPName')]"
+              },
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vNetName'), 'GatewaySubnet')]"
+              }
+            }
+          }
+        ],
+        "sku": {
+          "name": "Standard",
+          "tier": "Standard",
+          "capacity": 2
+        },
+        "gatewayType": "Vpn",
+        "vpnType": "RouteBased",
+        "enableBgp": false,
+        "activeActive": false,
+        "vpnClientConfiguration": {
+          "vpnClientAddressPool": {
+            "addressPrefixes": [
+              "[parameters('ExternalVPNRange')]"
+            ]
+          },
+          "vpnClientProtocols": [
+            "SSTP",
+            "IkeV2"
+          ],
+          "vpnClientRootCertificates": [
+            {
+              "name": "AzureVPN",
+              "etag": "W/\"938f80cb-720f-44ec-b490-91731eed1ea5\"",
+              "properties": {
+                "publicCertData": "MIIDCDCCAfSgAwIBAgIQ5C9DwmQmbohPmATY8ZmpYTAJBgUrDgMCHQUAMBsxGTAXBgNVBAMTEEF6dXJlVnBuUm9vdENlcnQwHhcNMTcxMjAyMTUxNzM4WhcNMzkxMjMxMjM1OTU5WjAbMRkwFwYDVQQDExBBenVyZVZwblJvb3RDZXJ0MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuVhhrkk9JpvEU/8Wn2zRY+5CF8gk4/sWAuEjaSPVYLtq5AvbvPqgkmDmjaHkkqxpWOa/WqbL/domikxU3hP/Ui58RPOOqZnzf71QHuF6xhPTiAFnXMn7Xe8/Mb6DcfnTl7jX906aRyY8VXm1y5MDNrhRlyoZ1kohaYb6XyURgYSfgVBb1Nqzwfo4PlU4bgTTEAMrZDE4uQTAnJwwRw/Fpoyo0hmD8GlA43R0BRjKm5/cDgTrnTE9bnEK/j0y2IhR/y7QMflbFqZDQklTV6X987/xrKS0QnFqkVqv1Bk4CUOVF/7vPIWyPxaSNdPic61EJ7gYDTvj8C2e5xlbd52NrQIDAQABo1AwTjBMBgNVHQEERTBDgBAsuAXdOkaEwpfsa6qkSb+koR0wGzEZMBcGA1UEAxMQQXp1cmVWcG5Sb290Q2VydIIQ5C9DwmQmbohPmATY8ZmpYTAJBgUrDgMCHQUAA4IBAQAEgXNta49hpjQyH8I3BrgOqkyiD4zFJlpK2WgWT+Urad7Jeko3mR1nKHYMvlSs9y85VcxI1F13+EKzDZGmrjTlRPExb/fdjzj2WPsuEmsq3rBBKMKTHC7OahZo3m9sS3nbdushwIpvKEKR7yRo9UxQ0nGllg91lO/yBAloKH7mqnxeG2bP1Po+TtnlI8e4YaTvrplZ1v0d4GEBK3pOj/xoNIe5qXsJbI4PykzTiLZg8y8+8oyj1dARjbWluA3lzkBlUmNl/+ina77BeiC3W6TYTIePDK5gad6dL6QnMRVkzWYSdwD4oWqZDZ767SjsIjtb4uEidsdvbvYulpUkhtx8"
+              }
+            }
+          ],
+          "vpnClientRevokedCertificates": []
+        },
+        "bgpSettings": {
+          "asn": 65515,
+          "bgpPeeringAddress": "10.100.7.254",
+          "peerWeight": 0
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', 'ExMgtPubIPName')]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vNetName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+  }
+}

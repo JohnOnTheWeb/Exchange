@@ -1,0 +1,100 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|AnyCPU">
+      <Configuration>Debug</Configuration>
+      <Platform>AnyCPU</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|AnyCPU">
+      <Configuration>Release</Configuration>
+      <Platform>AnyCPU</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>79758c5a-565f-44f7-a10d-cf49de02596e</ProjectGuid>
+  </PropertyGroup>
+  <PropertyGroup>
+    <TargetFrameworkIdentifier>Deployment</TargetFrameworkIdentifier>
+    <TargetFrameworkVersion>1.0</TargetFrameworkVersion>
+    <PrepareForBuildDependsOn>
+    </PrepareForBuildDependsOn>
+  </PropertyGroup>
+  <Import Condition=" Exists('Deployment.targets') " Project="Deployment.targets" />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" />
+  <!-- vertag<:>start tokens<:>maj.min -->
+  <Import Condition=" Exists('$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Deployment\1.1\DeploymentProject.targets') " Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Deployment\1.1\DeploymentProject.targets" />
+  <!-- vertag<:>end -->
+  <ItemGroup>
+    <Content Include="4-azuredeploy-ILBalancerStandard.json" />
+    <Content Include="7-azuredeploy-VMPrivateLinux.json" />
+    <Content Include="azuredeploy.json" />
+    <Content Include="0-azuredeploy-ALL.json" />
+    <Content Include="0-azuredeploy-Test.json" />
+    <Content Include="1-azuredeploy-LogAnalytics - Copy.json" />
+    <Content Include="1-azuredeploy-LogAnalyticsOLD.json" />
+    <Content Include="2-azuredeploy-VNet.json" />
+    <Content Include="3-azuredeploy-VMDirectoryAddDCs.json" />
+    <Content Include="3-azuredeploy-VMDirectoryNew.json" />
+    <Content Include="4-azuredeploy-ILBalancer.json" />
+    <Content Include="4-azuredeploy-PLBalancerLoop.json" />
+    <Content Include="4-azuredeploy-WAF.json" />
+    <Content Include="5-azuredeploy-VMPublic.json" />
+    <Content Include="6-azuredeploy-VMSQLPrivate.json" />
+    <Content Include="7-azuredeploy-VMPrivate.json" />
+    <Content Include="7-azuredeploy-VMPrivateLinux-Hadoop.json" />
+    <Content Include="7-azuredeploy-VMPrivateLinux-hdp.json" />
+    <Content Include="7-azuredeploy-VMPrivateLinuxAFT.json" />
+    <Content Include="7-azuredeploy-VMPrivateLinuxRAP.json" />
+    <Content Include="8-azuredeploy-NSG.json" />
+    <Content Include="azuredeploy.1-dev.parameters.json" />
+    <Content Include="azuredeploy.2-test.parameters.json" />
+    <Content Include="azuredeploy.3-prod.parameters.json" />
+    <Content Include="Deploy-AzureResourceGroup.ps1" />
+    <None Include="5-azuredeploy-VMPublicRAP.json" />
+    <Content Include="1-azuredeploy-LogAnalytics.json" />
+    <None Include="CDAA\ALL-ConfigurationData.psd1" />
+    <Content Include="CD\ADp-ConfigurationData.psd1" />
+    <Content Include="CD\ADs-ConfigurationData.psd1" />
+    <Content Include="CD\ConfigurationData.psd1" />
+    <Content Include="CD\FIL-ConfigurationData.psd1" />
+    <Content Include="CD\JMP-ConfigurationData.psd1" />
+    <Content Include="CD\Pull-ConfigurationData.psd1" />
+    <Content Include="CD\SQLp-ConfigurationData.psd1" />
+    <Content Include="CD\SQLs-ConfigurationData.psd1" />
+    <None Include="CustomScripts\LINBLD-script.sh" />
+    <None Include="CustomScripts\MASTERBLD-script.sh" />
+    <Content Include="CustomScripts\RHEL-script.sh" />
+    <Content Include="CustomScripts\PROXYRHEL-script.sh" />
+    <None Include="CustomScripts\script.sh" />
+    <Content Include="DSC\DSCAppTier.ps1" />
+    <Content Include="DSC\DSCDC1.ps1" />
+    <Content Include="DSC\DSCDC2.ps1" />
+    <Content Include="DSC\DSCSQLTier.ps1" />
+    <Content Include="nestedtemplates\SetvNetDNS.json" />
+    <None Include="PrereqsToDeploy\0-ConnectToAzureSelectSubscription.ps1" />
+    <None Include="PrereqsToDeploy\1-CreateKeyVaultAndStoreSecrets.ps1" />
+    <None Include="PrereqsToDeploy\2-CreateStorageAccountGlobal.ps1" />
+    <None Include="PrereqsToDeploy\3.1-CreateUploadWebCert.ps1" />
+    <None Include="PrereqsToDeploy\3.2-CreateUploadSSTPCerts.ps1" />
+    <None Include="PrereqsToDeploy\3.3-CreateWebAppFirewallCert.ps1" />
+    <None Include="PrereqsToDeploy\4-DetermineSizeOffersSkus.ps1" />
+    <None Include="PrereqsToDeploy\5-DeterminePublisherImageOffers.ps1" />
+    <None Include="PrereqsToDeploy\5.1-PreReqDSCModuleList.1.ps1" />
+    <None Include="PrereqsToDeploy\5.2-PreReqDSCModuleListAutomation.ps1" />
+    <None Include="PrereqsToDeploy\6-ListAPIVersions.ps1" />
+    <None Include="PrereqsToDeploy\7-Query-DeleteVMExtensions.ps1" />
+    <None Include="PrereqsToDeploy\8-DeleteVirtualMachineandDisks.ps1" />
+    <None Include="PrereqsToDeploy\9.2-ConnectToLinuxAD.ps1" />
+    <None Include="PrereqsToDeploy\9-DSCPullModeAA.ps1" />
+    <None Include="PrereqsToDeploy\Azure_ServerList.txt" />
+    <None Include="PrereqsToDeploy\DiagnosticsExtensionConfiguration.txt" />
+    <None Include="PrereqsToDeploy\DSCBindingsforCerts.ps1" />
+    <None Include="PrereqsToDeploy\ImportCerts.ps1" />
+    <None Include="ReadMe-DeploymentFeatures.md" />
+    <None Include="PrereqsToDeploy\ShutdownSchedule.ps1" />
+    <None Include="PrereqsToDeploy\SSLCertificateExport.ps1" />
+    <None Include="PrereqsToDeploy\_StoragePoolcustom.zip" />
+    <None Include="Runbooks\VDBStopStart.ps1" />
+  </ItemGroup>
+  <Target Name="GetReferenceAssemblyPaths" />
+</Project>

@@ -1,0 +1,190 @@
+﻿{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        // Global
+        "DeploymentID": {
+            "type": "string",
+            "defaultValue": "01",
+            "maxLength": 1
+        },
+        "Prefix": {
+            "type": "string",
+            "defaultValue": "AZE2",
+            "minLength": 1,
+            "allowedValues": [
+                "AZE2",
+                "AZE",
+                "AZW2",
+                "AZW"
+            ]
+        },
+        "Environment": {
+            "type": "string",
+            "defaultValue": "D",
+            "allowedValues": [
+                "D",
+                "Q",
+                "T",
+                "U",
+                "Z",
+                "P"
+            ]
+        },
+        "Stage": {
+            "type": "object",
+            "defaultValue": {
+                "OMS": 1,
+                "VNet": 1,
+                "AD": 1,
+                "PLB": 0,
+                "ILB": 0,
+                "SQL": 0,
+                "VMPublic": 1,
+                "VMPrivate": 1,
+                "WAF": 0
+            }
+        },
+
+        // Used for all VM's, local and Domain Admin Password
+        "vmAdminPassword": {
+            "type": "securestring"
+        },
+        "_artifactsLocation": {
+            "type": "string",
+            "metadata": {
+                "description": "Auto-generated container in staging storage account to receive post-build staging folder upload"
+            }
+        },
+        "_artifactsLocationSasToken": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Auto-generated token to access artifactsLocation"
+            }
+        },
+        "WildcardCertBase64": {
+            "type": "securestring"
+        },
+        "DSCUpdateTagVersion": {
+            "type": "string",
+            "defaultValue": "1.0",
+            "metadata": {
+                "description": "This value must be changed from a previous deployment to ensure the DSC extensions will re-run"
+            }
+        },
+        "StorageAccountKey": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Used for copying source files to DSC from Azure Files storage"
+            }
+        },
+        "Extensions": {
+            "type": "object",
+            "defaultValue": {
+                "Antimalware": 1,
+                "MonitoringAgent": 1,
+                "IaaSDiagnostics": 1
+            }
+        },
+        "DeploymentInfo": {
+            "type": "object",
+            "metadata": {
+                "description": "Can be used to input LB/VM Etc objects from Parameters file"
+            }
+        },
+        "Global": {
+            "type": "object"
+        }
+    },
+    "variables": {
+        // subscriptionId
+        "subscriptionId": "[subscription().subscriptionId]",
+        // rgName
+        "resourceGroupName": "[resourceGroup().name]",
+
+        // Global  BRWDev101
+        "Deployment": "[concat(parameters('Prefix'),'-',parameters('Environment'),parameters('DeploymentID'),'-', parameters('Global').AppName)]",
+
+        // Network
+        "networkId": "[concat('10.144.',string(sub(144,int(parameters('DeploymentID')))))]",
+
+        "addressPrefixes": [
+            "[concat(variables('networkId'),'.0/24')]"
+        ],
+        "SubnetInfo": "[parameters('DeploymentInfo').SubnetInfo]",
+
+        // DNS from 1st Domain Controller
+        "DC1PrivateIPAddress": "[concat(variables('networkId'),'.',parameters('DeploymentInfo').DC1PrivateIPAddress)]",
+        "DC2PrivateIPAddress": "[concat(variables('networkId'),'.',parameters('DeploymentInfo').DC2PrivateIPAddress)]",
+
+
+        "VnetID": "[resourceId('Microsoft.Network/virtualNetworks', concat(Variables('Deployment'),'-vn'))]"
+
+
+    },
+    "resources": [
+        {
+            "name": "[concat(Variables('Deployment'),'-vn')]",
+            "type": "Microsoft.Network/virtualNetworks",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-06-15",
+            "dependsOn": [],
+            "tags": {
+                "displayName": "vNet",
+                "deployment": "[variables('Deployment')]",
+                "environment": "[parameters('Environment')]"
+            },
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": "[variables('addressPrefixes')]"
+                },
+                "dhcpOptions": {
+                    "dnsServers": [
+                        "[variables('DC1PrivateIPAddress')]",
+                        "[variables('DC2PrivateIPAddress')]"
+                    ]
+                },
+                "copy": [
+                    {
+                        "name": "subnets",
+                        "count": "[length(variables('SubnetInfo'))]",
+                        "input": {
+                            "name": "[concat('sn',variables('SubnetInfo')[copyIndex('subnets')].name)]",
+                            "properties": {
+                                "addressPrefix": "[concat(variables('networkId'),'.',variables('SubnetInfo')[copyIndex('subnets')].Prefix)]"
+
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    ],
+    "outputs": {
+        "VNet-AddressPrefixes": {
+            "value": "[reference(variables('VnetID'), '2015-06-15').addressSpace.addressPrefixes]",
+            "type": "array"
+        },
+        "VNet-dhcpOptions": {
+            "value": "[reference(variables('VnetID'), '2015-06-15').dhcpOptions.dnsServers]",
+            "type": "array"
+        },
+        "VNet-Subnets": {
+            "value": "[reference(variables('VnetID'), '2015-06-15').subnets]",
+            "type": "array"
+        },
+        "NetworkID": {
+            "value": "[resourceId(variables('resourceGroupName'), 'Microsoft.Network/VirtualNetworks', concat(Variables('Deployment'),'-vn'))]",
+            "type": "string"
+        },
+        "Subscription": {
+            "value": "[subscription()]",
+            "type": "object"
+        },
+        "VnetID": {
+            "value": "[resourceId(variables('subscriptionId'),variables('resourceGroupName'), 'Microsoft.Network/VirtualNetworks', concat(Variables('Deployment'),'-vn'))]",
+            "type": "string"
+        }
+
+    }
+}

@@ -1,0 +1,1128 @@
+﻿{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        // Global
+        "DeploymentID": {
+            "type": "string",
+            "defaultValue": "01",
+            "maxLength": 1
+        },
+        "Prefix": {
+            "type": "string",
+            "defaultValue": "AZE2",
+            "minLength": 1,
+            "allowedValues": [
+                "AZE2",
+                "AZE",
+                "AZW2",
+                "AZW"
+            ]
+        },
+        "Environment": {
+            "type": "string",
+            "defaultValue": "D",
+            "allowedValues": [
+                "D",
+                "Q",
+                "T",
+                "U",
+                "Z",
+                "P"
+            ]
+        },
+        "Stage": {
+            "type": "object"
+        },
+        "vmAdminPassword": {
+            "type": "securestring"
+        },
+        "_artifactsLocation": {
+            "type": "string",
+            "metadata": {
+                "description": "Auto-generated container in staging storage account to receive post-build staging folder upload"
+            }
+        },
+        "_artifactsLocationSasToken": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Auto-generated token to access artifactsLocation"
+            }
+        },
+        "WildcardCertBase64": {
+            "type": "securestring"
+        },
+        "DSCUpdateTagVersion": {
+            "type": "string",
+            "defaultValue": "1.0",
+            "metadata": {
+                "description": "This value must be changed from a previous deployment to ensure the DSC extensions will re-run"
+            }
+        },
+        "StorageAccountKey": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Used for copying source files to DSC from Azure Files storage"
+            }
+        },
+        "Extensions": {
+            "type": "object",
+            "defaultValue": {
+                "Antimalware": 1,
+                "MonitoringAgent": 1,
+                "IaaSDiagnostics": 1
+            }
+        },
+        "DeploymentInfo": {
+            "type": "object",
+            "metadata": {
+                "description": "Can be used to input LB/VM Etc objects from Parameters file"
+            }
+        },
+        "Global": {
+            "type": "object"
+        }
+    },
+  "variables": {
+    "subscriptionId": "[subscription().subscriptionId]",
+    "resourceGroupName": "[resourceGroup().name]",
+    "Deployment": "[toLower(concat(parameters('Prefix'),parameters('Environment'),parameters('DeploymentID'), parameters('Global').AppName))]",
+    // Free plans only have 7 days
+    "dataRetention": 7,
+    "OMSworkspaceName": "[replace(concat(variables('Deployment'),'OMSLogAnalytics'),'-','')]",
+    "SADiagName": "[concat(variables('Deployment'),'sadiag')]",
+    "serviceTier": "pernode",
+    "AAName": "[replace(concat(variables('Deployment'),'OMSAutomation'),'-','')]",
+    "AAserviceTier": "OMS",
+    "location": "EastUS",
+    "RSVaultlocation": "EastUS2",
+
+    "RecoveryVaultName": "[replace(concat(variables('Deployment'),'OMSRecoveryVault'),'-','')]",
+    "RecoveryVaultRegion": "[variables('RSVaultlocation')]",
+
+    "solutionList": {
+      "solutions": [
+        {
+          "name": "[concat('AzureAutomation', '(', variables('omsWorkspaceName'), ')')]",
+          "marketplaceName": "AzureAutomation"
+        },
+        {
+          "name": "[concat('Updates', '(', variables('omsWorkspaceName'), ')')]",
+          "marketplaceName": "Updates"
+        },
+        {
+          "name": "[concat('Security', '(', variables('omsWorkspaceName'), ')')]",
+          "marketplaceName": "Security"
+        },
+        {
+          "name": "[concat('AgentHealthAssessment', '(', variables('omsWorkspaceName'), ')')]",
+          "marketplaceName": "AgentHealthAssessment"
+        },
+        {
+          "name": "[concat('ChangeTracking', '(', variables('omsWorkspaceName'), ')')]",
+          "marketplaceName": "ChangeTracking"
+        },
+        {
+          "name": "[concat('AzureActivity', '(', variables('omsWorkspaceName'), ')')]",
+          "marketplaceName": "AzureActivity"
+        },
+        {
+          "name": "[concat('ADAssessment', '(', variables('omsWorkspaceName'), ')')]",
+          "marketplaceName": "ADAssessment"
+        },
+        {
+          "name": "[concat('SQLAssessment', '(', variables('omsWorkspaceName'), ')')]",
+          "marketplaceName": "SQLAssessment"
+        },
+        {
+          "name": "[concat('ServiceMap', '(', variables('omsWorkspaceName'), ')')]",
+          "marketplaceName": "ServiceMap"
+        },
+        {
+          "name": "[concat('AntiMalware', '(', variables('omsWorkspaceName'), ')')]",
+          "marketplaceName": "AntiMalware"
+        },
+        {
+          "name": "[concat('AzureAppGatewayAnalytics', '(', variables('omsWorkspaceName'), ')')]",
+          "marketplaceName": "AzureAppGatewayAnalytics"
+        },
+        {
+          "name": "[concat('AzureNSGAnalytics', '(', variables('omsWorkspaceName'), ')')]",
+          "marketplaceName": "AzureNSGAnalytics"
+        }
+      ]
+    },
+
+    "diagnosticsStorageAccount": "[resourceId('Microsoft.Storage/storageAccounts', variables('SADiagName'))]",
+
+    "aaAssets": {
+            
+            "modules": [
+                {"name": "xPSDesiredStateConfiguration",	"url": "https://www.powershellgallery.com/api/v2/package/xPSDesiredStateConfiguration/7.0.0.0"},
+	              {"name": "xActiveDirectory",	"url": "https://www.powershellgallery.com/api/v2/package/xActiveDirectory/2.16.0.0"},
+	              {"name": "xStorage",	"url": "https://www.powershellgallery.com/api/v2/package/xStorage/3.2.0.0"},
+	              {"name": "xPendingReboot",	"url": "https://www.powershellgallery.com/api/v2/package/xPendingReboot/0.3.0.0"},
+	              {"name": "xComputerManagement",	"url": "https://www.powershellgallery.com/api/v2/package/xComputerManagement/3.0.0.0"},
+	              {"name": "xWebAdministration",	"url": "https://www.powershellgallery.com/api/v2/package/xWebAdministration/1.18.0.0"},
+	              {"name": "xSQLServer",	"url": "https://www.powershellgallery.com/api/v2/package/xSQLServer/8.2.0.0"},
+	              {"name": "xFailOverCluster",	"url": "https://www.powershellgallery.com/api/v2/package/xFailOverCluster/1.8.0.0"},
+	              {"name": "xNetworking",	"url": "https://www.powershellgallery.com/api/v2/package/xNetworking/5.2.0.0"},
+	              {"name": "SecurityPolicyDsc",	"url": "https://www.powershellgallery.com/api/v2/package/SecurityPolicyDsc/2.0.0.0"},
+	              {"name": "xTimeZone",	"url": "https://www.powershellgallery.com/api/v2/package/xTimeZone/1.6.0.0"},
+	              {"name": "xSystemSecurity",	"url": "https://www.powershellgallery.com/api/v2/package/xSystemSecurity/1.2.0.0"},
+	              {"name": "xRemoteDesktopSessionHost",	"url": "https://www.powershellgallery.com/api/v2/package/xRemoteDesktopSessionHost/1.4.0.0"},
+	              {"name": "xRemoteDesktopAdmin",	"url": "https://www.powershellgallery.com/api/v2/package/xRemoteDesktopAdmin/1.1.0.0"},
+	              {"name": "xDSCFirewall",	"url": "https://www.powershellgallery.com/api/v2/package/xDSCFirewall/1.6.21"},
+	              {"name": "xWindowsUpdate",	"url": "https://www.powershellgallery.com/api/v2/package/xWindowsUpdate/2.7.0.0"},
+	              {"name": "PowerShellModule",	"url": "https://www.powershellgallery.com/api/v2/package/PowerShellModule/0.3"},
+	              {"name": "xDnsServer",	"url": "https://www.powershellgallery.com/api/v2/package/xDnsServer/1.8.0.0"},
+	              {"name": "xSmbShare",	"url": "https://www.powershellgallery.com/api/v2/package/xSmbShare/2.0.0.0"}
+            ]
+        }
+  },
+    "resources": [
+
+      //{
+      //  "name": "[variables('SADiagName')]",
+      //  "type": "Microsoft.Storage/storageAccounts",
+      //  "location": "[resourceGroup().location]",
+      //  "apiVersion": "2017-06-01",
+      //  "sku": {
+      //    "name": "Standard_LRS"
+      //  },
+      //  "dependsOn": [],
+      //  "tags": {
+      //    "displayName": "StorageDiagAccount"
+      //  },
+      //  "kind": "Storage",
+      //  "properties": {
+      //    "encryption": {
+      //      "keySource": "Microsoft.Storage",
+      //      "services": {
+      //        "blob": {
+      //          "enabled": true
+      //        },
+      //        "file": {
+      //          "enabled": true
+      //        }
+      //      }
+      //    }
+      //  }
+      //},
+      //{
+      //      "apiVersion": "2016-06-01",
+      //      "location": "[variables('RecoveryVaultRegion')]",
+      //      "name": "[variables('RecoveryVaultName')]",
+      //      "type": "Microsoft.RecoveryServices/vaults",
+      //      "tags": {
+      //        "displayName": "RecoveryServicesVault" 
+      //      },
+      //      "comments": "ASR Recovery Vault for OMS",
+      //      "sku": {
+      //          "name": "RS0",
+      //          "tier": "Standard"
+      //      },
+      //      "properties": {},
+      //      "resources": []
+      //  }//,
+        //{
+        //    "name": "[variables('AAName')]",
+        //    "type": "Microsoft.Automation/automationAccounts",
+        //    "apiVersion": "2015-01-01-preview",
+        //    "location": "[resourceGroup().location]",
+        //    "dependsOn": [],
+        //  "tags": {
+        //    "displayName": "AutomationAccount" 
+        //  },
+        //    "properties": {
+        //        "sku": {
+        //            "name": "[variables('AAserviceTier')]"
+        //        }
+                
+
+        //    },
+        //    "resources": [
+                
+        //        //{
+        //        //  "name": "[variables('runbookName')]",
+        //        //  "type": "runbooks",
+        //        //  "apiVersion": "2015-01-01-preview",
+        //        //  "location": "[resourceGroup().location]",
+        //        //  "dependsOn": [
+        //        //    "[concat('Microsoft.Automation/automationAccounts/', variables('AAName'))]"
+        //        //  ],
+        //        //  "tags": {},
+        //        //  "properties": {
+        //        //    "runbookType": "Script",
+        //        //    "logProgress": "false",
+        //        //    "logVerbose": "false",
+        //        //    "description": "[variables('runbookDescription')]",
+        //        //    "publishContentLink": {
+        //        //      "uri": "[variables('scriptUri')]",
+        //        //      "version": "1.0.0.0"
+        //        //    }
+        //        //  }
+        //        //},
+        //        //{
+        //        //  "name": "[parameters('Global').AdminUsername]",
+        //        //  "type": "credentials",
+        //        //  "apiVersion": "2015-01-01-preview",
+        //        //  "location": "[resourceGroup().location]",
+        //        //  "dependsOn": [
+        //        //    "[concat('Microsoft.Automation/automationAccounts/', variables('AAName'))]"
+        //        //  ],
+        //        //  "tags": {},
+        //        //  "properties": {
+        //        //    "userName": "[parameters('Global').AdminUsername]",
+        //        //    "password": "[parameters('vmAdminPassword')]"
+        //        //  }
+        //        //},
+        //        //{
+        //        //  "name": "[parameters('jobId')]",
+        //        //  "type": "jobs",
+        //        //  "apiVersion": "2015-01-01-preview",
+        //        //  "location": "[resourceGroup().location]",
+        //        //  "dependsOn": [
+        //        //    "[concat('Microsoft.Automation/automationAccounts/', variables('AAName'))]",
+        //        //    "[concat('Microsoft.Automation/automationAccounts/', variables('AAName'), '/runbooks/',variables('runbookName'))]"
+        //        //  ],
+        //        //  "tags": {
+        //        //    "key": "value"
+        //        //  },
+        //        //  "properties": {
+        //        //    "runbook": {
+        //        //      "name": "[variables('runbookName')]"
+        //        //    }
+        //        //  }
+        //        //}
+        //    ]
+        //},
+        //{
+        //    "apiVersion": "2015-10-31",
+        //    "type": "Microsoft.Automation/automationAccounts/modules",
+        //    "name": "[concat(variables('AAName'), '/', variables('aaAssets').modules[copyIndex()].Name)]",
+        //    "location": "[resourceGroup().location]",
+        //    "tags": {
+        //    "displayName": "AutomationModules" 
+        //    },
+        //    "dependsOn": [
+        //        "[resourceId('Microsoft.Automation/automationAccounts/', variables('AAName'))]"
+        //    ],
+        //    "copy": {
+        //        "name": "modulesLoop",
+        //        "count": "[length(variables('aaAssets').modules)]"
+        //    },
+        //    "properties": {
+        //        "contentLink": {
+        //            "uri": "[variables('aaAssets').modules[copyIndex()].url]"
+        //        }
+        //    }
+        //},
+        //{
+        //    "apiVersion": "2017-04-26-preview",
+        //    "type": "Microsoft.OperationalInsights/workspaces",
+        //    "name": "[variables('OMSworkspaceName')]",
+        //    "location": "[variables('location')]",
+        //    "tags": {
+        //      "displayName": "LogAnalyticsWorkSpace" 
+        //    },
+        //    "dependsOn": [
+        //        "[concat('Microsoft.Automation/automationAccounts/', variables('AAName'))]"
+        //    ],
+        //    "properties": {
+        //        "sku": {
+        //            "Name": "[variables('serviceTier')]"
+        //        },
+        //        "retention": "[variables('dataRetention')]",
+        //        "features": {
+        //            "legacy": 0,
+        //            "searchVersion": 1
+        //        }
+        //    },
+        //  "resources": [
+        //    {
+        //      "apiVersion": "2015-11-01-preview",
+        //      "type": "linkedServices",
+        //      "name": "Automation",
+        //      "dependsOn": [
+        //        "[concat('Microsoft.OperationalInsights/workspaces/', variables('OMSworkspaceName'))]",
+        //        "[concat('Microsoft.Automation/automationAccounts/', variables('AAName'))]"
+        //      ],
+        //      "properties": {
+        //        "resourceId": "[resourceId('Microsoft.Automation/automationAccounts',variables('AAName'))]"
+        //      }
+        //    },
+        //    {
+        //      "name": "AzureActivityLog",
+        //      "type": "datasources",
+        //      "apiVersion": "2015-11-01-preview",
+        //      "dependsOn": [
+        //        "[concat('Microsoft.OperationalInsights/workspaces/', variables('OMSworkspaceName'))]"
+        //      ],
+        //      "kind": "AzureActivityLog",
+        //      "properties": {
+        //        "linkedResourceId": "[concat(subscription().id, '/providers/Microsoft.Insights/eventTypes/management')]"
+        //      }
+        //    },
+        //    //{
+        //    //  "name": "[concat(variables('OMSworkspaceName'), '/', 'SoftwareUpdateFailed1')]",
+        //    //  "type": "Microsoft.OperationalInsights/workspaces/savedSearches",
+        //    //  "apiVersion": "2017-03-15-preview",
+        //    //  "dependsOn": [
+        //    //    "[concat('Microsoft.OperationalInsights/workspaces/', variables('OMSworkspaceName'))]"
+        //    //  ],
+        //    //  "tags": {},
+        //    //  "properties": {
+        //    //    "ETag": "*",
+        //    //    "query": "Type=Event EventID=20 Source=\"Microsoft-Windows-WindowsUpdateClient\" EventLog=\"System\" TimeGenerated>NOW-24HOURS | Measure Count() By Computer",
+        //    //    "displayName": "A Software Update Installation Failed",
+        //    //    "category": "Software Updates"
+        //    //  }
+        //    //},
+        //    //{
+        //    //  "name": "[concat(variables('OMSworkspaceName'), '/', 'SoftwareUpdateFailed2')]",
+        //    //  "type": "Microsoft.OperationalInsights/workspaces/savedSearches",
+        //    //  "apiVersion": "2017-03-15-preview",
+        //    //  "dependsOn": [
+        //    //    "[concat('Microsoft.OperationalInsights/workspaces/', variables('OMSworkspaceName'))]"
+        //    //  ],
+        //    //  "tags": {},
+        //    //  "properties": {
+        //    //    "ETag": "*",
+        //    //    "query": "Type=Event EventID=20 Source=\"Microsoft-Windows-WindowsUpdateClient\" EventLog=\"System\" TimeGenerated>NOW-168HOURS",
+        //    //    "displayName": "A Software Update Installation Failed",
+        //    //    "category": "Software Updates"
+        //    //  }
+        //    //},
+        //    //{
+        //    //  "name": "[concat(variables('OMSworkspaceName'), '/', 'Network1')]",
+        //    //  "type": "Microsoft.OperationalInsights/workspaces/savedSearches",
+        //    //  "apiVersion": "2017-03-15-preview",
+        //    //  "dependsOn": [
+        //    //    "[concat('Microsoft.OperationalInsights/workspaces/', variables('OMSworkspaceName'))]"
+        //    //  ],
+        //    //  "tags": {},
+        //    //  "properties": {
+        //    //    "ETag": "*",
+        //    //    "query": "Type=Event EventID=4202 Source=\"TCPIP\" EventLog=\"System\" TimeGenerated>NOW-24HOURS | Measure Count() By Computer",
+        //    //    "displayName": "A Network adatper was disconnected from the network",
+        //    //    "category": "Networking"
+        //    //  }
+        //    //},
+        //    //{
+        //    //  "name": "[concat(variables('OMSworkspaceName'), '/', 'Network2')]",
+        //    //  "type": "Microsoft.OperationalInsights/workspaces/savedSearches",
+        //    //  "apiVersion": "2017-03-15-preview",
+        //    //  "dependsOn": [
+        //    //    "[concat('Microsoft.OperationalInsights/workspaces/', variables('OMSworkspaceName'))]"
+        //    //  ],
+        //    //  "tags": {},
+        //    //  "properties": {
+        //    //    "ETag": "*",
+        //    //    "query": "Type=Event EventID=4198 OR EventID=4199 Source=\"TCPIP\" EventLog=\"System\" TimeGenerated>NOW-24HOURS",
+        //    //    "displayName": "Duplicate IP address has been detected",
+        //    //    "category": "Networking"
+        //    //  }
+        //    //},
+        //    //{
+        //    //  "name": "[concat(variables('OMSworkspaceName'), '/', 'NTFS1')]",
+        //    //  "type": "Microsoft.OperationalInsights/workspaces/savedSearches",
+        //    //  "apiVersion": "2017-03-15-preview",
+        //    //  "dependsOn": [
+        //    //    "[concat('Microsoft.OperationalInsights/workspaces/', variables('OMSworkspaceName'))]"
+        //    //  ],
+        //    //  "tags": {},
+        //    //  "properties": {
+        //    //    "ETag": "*",
+        //    //    "query": "Type=Event EventID=98 Source=\"Microsoft-Windows-Ntfs\" EventLog=\"System\" TimeGenerated>NOW-24HOURS | Measure Count() By Computer",
+        //    //    "displayName": "NTFS File System Corruption",
+        //    //    "category": "NTFS"
+        //    //  }
+        //    //},
+        //    //{
+        //    //  "name": "[concat(variables('OMSworkspaceName'), '/', 'NTFS2')]",
+        //    //  "type": "Microsoft.OperationalInsights/workspaces/savedSearches",
+        //    //  "apiVersion": "2017-03-15-preview",
+        //    //  "dependsOn": [
+        //    //    "[concat('Microsoft.OperationalInsights/workspaces/', variables('OMSworkspaceName'))]"
+        //    //  ],
+        //    //  "tags": {},
+        //    //  "properties": {
+        //    //    "ETag": "*",
+        //    //    "query": "Type=Event EventID=40 OR EventID=36 Source=\"DISK\" EventLog=\"System\" TimeGenerated>NOW-24HOURS | Measure Count() By Compute",
+        //    //    "displayName": "NTFS Quouta treshold limit reached",
+        //    //    "category": "NTFS"
+        //    //  }
+        //    //},
+        //    {
+        //      "apiVersion": "2015-11-01-preview",
+        //      "type": "datasources",
+        //      "name": "LogicalDisk1",
+        //      "dependsOn": [
+        //        "[concat('Microsoft.OperationalInsights/workspaces/', variables('OMSworkspaceName'))]"
+        //      ],
+        //      "kind": "WindowsPerformanceCounter",
+        //      "properties": {
+        //        "objectName": "LogicalDisk",
+        //        "instanceName": "*",
+        //        "intervalSeconds": 10,
+        //        "counterName": "Avg Disk sec/Read"
+        //      }
+        //    },
+        //    {
+        //      "apiVersion": "2015-11-01-preview",
+        //      "type": "datasources",
+        //      "name": "LogicalDisk2",
+        //      "dependsOn": [
+        //        "[concat('Microsoft.OperationalInsights/workspaces/', variables('OMSworkspaceName'))]"
+        //      ],
+        //      "kind": "WindowsPerformanceCounter",
+        //      "properties": {
+        //        "objectName": "LogicalDisk",
+        //        "instanceName": "*",
+        //        "intervalSeconds": 10,
+        //        "counterName": "Avg Disk sec/Write"
+        //      }
+        //    },
+        //    {
+        //      "apiVersion": "2015-11-01-preview",
+        //      "type": "datasources",
+        //      "name": "LogicalDisk3",
+        //      "dependsOn": [
+        //        "[concat('Microsoft.OperationalInsights/workspaces/', variables('OMSworkspaceName'))]"
+        //      ],
+        //      "kind": "WindowsPerformanceCounter",
+        //      "properties": {
+        //        "objectName": "LogicalDisk",
+        //        "instanceName": "*",
+        //        "intervalSeconds": 10,
+        //        "counterName": "Current Disk Queue Lenght"
+        //      }
+        //    },
+        //    {
+        //      "apiVersion": "2015-11-01-preview",
+        //      "type": "datasources",
+        //      "name": "LogicalDisk4",
+        //      "dependsOn": [
+        //        "[concat('Microsoft.OperationalInsights/workspaces/', variables('OMSworkspaceName'))]"
+        //      ],
+        //      "kind": "WindowsPerformanceCounter",
+        //      "properties": {
+        //        "objectName": "LogicalDisk",
+        //        "instanceName": "*",
+        //        "intervalSeconds": 10,
+        //        "counterName": "Disk Reads/sec"
+        //      }
+        //    },
+        //    {
+        //      "apiVersion": "2015-11-01-preview",
+        //      "type": "datasources",
+        //      "name": "LogicalDisk5",
+        //      "dependsOn": [
+        //        "[concat('Microsoft.OperationalInsights/workspaces/', variables('OMSworkspaceName'))]"
+        //      ],
+        //      "kind": "WindowsPerformanceCounter",
+        //      "properties": {
+        //        "objectName": "LogicalDisk",
+        //        "instanceName": "*",
+        //        "intervalSeconds": 10,
+        //        "counterName": "Disk Transfers/sec"
+        //      }
+        //    },
+        //    {
+        //      "apiVersion": "2015-11-01-preview",
+        //      "type": "datasources",
+        //      "name": "LogicalDisk6",
+        //      "dependsOn": [
+        //        "[concat('Microsoft.OperationalInsights/workspaces/', variables('OMSworkspaceName'))]"
+        //      ],
+        //      "kind": "WindowsPerformanceCounter",
+        //      "properties": {
+        //        "objectName": "LogicalDisk",
+        //        "instanceName": "*",
+        //        "intervalSeconds": 10,
+        //        "counterName": "Disk Writes/sec"
+        //      }
+        //    },
+        //    {
+        //      "apiVersion": "2015-11-01-preview",
+        //      "type": "datasources",
+        //      "name": "LogicalDisk7",
+        //      "dependsOn": [
+        //        "[concat('Microsoft.OperationalInsights/workspaces/', variables('OMSworkspaceName'))]"
+        //      ],
+        //      "kind": "WindowsPerformanceCounter",
+        //      "properties": {
+        //        "objectName": "LogicalDisk",
+        //        "instanceName": "*",
+        //        "intervalSeconds": 10,
+        //        "counterName": "Free Megabytes"
+        //      }
+        //    },
+        //    {
+        //      "apiVersion": "2015-11-01-preview",
+        //      "type": "datasources",
+        //      "name": "LogicalDisk8",
+        //      "dependsOn": [
+        //        "[concat('Microsoft.OperationalInsights/workspaces/', variables('OMSworkspaceName'))]"
+        //      ],
+        //      "kind": "WindowsPerformanceCounter",
+        //      "properties": {
+        //        "objectName": "LogicalDisk",
+        //        "instanceName": "*",
+        //        "intervalSeconds": 10,
+        //        "counterName": "% Free Space"
+        //      }
+        //    },
+
+        //    {
+        //      "apiVersion": "2015-11-01-preview",
+        //      "type": "datasources",
+        //      "name": "PhysicalDisk",
+        //      "dependsOn": [
+        //        "[concat('Microsoft.OperationalInsights/workspaces/', variables('OMSworkspaceName'))]"
+        //      ],
+        //      "kind": "WindowsPerformanceCounter",
+        //      "properties": {
+        //        "objectName": "PhysicalDisk",
+        //        "instanceName": "_Total",
+        //        "intervalSeconds": 10,
+        //        "counterName": "% Free Space"
+        //      }
+        //    },
+        //    {
+        //      "apiVersion": "2015-11-01-preview",
+        //      "type": "datasources",
+        //      "name": "PhysicalDisk1",
+        //      "dependsOn": [
+        //        "[concat('Microsoft.OperationalInsights/workspaces/', variables('OMSworkspaceName'))]"
+        //      ],
+        //      "kind": "WindowsPerformanceCounter",
+        //      "properties": {
+        //        "objectName": "PhysicalDisk",
+        //        "instanceName": "_Total",
+        //        "intervalSeconds": 10,
+        //        "counterName": "% Disk Time"
+        //      }
+        //    },
+        //    {
+        //      "apiVersion": "2015-11-01-preview",
+        //      "type": "datasources",
+        //      "name": "PhysicalDisk2",
+        //      "dependsOn": [
+        //        "[concat('Microsoft.OperationalInsights/workspaces/', variables('OMSworkspaceName'))]"
+        //      ],
+        //      "kind": "WindowsPerformanceCounter",
+        //      "properties": {
+        //        "objectName": "PhysicalDisk",
+        //        "instanceName": "_Total",
+        //        "intervalSeconds": 10,
+        //        "counterName": "% Disk Read Time"
+        //      }
+        //    },
+        //    {
+        //      "apiVersion": "2015-11-01-preview",
+        //      "type": "datasources",
+        //      "name": "PhysicalDisk3",
+        //      "dependsOn": [
+        //        "[concat('Microsoft.OperationalInsights/workspaces/', variables('OMSworkspaceName'))]"
+        //      ],
+        //      "kind": "WindowsPerformanceCounter",
+        //      "properties": {
+        //        "objectName": "PhysicalDisk",
+        //        "instanceName": "_Total",
+        //        "intervalSeconds": 10,
+        //        "counterName": "% Disk Write Time"
+        //      }
+        //    },
+        //    {
+        //      "apiVersion": "2015-11-01-preview",
+        //      "type": "datasources",
+        //      "name": "PhysicalDisk4",
+        //      "dependsOn": [
+        //        "[concat('Microsoft.OperationalInsights/workspaces/', variables('OMSworkspaceName'))]"
+        //      ],
+        //      "kind": "WindowsPerformanceCounter",
+        //      "properties": {
+        //        "objectName": "PhysicalDisk",
+        //        "instanceName": "_Total",
+        //        "intervalSeconds": 10,
+        //        "counterName": "Disk Transfers/sec"
+        //      }
+        //    },
+        //    {
+        //      "apiVersion": "2015-11-01-preview",
+        //      "type": "datasources",
+        //      "name": "PhysicalDisk5",
+        //      "dependsOn": [
+        //        "[concat('Microsoft.OperationalInsights/workspaces/', variables('OMSworkspaceName'))]"
+        //      ],
+        //      "kind": "WindowsPerformanceCounter",
+        //      "properties": {
+        //        "objectName": "PhysicalDisk",
+        //        "instanceName": "_Total",
+        //        "intervalSeconds": 10,
+        //        "counterName": "Disk Reads/sec"
+        //      }
+        //    },
+        //    {
+        //      "apiVersion": "2015-11-01-preview",
+        //      "type": "datasources",
+        //      "name": "PhysicalDisk6",
+        //      "dependsOn": [
+        //        "[concat('Microsoft.OperationalInsights/workspaces/', variables('OMSworkspaceName'))]"
+        //      ],
+        //      "kind": "WindowsPerformanceCounter",
+        //      "properties": {
+        //        "objectName": "PhysicalDisk",
+        //        "instanceName": "_Total",
+        //        "intervalSeconds": 10,
+        //        "counterName": "Disk Writes/sec"
+        //      }
+        //    },
+        //    {
+        //      "apiVersion": "2015-11-01-preview",
+        //      "type": "datasources",
+        //      "name": "PhysicalDisk7",
+        //      "dependsOn": [
+        //        "[concat('Microsoft.OperationalInsights/workspaces/', variables('OMSworkspaceName'))]"
+        //      ],
+        //      "kind": "WindowsPerformanceCounter",
+        //      "properties": {
+        //        "objectName": "PhysicalDisk",
+        //        "instanceName": "_Total",
+        //        "intervalSeconds": 10,
+        //        "counterName": "Disk Bytes/sec"
+        //      }
+        //    },
+        //    {
+        //      "apiVersion": "2015-11-01-preview",
+        //      "type": "datasources",
+        //      "name": "PhysicalDisk8",
+        //      "dependsOn": [
+        //        "[concat('Microsoft.OperationalInsights/workspaces/', variables('OMSworkspaceName'))]"
+        //      ],
+        //      "kind": "WindowsPerformanceCounter",
+        //      "properties": {
+        //        "objectName": "PhysicalDisk",
+        //        "instanceName": "_Total",
+        //        "intervalSeconds": 10,
+        //        "counterName": "Disk Read Bytes/sec"
+        //      }
+        //    },
+        //    {
+        //      "apiVersion": "2015-11-01-preview",
+        //      "type": "datasources",
+        //      "name": "PhysicalDisk9",
+        //      "dependsOn": [
+        //        "[concat('Microsoft.OperationalInsights/workspaces/', variables('OMSworkspaceName'))]"
+        //      ],
+        //      "kind": "WindowsPerformanceCounter",
+        //      "properties": {
+        //        "objectName": "PhysicalDisk",
+        //        "instanceName": "_Total",
+        //        "intervalSeconds": 10,
+        //        "counterName": "Disk Write Bytes/sec"
+        //      }
+        //    },
+        //    {
+        //      "apiVersion": "2015-11-01-preview",
+        //      "type": "datasources",
+        //      "name": "PhysicalDisk10",
+        //      "dependsOn": [
+        //        "[concat('Microsoft.OperationalInsights/workspaces/', variables('OMSworkspaceName'))]"
+        //      ],
+        //      "kind": "WindowsPerformanceCounter",
+        //      "properties": {
+        //        "objectName": "PhysicalDisk",
+        //        "instanceName": "_Total",
+        //        "intervalSeconds": 10,
+        //        "counterName": "Avg. Disk Queue Length"
+        //      }
+        //    },
+        //    {
+        //      "apiVersion": "2015-11-01-preview",
+        //      "type": "datasources",
+        //      "name": "PhysicalDisk11",
+        //      "dependsOn": [
+        //        "[concat('Microsoft.OperationalInsights/workspaces/', variables('OMSworkspaceName'))]"
+        //      ],
+        //      "kind": "WindowsPerformanceCounter",
+        //      "properties": {
+        //        "objectName": "PhysicalDisk",
+        //        "instanceName": "_Total",
+        //        "intervalSeconds": 10,
+        //        "counterName": "Avg. Disk Read Queue Length"
+        //      }
+        //    },
+        //    {
+        //      "apiVersion": "2015-11-01-preview",
+        //      "type": "datasources",
+        //      "name": "PhysicalDisk12",
+        //      "dependsOn": [
+        //        "[concat('Microsoft.OperationalInsights/workspaces/', variables('OMSworkspaceName'))]"
+        //      ],
+        //      "kind": "WindowsPerformanceCounter",
+        //      "properties": {
+        //        "objectName": "PhysicalDisk",
+        //        "instanceName": "_Total",
+        //        "intervalSeconds": 10,
+        //        "counterName": "Avg. Disk Write Queue Length"
+        //      }
+        //    },
+        //    {
+        //      "apiVersion": "2015-11-01-preview",
+        //      "type": "datasources",
+        //      "name": "PhysicalDisk13",
+        //      "dependsOn": [
+        //        "[concat('Microsoft.OperationalInsights/workspaces/', variables('OMSworkspaceName'))]"
+        //      ],
+        //      "kind": "WindowsPerformanceCounter",
+        //      "properties": {
+        //        "objectName": "PhysicalDisk",
+        //        "instanceName": "*",
+        //        "intervalSeconds": 10,
+        //        "counterName": "Disk Transfers/sec"
+        //      }
+        //    },
+        //    {
+        //      "apiVersion": "2015-11-01-preview",
+        //      "type": "datasources",
+        //      "name": "Memory1",
+        //      "dependsOn": [
+        //        "[concat('Microsoft.OperationalInsights/workspaces/', variables('OMSworkspaceName'))]"
+        //      ],
+        //      "kind": "WindowsPerformanceCounter",
+        //      "properties": {
+        //        "objectName": "Memory",
+        //        "instanceName": "*",
+        //        "intervalSeconds": 10,
+        //        "counterName": "Available MBytes"
+        //      }
+        //    },
+        //    {
+        //      "apiVersion": "2015-11-01-preview",
+        //      "type": "datasources",
+        //      "name": "Memory2",
+        //      "dependsOn": [
+        //        "[concat('Microsoft.OperationalInsights/workspaces/', variables('OMSworkspaceName'))]"
+        //      ],
+        //      "kind": "WindowsPerformanceCounter",
+        //      "properties": {
+        //        "objectName": "Memory",
+        //        "instanceName": "*",
+        //        "intervalSeconds": 10,
+        //        "counterName": "% Committed Bytes In Use"
+        //      }
+        //    },
+        //    {
+        //      "apiVersion": "2015-11-01-preview",
+        //      "type": "datasources",
+        //      "name": "Network1",
+        //      "dependsOn": [
+        //        "[concat('Microsoft.OperationalInsights/workspaces/', variables('OMSworkspaceName'))]"
+        //      ],
+        //      "kind": "WindowsPerformanceCounter",
+        //      "properties": {
+        //        "objectName": "Network Adapter",
+        //        "instanceName": "*",
+        //        "intervalSeconds": 10,
+        //        "counterName": "Bytes Received/sec"
+        //      }
+        //    },
+        //    {
+        //      "apiVersion": "2015-11-01-preview",
+        //      "type": "datasources",
+        //      "name": "Network2",
+        //      "dependsOn": [
+        //        "[concat('Microsoft.OperationalInsights/workspaces/', variables('OMSworkspaceName'))]"
+        //      ],
+        //      "kind": "WindowsPerformanceCounter",
+        //      "properties": {
+        //        "objectName": "Network Adapter",
+        //        "instanceName": "*",
+        //        "intervalSeconds": 10,
+        //        "counterName": "Bytes Sent/sec"
+        //      }
+        //    },
+        //    {
+        //      "apiVersion": "2015-11-01-preview",
+        //      "type": "datasources",
+        //      "name": "Network3",
+        //      "dependsOn": [
+        //        "[concat('Microsoft.OperationalInsights/workspaces/', variables('OMSworkspaceName'))]"
+        //      ],
+        //      "kind": "WindowsPerformanceCounter",
+        //      "properties": {
+        //        "objectName": "Network Adapter",
+        //        "instanceName": "*",
+        //        "intervalSeconds": 10,
+        //        "counterName": "Bytes Total/sec"
+        //      }
+        //    },
+        //    {
+        //      "apiVersion": "2015-11-01-preview",
+        //      "type": "datasources",
+        //      "name": "CPU1",
+        //      "dependsOn": [
+        //        "[concat('Microsoft.OperationalInsights/workspaces/', variables('OMSworkspaceName'))]"
+        //      ],
+        //      "kind": "WindowsPerformanceCounter",
+        //      "properties": {
+        //        "objectName": "Processor",
+        //        "instanceName": "_Total",
+        //        "intervalSeconds": 10,
+        //        "counterName": "% Processor Time"
+        //      }
+        //    },
+        //    {
+        //      "apiVersion": "2015-11-01-preview",
+        //      "type": "datasources",
+        //      "name": "CPU2",
+        //      "dependsOn": [
+        //        "[concat('Microsoft.OperationalInsights/workspaces/', variables('OMSworkspaceName'))]"
+        //      ],
+        //      "kind": "WindowsPerformanceCounter",
+        //      "properties": {
+        //        "objectName": "Processor",
+        //        "instanceName": "_Total",
+        //        "intervalSeconds": 10,
+        //        "counterName": "% Privileged Time"
+        //      }
+        //    },
+        //    {
+        //      "apiVersion": "2015-11-01-preview",
+        //      "type": "datasources",
+        //      "name": "CPU3",
+        //      "dependsOn": [
+        //        "[concat('Microsoft.OperationalInsights/workspaces/', variables('OMSworkspaceName'))]"
+        //      ],
+        //      "kind": "WindowsPerformanceCounter",
+        //      "properties": {
+        //        "objectName": "Processor",
+        //        "instanceName": "_Total",
+        //        "intervalSeconds": 10,
+        //        "counterName": "% User Time"
+        //      }
+        //    },
+        //    {
+        //      "apiVersion": "2015-11-01-preview",
+        //      "type": "datasources",
+        //      "name": "CPU5",
+        //      "dependsOn": [
+        //        "[concat('Microsoft.OperationalInsights/workspaces/', variables('OMSworkspaceName'))]"
+        //      ],
+        //      "kind": "WindowsPerformanceCounter",
+        //      "properties": {
+        //        "objectName": "Processor Information",
+        //        "instanceName": "_Total",
+        //        "intervalSeconds": 10,
+        //        "counterName": "Processor Frequency"
+        //      }
+        //    },
+        //    {
+        //      "apiVersion": "2015-11-01-preview",
+        //      "type": "datasources",
+        //      "name": "CPU6",
+        //      "dependsOn": [
+        //        "[concat('Microsoft.OperationalInsights/workspaces/', variables('OMSworkspaceName'))]"
+        //      ],
+        //      "kind": "WindowsPerformanceCounter",
+        //      "properties": {
+        //        "objectName": "System",
+        //        "instanceName": "*",
+        //        "intervalSeconds": 10,
+        //        "counterName": "Processor Queue Lenght"
+        //      }
+        //    },
+        //    {
+        //      "apiVersion": "2015-11-01-preview",
+        //      "type": "datasources",
+        //      "name": "System",
+        //      "dependsOn": [
+        //        "[concat('Microsoft.OperationalInsights/workspaces/', variables('OMSworkspaceName'))]"
+        //      ],
+        //      "kind": "WindowsEvent",
+        //      "properties": {
+        //        "eventLogName": "System",
+        //        "eventTypes": [
+        //          {
+        //            "eventType": "Error"
+        //          },
+        //          {
+        //            "eventType": "Warning"
+        //          }
+        //        ]
+        //      }
+        //    },
+        //    {
+        //      "apiVersion": "2015-11-01-preview",
+        //      "type": "datasources",
+        //      "name": "Application",
+        //      "dependsOn": [
+        //        "[concat('Microsoft.OperationalInsights/workspaces/', variables('OMSworkspaceName'))]"
+        //      ],
+        //      "kind": "WindowsEvent",
+        //      "properties": {
+        //        "eventLogName": "Application",
+        //        "eventTypes": [
+        //          {
+        //            "eventType": "Error"
+        //          },
+        //          {
+        //            "eventType": "Warning"
+        //          }
+        //        ]
+        //      }
+        //    },
+        //    {
+        //      "apiVersion": "2015-11-01-preview",
+        //      "type": "datasources",
+        //      "name": "DSCEventLogs",
+        //      "dependsOn": [
+        //        "[concat('Microsoft.OperationalInsights/workspaces/', variables('OMSworkspaceName'))]"
+        //      ],
+        //      "kind": "WindowsEvent",
+        //      "properties": {
+        //        "eventLogName": "Microsoft-Windows-DSC/Operational",
+        //        "eventTypes": [
+        //          {
+        //            "eventType": "Error"
+        //          },
+        //          {
+        //            "eventType": "Warning"
+        //          },
+        //          {
+        //            "eventType": "Information"
+        //          }
+        //        ]
+        //      }
+        //    },
+        //    {
+        //      "apiVersion": "2015-11-01-preview",
+        //      "type": "datasources",
+        //      "name": "Linux",
+        //      "dependsOn": [
+        //        "[concat('Microsoft.OperationalInsights/workspaces/', variables('OMSworkspaceName'))]"
+        //      ],
+        //      "kind": "LinuxPerformanceObject",
+        //      "properties": {
+        //        "performanceCounters": [
+        //          {
+        //            "counterName": "% Used Inodes"
+        //          },
+        //          {
+        //            "counterName": "Free Megabytes"
+        //          },
+        //          {
+        //            "counterName": "% Used Space"
+        //          },
+        //          {
+        //            "counterName": "Disk Transfers/sec"
+        //          },
+        //          {
+        //            "counterName": "Disk Reads/sec"
+        //          },
+        //          {
+        //            "counterName": "Disk Writes/sec"
+        //          }
+        //        ],
+        //        "objectName": "Logical Disk",
+        //        "instanceName": "*",
+        //        "intervalSeconds": 10
+        //      }
+        //    },
+        //    {
+        //      "apiVersion": "2015-11-01-preview",
+        //      "type": "datasources",
+        //      "name": "LinuxPerfCollection",
+        //      "dependsOn": [
+        //        "[concat('Microsoft.OperationalInsights/workspaces/', variables('OMSworkspaceName'))]"
+        //      ],
+        //      "kind": "LinuxPerformanceCollection",
+        //      "properties": {
+        //        "state": "Enabled"
+        //      }
+        //    },
+        //    {
+        //      "apiVersion": "2015-11-01-preview",
+        //      "type": "datasources",
+        //      "name": "IISLog",
+        //      "dependsOn": [
+        //        "[concat('Microsoft.OperationalInsights/workspaces/', variables('OMSworkspaceName'))]"
+        //      ],
+        //      "kind": "IISLogs",
+        //      "properties": {
+        //        "state": "OnPremiseEnabled"
+        //      }
+        //    },
+        //    {
+        //      "apiVersion": "2015-11-01-preview",
+        //      "type": "datasources",
+        //      "name": "Syslog",
+        //      "dependsOn": [
+        //        "[concat('Microsoft.OperationalInsights/workspaces/', variables('OMSworkspaceName'))]"
+        //      ],
+        //      "kind": "LinuxSyslog",
+        //      "properties": {
+        //        "syslogName": "kern",
+        //        "syslogSeverities": [
+        //          {
+        //            "severity": "emerg"
+        //          },
+        //          {
+        //            "severity": "alert"
+        //          },
+        //          {
+        //            "severity": "crit"
+        //          },
+        //          {
+        //            "severity": "err"
+        //          },
+        //          {
+        //            "severity": "warning"
+        //          }
+        //        ]
+        //      }
+        //    },
+        //    {
+        //      "apiVersion": "2015-11-01-preview",
+        //      "type": "datasources",
+        //      "name": "SyslogCollection",
+        //      "dependsOn": [
+        //        "[concat('Microsoft.OperationalInsights/workspaces/', variables('OMSworkspaceName'))]"
+        //      ],
+        //      "kind": "LinuxSyslogCollection",
+        //      "properties": {
+        //        "state": "Enabled"
+        //      }
+        //    }
+        //  ]
+        //},
+        //{
+        //    "apiVersion": "2015-11-01-preview",
+        //    "type": "Microsoft.OperationsManagement/solutions",
+        //    "name": "[concat(variables('solutionList').solutions[copyIndex()].Name)]",
+        //    "location": "[variables('location')]",
+        //    "tags": {
+        //      "displayName": "OMSSolutionsList" 
+        //    },
+        //    "dependsOn": [
+        //        "[concat('Microsoft.OperationalInsights/workspaces/', variables('omsWorkspaceName'))]"
+        //    ],
+        //    "copy": {
+        //        "name": "solutionCopy",
+        //        "count": "[length(variables('solutionList').solutions)]"
+        //    },
+        //    "properties": {
+        //        "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('omsWorkspaceName'))]"
+        //    },
+        //    "plan": {
+        //        "name": "[variables('solutionList').solutions[copyIndex()].name]",
+        //        "product": "[concat('OMSGallery/', variables('solutionList').solutions[copyIndex()].marketplaceName)]",
+        //        "promotionCode": "",
+        //        "publisher": "Microsoft"
+        //    }
+        //}
+    ]
+}

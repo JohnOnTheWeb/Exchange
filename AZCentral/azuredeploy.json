@@ -1,0 +1,130 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmMgmtPrivatePublicIPDnsName": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "ex-managment-ipdns"
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "Auto-generated container in staging storage account to receive post-build staging folder upload"
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Auto-generated token to access artifactsLocation"
+      }
+    },
+    "DeploymentID": {
+      "type": "string",
+      "defaultValue": "01",
+      "minLength": 2
+    },
+    "Prefix": {
+      "type": "string",
+      "defaultValue": "AZPOC",
+      "minLength": 1
+
+    },
+    "vNetRange": {
+      "type": "string",
+      "metadata": {
+        "description": "IP range of the virtual network."
+      }
+    },
+    "storageAccountNamePrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Prefix string for storage account name."
+      }
+    },
+    "DeploymentInfo": {
+      "type": "object",
+      "metadata": {
+        "description": "Can be used to input LB/VM Etc objects from Parameters file"
+      }
+    },
+    "storageType": {
+      "type": "string",
+      "metadata": {
+        "description": "Type of storage account."
+      }
+    },
+
+    "ExternalVPNRange": {
+      "type": "string",
+      "metadata": {
+        "description": "IP range of first subnet."
+      }
+    },
+    "subnetVPNRange": {
+      "type": "string",
+      "metadata": {
+        "description": "IP range of first subnet."
+      }
+    }
+  },
+  "variables": {
+    "vNetName": "[concat(parameters('Prefix'),'-',parameters('DeploymentID'),'-vn')]",
+    "vNetApiVersion": "2015-06-15",
+    "deploymentApiVersion": "2016-02-01",
+    "storageApiVersion": "2015-06-15",
+    "DeploymentInfo": {
+      "type": "object",
+      "metadata": {
+        "description": "Can be used to input LB/VM Etc objects from Parameters file"
+      }
+    },
+    "DeploymentInfoObject": {
+      "Storage": "storage.json",
+      "VNet": "vnet.json"
+    }
+
+  },
+  "resources": [
+   
+    {
+      "apiVersion": "[variables('deploymentApiVersion')]",
+      "name": "VNetDeployment",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('_artifactsLocation'), '/shared/', variables('DeploymentInfoObject').VNET, parameters('_artifactsLocationSasToken'))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "DeploymentID": { "value": "[parameters('DeploymentID')]" },
+          "Prefix": { "value": "[parameters('Prefix')]" },
+          "vNetRange": { "value": "[parameters('vNetRange')]" },
+          "vmMgmtPrivatePublicIPDnsName": { "value": "[parameters('vmMgmtPrivatePublicIPDnsName')]" },
+          "ExternalVPNRange": { "value": "[parameters('ExternalVPNRange')]" },
+          "subnetVPNRange": { "value": "[parameters('subnetVPNRange')]" }
+        }
+      }
+    },
+    {
+      "apiVersion": "[variables('deploymentApiVersion')]",
+      "name": "StorageDeployment",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('_artifactsLocation'), '/shared/', variables('DeploymentInfoObject').storage, parameters('_artifactsLocationSasToken'))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "storageType": { "value": "[parameters('storageType')]" },
+          "storageApiVersion": { "value": "[variables('storageApiVersion')]" },
+          "storageAccountNamePrefix": { "value": "[parameters('storageAccountNamePrefix')]" }
+        }
+      }
+    },
+   
+  ],
+  "outputs": {}
+}

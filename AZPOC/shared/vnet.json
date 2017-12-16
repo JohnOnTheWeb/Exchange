@@ -1,0 +1,139 @@
+﻿{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+   "DeploymentID": {
+      "type": "string",
+      "defaultValue": "01",
+      "minLength": 2
+    },
+    "Prefix": {
+      "type": "string",
+      "defaultValue": "AZPOC",
+      "minLength": 1
+
+    },
+    "DeploymentInfo": {
+      "type": "object",
+      "metadata": {
+        "description": "Can be used to input LB/VM Etc objects from Parameters file"
+      }
+    },
+    "vNetApiVersion": {
+      "type": "string",
+      "metadata": {
+        "description": "Azure API for virtual network."
+      }
+    },
+    "vNetRangePrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "IP range of the virtual network."
+      }
+    }
+  },
+  "variables": {
+    "NSGList": "[parameters('DeploymentInfo').VMSBCFG]",
+    "Deployment": "[concat(parameters('Prefix'),'-',parameters('DeploymentID'))]",
+    "subscriptionId": "[subscription().subscriptionId]",
+    "resourceGroupName": "[resourceGroup().name]",
+    "SubnetInfo": [
+      {
+        "name": "subnet-AGS",
+        "prefix": "[concat(parameters('vNetRangePrefix'),'0.0/24')]"
+      },
+      {
+        "name": "subnet-DB",
+        "prefix": "[concat(parameters('vNetRangePrefix'),'1.0/24')]"
+      },
+      {
+        "name": "subnet-Web",
+        "prefix": "[concat(parameters('vNetRangePrefix'),'2.0/24')]"
+      },
+      {
+        "name": "subnet-ServiceBus",
+        "prefix": "[concat(parameters('vNetRangePrefix'),'3.0/24')]"
+      },
+      {
+        "name": "subnet-Service",
+        "prefix": "[concat(parameters('vNetRangePrefix'),'4.0/24')]"
+      },
+      {
+        "name": "subnet-Management",
+        "prefix": "[concat(parameters('vNetRangePrefix'),'5.0/24')]"
+      },
+      {
+        "name": "subnet-Test",
+        "prefix": "[concat(parameters('vNetRangePrefix'),'6.0/24')]"
+      }
+    ],
+
+    
+    "vNetName": "[concat(parameters('Prefix'),'-',parameters('DeploymentID'),'-exvn')]"
+
+  },
+  "resources": [
+    //{
+
+    //  "apiVersion": "2015-06-15",
+    //  "type": "Microsoft.Network/networkSecurityGroups",
+    //  "location": "[resourceGroup().location]",
+    //  "dependsOn": [
+    //  ],
+    //  "tags": {
+    //    "displayName": "NSG Loop"
+    //  },
+    //  "name": "[concat(variables('Deployment'), '-vm', variables('NSGList')[copyIndex(0)].ASName)]",
+    //  "copy": {
+    //    "name": "nsgLoop",
+    //    "count": "[length(variables('NSGList'))]"
+    //  },
+    //  "properties": {
+    //    "securityRules": [
+
+
+
+    //    ]
+    //  }
+    //},
+    {
+      "apiVersion": "2015-06-15",
+      "dependsOn": [
+           ],
+      "location": "[resourceGroup().location]",
+      "name": "[variables('vNetName')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[Concat(parameters('vNetRangePrefix'),'0.0/20')]"
+          ]
+        },
+        "copy": [
+          {
+            "name": "subnets",
+            "count": "[length(variables('SubnetInfo'))]",
+            "input": {
+              "name": "[variables('SubnetInfo')[copyIndex('subnets')].name]",
+              "properties": {
+                "addressPrefix": "[variables('SubnetInfo')[copyIndex('subnets')].Prefix]"
+                //"networkSecurityGroup": {
+                //  "id": "[if( equals(variables('SubnetInfo')[copyIndex('subnets')].nsgName, json('null')),json('null'),resourceId(variables('NSGRGName'),variables('NSGPATH'),variables('SubnetInfo')[copyIndex('subnets')].nsgName) )]"
+                //  //"[resourceId(variables('NSGRGName'),variables('NSGPATH'),variables('snFE01-NSG'))]"
+                //}
+              }
+            }
+          }
+        ]
+        
+        
+      },
+      "tags": {
+        "displayName": "VirtualNetwork"
+      },
+      "type": "Microsoft.Network/virtualNetworks"
+    }
+  ],
+  "outputs": {
+    
+  }
+}

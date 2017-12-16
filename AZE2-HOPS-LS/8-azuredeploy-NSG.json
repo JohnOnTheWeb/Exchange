@@ -1,0 +1,2281 @@
+﻿{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        // Global
+        "DeploymentID": {
+            "type": "string",
+            "defaultValue": "1",
+            "maxLength": 1
+        },
+        "Prefix": {
+            "type": "string",
+            "defaultValue": "AZE2",
+            "minLength": 1,
+            "allowedValues": [
+                "AZE2",
+                "AZE",
+                "AZW2",
+                "AZW"
+            ]
+        },
+        "Environment": {
+            "type": "string",
+            "defaultValue": "D",
+            "allowedValues": [
+                "D",
+                "Q",
+                "T",
+                "U",
+                "Z",
+                "P"
+            ]
+        },
+        "Stage": {
+            "type": "object",
+            "defaultValue": {
+                "OMS": 1,
+                "VNet": 1,
+                "AD": 1,
+                "PLB": 0,
+                "ILB": 0,
+                "SQL": 0,
+                "VMPublic": 1,
+                "VMPrivate": 1,
+                "WAF": 0
+            }
+        },
+        
+        // Used for all VM's, local and Domain Admin Password
+        "vmAdminPassword": {
+            "type": "securestring"
+        },
+        "_artifactsLocation": {
+            "type": "string",
+            "metadata": {
+                "description": "Auto-generated container in staging storage account to receive post-build staging folder upload"
+            }
+        },
+        "_artifactsLocationSasToken": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Auto-generated token to access artifactsLocation"
+            }
+        },
+        "WildcardCertBase64": {
+            "type": "securestring"
+        },
+        "DSCUpdateTagVersion": {
+            "type": "string",
+            "defaultValue": "1.0",
+            "metadata": {
+                "description": "This value must be changed from a previous deployment to ensure the DSC extensions will re-run"
+            }
+        },
+        "StorageAccountKey": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Used for copying source files to DSC from Azure Files storage"
+            }
+        },
+        "Extensions": {
+            "type": "object",
+            "defaultValue": {
+                "Antimalware": 1,
+                "MonitoringAgent": 1,
+                "IaaSDiagnostics": 1
+            }
+        },
+        "DeploymentInfo": {
+            "type": "object",
+            "metadata": {
+                "description": "Can be used to input LB/VM Etc objects from Parameters file"
+            }
+        },
+        "Global": {
+            "type": "object"
+        }
+    },
+    "variables": {
+        // subscriptionId
+        "subscriptionId": "[subscription().subscriptionId]",
+        // rgName
+        "resourceGroupName": "[resourceGroup().name]",
+
+        // Global  BRWDev101
+        "Deployment": "[concat(parameters('Prefix'),'-',parameters('Environment'),parameters('DeploymentID'),'-', parameters('Global').AppName)]",
+
+        // Network
+        "vnetPrefix01": "172.16.240.0/20",
+        "vnetPrefix02": "172.16.32.0/20",
+
+
+        // DNS from 1st Domain Controller
+        "DC1PrivateIPAddress": "172.16.241.254",
+        "DC2PrivateIPAddress": "172.16.241.253",
+        "DC3PrivateIPAddress": "172.16.241.252",
+
+        // 9 Subnets: Directory, BackEnd, MidTier, FrontEnd & Gateway
+        //1
+        "snAD01Name": "[concat(variables('Deployment'),'-snAD01')]",
+        "snAD01Prefix": "172.16.241.0/24",
+
+        //2
+        "snMGMT01Name": "[concat(variables('Deployment'),'-snMGMT01')]",
+        "snMGMT01Prefix": "172.16.242.0/24",
+
+        //3
+        "snSQL01Name": "[concat(variables('Deployment'),'-snSQL01')]",
+        "snSQL01Prefix": "172.16.243.0/24",
+
+        //4
+        "snSQL02Name": "[concat(variables('Deployment'),'-snSQL02')]",
+        "snSQL02Prefix": "172.16.246.0/24",
+
+        //5
+        "snDMZ01Name": "[concat(variables('Deployment'),'-snDMZ01')]",
+        "snDMZ01Prefix": "172.16.255.0/24",
+
+        //6
+        "snWAF01Name": "[concat(variables('Deployment'),'-snWAF01')]",
+        "snWAF01Prefix": "172.16.240.0/24",
+
+        //7
+        "snHST01Name": "[concat(variables('Deployment'),'-snHST01')]",
+        "snHST01Prefix": "172.16.245.0/24",
+
+        //8
+        "sn360LIV01Name": "[concat(variables('Deployment'),'-sn360LIV01')]",
+        "sn360LIV01Prefix": "172.16.244.0/24",
+
+        //9
+        "snVPN01Name": "[concat(variables('Deployment'),'-snVPN01')]",
+        "snVPN01Prefix": "172.16.32.0/20",
+
+        "VnetID": "[resourceId('Microsoft.Network/virtualNetworks', concat(Variables('Deployment'),'-vn'))]",
+
+        "ADNSG01Name": "[concat(variables('Deployment'),'-nsgAD01')]",
+        "ADNSG01ID": "[resourceId('Microsoft.Network/networkSecurityGroups', concat(Variables('ADNSG01Name')))]",
+
+        "SQLNSG01Name": "[concat(variables('Deployment'),'-nsgSQL01')]",
+        "SQLNSG01ID": "[resourceId('Microsoft.Network/networkSecurityGroups', concat(Variables('SQLNSG01Name')))]",
+
+        "SQLNSG02Name": "[concat(variables('Deployment'),'-nsgSQL02')]",
+        "SQLNSG02ID": "[resourceId('Microsoft.Network/networkSecurityGroups', concat(Variables('SQLNSG02Name')))]",
+
+        "MGMTNSG01Name": "[concat(variables('Deployment'),'-nsgMGMT01')]",
+        "MGMTNSG01ID": "[resourceId('Microsoft.Network/networkSecurityGroups', concat(Variables('MGMTNSG01Name')))]",
+
+        "DMZNSG01Name": "[concat(variables('Deployment'),'-nsgDMZ01')]",
+        "DMZNSG01ID": "[resourceId('Microsoft.Network/networkSecurityGroups', concat(Variables('DMZNSG01Name')))]",
+
+        "WAFNSG01Name": "[concat(variables('Deployment'),'-nsgWAF01')]",
+        "WAFNSG01ID": "[resourceId('Microsoft.Network/networkSecurityGroups', concat(Variables('WAFNSG01Name')))]",
+
+        "HSTNSG01Name": "[concat(variables('Deployment'),'-nsgHST01')]",
+        "HSTNSG01ID": "[resourceId('Microsoft.Network/networkSecurityGroups', concat(Variables('HSTNSG01Name')))]",
+
+        "360LIVNSG01Name": "[concat(variables('Deployment'),'-nsg360LIV01')]",
+        "360LIVNSG01ID": "[resourceId('Microsoft.Network/networkSecurityGroups', concat(Variables('360LIVNSG01Name')))]",
+
+        "VPNNSG01Name": "[concat(variables('Deployment'),'-nsgVPN01')]",
+        "VPNNSG01ID": "[resourceId('Microsoft.Network/networkSecurityGroups', concat(Variables('VPNNSG01Name')))]"
+
+
+    },
+    "resources": [
+        {
+            "apiVersion": "2015-06-15",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[variables('ADNSG01Name')]",
+            "location": "[resourceGroup().location]",
+            "tags": {
+                "displayName": "NSG - AD01"
+            },
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "AD-TCP636",
+                        "properties": {
+                            "description": "AD-TCP636",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "636",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 110,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCP3268-3269",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "3268-3269",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 120,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCPUDP88",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "88",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 130,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCPUDP445",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "445",
+                            "destinationPortRange": "445",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 150,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCP135",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "135",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 160,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCP5722",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "5722",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 170,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "AD-UDP123",
+                        "properties": {
+                            "protocol": "Udp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "123",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 180,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCPUDP464",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "464",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 190,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCPUDP137-139",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "137-139",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 200,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCP3389",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "3389",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 210,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "AD-RPC",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "49152-65535",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 220,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCP9389",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "9389",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 230,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCPUDP389",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "389",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 240,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCPUDP53",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "53",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 140,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "2015-06-15",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[variables('SQLNSG01Name')]",
+            "location": "[resourceGroup().location]",
+            "tags": {
+                "displayName": "NSG - SQL01"
+            },
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "AD-TCP636",
+                        "properties": {
+                            "description": "AD-TCP636",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "636",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1110,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCP3268-3269",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "3268-3269",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1120,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCPUDP88",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "88",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1130,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCPUDP445",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "445",
+                            "destinationPortRange": "445",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1150,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCP135",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "135",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1160,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCP5722",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "5722",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1170,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-UDP123",
+                        "properties": {
+                            "protocol": "Udp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "123",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1180,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCPUDP464",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "464",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1190,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCPUDP137-139",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "137-139",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1200,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCP3389",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "3389",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1210,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-RPC",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "49152-65535",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1220,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCP9389",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "9389",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1230,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCPUDP389",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "389",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1240,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCPUDP53",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "53",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1140,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "SQL-MGMT-TCPUDP1433-1434",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "1433-1434",
+                            "sourceAddressPrefix": "[variables('snMGMT01Prefix')]",
+                            "destinationAddressPrefix": "[variables('snSQL01Prefix')]",
+                            "access": "Allow",
+                            "priority": 110,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "SQL-TCP445",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "445",
+                            "sourceAddressPrefix": "[variables('snMGMT01Prefix')]",
+                            "destinationAddressPrefix": "[variables('snSQL01Prefix')]",
+                            "access": "Allow",
+                            "priority": 120,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "SQL-TCP3389",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "3389",
+                            "sourceAddressPrefix": "[variables('snMGMT01Prefix')]",
+                            "destinationAddressPrefix": "[variables('snSQL01Prefix')]",
+                            "access": "Allow",
+                            "priority": 130,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "SQL-TCP5985-5986",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "5985-5986",
+                            "sourceAddressPrefix": "[variables('snMGMT01Prefix')]",
+                            "destinationAddressPrefix": "[variables('snSQL01Prefix')]",
+                            "access": "Allow",
+                            "priority": 140,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "SQL-TCP5723",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "5723",
+                            "sourceAddressPrefix": "[variables('snMGMT01Prefix')]",
+                            "destinationAddressPrefix": "[variables('snSQL01Prefix')]",
+                            "access": "Allow",
+                            "priority": 150,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "SQL-LIV-TCPUDP1433-1434",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "1433-1434",
+                            "sourceAddressPrefix": "[variables('sn360LIV01Prefix')]",
+                            "destinationAddressPrefix": "[variables('snSQL01Prefix')]",
+                            "access": "Allow",
+                            "priority": 160,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "SQL-DMZ-TCPUDP1433-1434",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "1433-1434",
+                            "sourceAddressPrefix": "[variables('snDMZ01Prefix')]",
+                            "destinationAddressPrefix": "[variables('snSQL01Prefix')]",
+                            "access": "Allow",
+                            "priority": 170,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "2015-06-15",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[variables('SQLNSG02Name')]",
+            "location": "[resourceGroup().location]",
+            "tags": {
+                "displayName": "NSG - SQL02"
+            },
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "AD-TCP636",
+                        "properties": {
+                            "description": "AD-TCP636",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "636",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1110,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCP3268-3269",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "3268-3269",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1120,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCPUDP88",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "88",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1130,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCPUDP445",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "445",
+                            "destinationPortRange": "445",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1150,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCP135",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "135",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1160,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCP5722",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "5722",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1170,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-UDP123",
+                        "properties": {
+                            "protocol": "Udp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "123",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1180,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCPUDP464",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "464",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1190,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCPUDP137-139",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "137-139",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1200,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCP3389",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "3389",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1210,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-RPC",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "49152-65535",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1220,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCP9389",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "9389",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1230,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCPUDP389",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "389",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1240,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCPUDP53",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "53",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1140,
+                            "direction": "Outbound"
+                        }
+                    },
+
+                    {
+                        "name": "SQL-MGMT-TCPUDP1433-1434",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "1433-1434",
+                            "sourceAddressPrefix": "[variables('snMGMT01Prefix')]",
+                            "destinationAddressPrefix": "[variables('snSQL01Prefix')]",
+                            "access": "Allow",
+                            "priority": 110,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "SQL-TCP445",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "445",
+                            "sourceAddressPrefix": "[variables('snMGMT01Prefix')]",
+                            "destinationAddressPrefix": "[variables('snSQL01Prefix')]",
+                            "access": "Allow",
+                            "priority": 120,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "SQL-TCP3389",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "3389",
+                            "sourceAddressPrefix": "[variables('snMGMT01Prefix')]",
+                            "destinationAddressPrefix": "[variables('snSQL01Prefix')]",
+                            "access": "Allow",
+                            "priority": 130,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "SQL-TCP5985-5986",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "5985-5986",
+                            "sourceAddressPrefix": "[variables('snMGMT01Prefix')]",
+                            "destinationAddressPrefix": "[variables('snSQL01Prefix')]",
+                            "access": "Allow",
+                            "priority": 140,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "SQL-TCP5723",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "5723",
+                            "sourceAddressPrefix": "[variables('snMGMT01Prefix')]",
+                            "destinationAddressPrefix": "[variables('snSQL01Prefix')]",
+                            "access": "Allow",
+                            "priority": 150,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "SQL-LIV-TCPUDP1433-1434",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "1433-1434",
+                            "sourceAddressPrefix": "[variables('sn360LIV01Prefix')]",
+                            "destinationAddressPrefix": "[variables('snSQL01Prefix')]",
+                            "access": "Allow",
+                            "priority": 160,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "SQL-DMZ-TCPUDP1433-1434",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "1433-1434",
+                            "sourceAddressPrefix": "[variables('snDMZ01Prefix')]",
+                            "destinationAddressPrefix": "[variables('snSQL01Prefix')]",
+                            "access": "Allow",
+                            "priority": 170,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "2015-06-15",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[variables('MGMTNSG01Name')]",
+            "location": "[resourceGroup().location]",
+            "tags": {
+                "displayName": "NSG - MGMT01"
+            },
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "AD-TCP636",
+                        "properties": {
+                            "description": "AD-TCP636",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "636",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1110,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCP3268-3269",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "3268-3269",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1120,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCPUDP88",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "88",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1130,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCPUDP445",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "445",
+                            "destinationPortRange": "445",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1150,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCP135",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "135",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1160,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCP5722",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "5722",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1170,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-UDP123",
+                        "properties": {
+                            "protocol": "Udp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "123",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1180,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCPUDP464",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "464",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1190,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCPUDP137-139",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "137-139",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1200,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCP3389",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "3389",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1210,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-RPC",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "49152-65535",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1220,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCP9389",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "9389",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1230,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCPUDP389",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "389",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1240,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCPUDP53",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "53",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1140,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "SQL-TCPUDP1433-1434",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "1433-1434",
+                            "sourceAddressPrefix": "[variables('snSQL01Prefix')]",
+                            "destinationAddressPrefix": "[variables('snMGMT01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1250,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "SQL-TCP445",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "445",
+                            "sourceAddressPrefix": "[variables('snSQL01Prefix')]",
+                            "destinationAddressPrefix": "[variables('snMGMT01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1260,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "SQL-TCP3389",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "3389",
+                            "sourceAddressPrefix": "[variables('snSQL01Prefix')]",
+                            "destinationAddressPrefix": "[variables('snMGMT01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1270,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "SQL-TCP5985-5986",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "5985-5986",
+                            "sourceAddressPrefix": "[variables('snSQL01Prefix')]",
+                            "destinationAddressPrefix": "[variables('snMGMT01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1280,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "SQL-TCP5723",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "5723",
+                            "sourceAddressPrefix": "[variables('snSQL01Prefix')]",
+                            "destinationAddressPrefix": "[variables('snMGMT01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1290,
+                            "direction": "Outbound"
+                        }
+                    }
+
+                ]
+            }
+        },
+        {
+            "apiVersion": "2015-06-15",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[variables('DMZNSG01Name')]",
+            "location": "[resourceGroup().location]",
+            "tags": {
+                "displayName": "NSG - DMZ01"
+            },
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "AD-TCP636",
+                        "properties": {
+                            "description": "AD-TCP636",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "636",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1110,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCP3268-3269",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "3268-3269",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1120,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCPUDP88",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "88",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1130,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCPUDP445",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "445",
+                            "destinationPortRange": "445",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1150,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCP135",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "135",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1160,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCP5722",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "5722",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1170,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-UDP123",
+                        "properties": {
+                            "protocol": "Udp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "123",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1180,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCPUDP464",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "464",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1190,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCPUDP137-139",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "137-139",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1200,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCP3389",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "3389",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1210,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-RPC",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "49152-65535",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1220,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCP9389",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "9389",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1230,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCPUDP389",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "389",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1240,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCPUDP53",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "53",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1140,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "SQL-TCPUDP1433-1434",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "1433-1434",
+                            "sourceAddressPrefix": "[variables('snSQL01Prefix')]",
+                            "destinationAddressPrefix": "[variables('snDMZ01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1250,
+                            "direction": "Outbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "2015-06-15",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[variables('WAFNSG01Name')]",
+            "location": "[resourceGroup().location]",
+            "tags": {
+                "displayName": "NSG - WAF01"
+            },
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "HTTPS-443-INSIDE",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "443",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snDMZ01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1140,
+                            "direction": "Outbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "2015-06-15",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[variables('HSTNSG01Name')]",
+            "location": "[resourceGroup().location]",
+            "tags": {
+                "displayName": "NSG - HST01"
+            },
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "AD-TCP636",
+                        "properties": {
+                            "description": "AD-TCP636",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "636",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1110,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCP3268-3269",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "3268-3269",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1120,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCPUDP88",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "88",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1130,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCPUDP445",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "445",
+                            "destinationPortRange": "445",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1150,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCP135",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "135",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1160,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCP5722",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "5722",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1170,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-UDP123",
+                        "properties": {
+                            "protocol": "Udp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "123",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1180,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCPUDP464",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "464",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1190,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCPUDP137-139",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "137-139",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1200,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCP3389",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "3389",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1210,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-RPC",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "49152-65535",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1220,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCP9389",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "9389",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1230,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCPUDP389",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "389",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1240,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCPUDP53",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "53",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1140,
+                            "direction": "Outbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "2015-06-15",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[variables('360LIVNSG01Name')]",
+            "location": "[resourceGroup().location]",
+            "tags": {
+                "displayName": "NSG - 360LIV01"
+            },
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "AD-TCP636",
+                        "properties": {
+                            "description": "AD-TCP636",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "636",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1110,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCP3268-3269",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "3268-3269",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1120,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCPUDP88",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "88",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1130,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCPUDP445",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "445",
+                            "destinationPortRange": "445",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1150,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCP135",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "135",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1160,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCP5722",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "5722",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1170,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-UDP123",
+                        "properties": {
+                            "protocol": "Udp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "123",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1180,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCPUDP464",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "464",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1190,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCPUDP137-139",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "137-139",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1200,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCP3389",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "3389",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1210,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-RPC",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "49152-65535",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1220,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCP9389",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "9389",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1230,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCPUDP389",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "389",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1240,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCPUDP53",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "53",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1140,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "SQL-TCPUDP1433-1434",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "1433-1434",
+                            "sourceAddressPrefix": "[variables('snSQL01Prefix')]",
+                            "destinationAddressPrefix": "[variables('sn360LIV01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1250,
+                            "direction": "Outbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "2015-06-15",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[variables('VPNNSG01Name')]",
+            "location": "[resourceGroup().location]",
+            "tags": {
+                "displayName": "NSG - VPN01"
+            },
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "AD-TCP636",
+                        "properties": {
+                            "description": "AD-TCP636",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "636",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1110,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCP3268-3269",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "3268-3269",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1120,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCPUDP88",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "88",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1130,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCPUDP445",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "445",
+                            "destinationPortRange": "445",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1150,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCP135",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "135",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1160,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCP5722",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "5722",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1170,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-UDP123",
+                        "properties": {
+                            "protocol": "Udp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "123",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1180,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCPUDP464",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "464",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1190,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCPUDP137-139",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "137-139",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1200,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCP3389",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "3389",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1210,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-RPC",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "49152-65535",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1220,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCP9389",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "9389",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1230,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCPUDP389",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "389",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1240,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AD-TCPUDP53",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "53",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[variables('snAD01Prefix')]",
+                            "access": "Allow",
+                            "priority": 1140,
+                            "direction": "Outbound"
+                        }
+                    }
+                ]
+            }
+        },
+
+
+        {
+
+            "name": "[concat(Variables('Deployment'),'-vn')]",
+            "type": "Microsoft.Network/virtualNetworks",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-06-15",
+            "dependsOn": [
+                "[variables('ADNSG01ID')]",
+                "[variables('SQLNSG01ID')]",
+                "[variables('SQLNSG02ID')]",
+                "[variables('MGMTNSG01ID')]",
+                "[variables('DMZNSG01ID')]",
+                "[variables('WAFNSG01ID')]",
+                "[variables('HSTNSG01ID')]",
+                "[variables('360LIVNSG01ID')]",
+                "[variables('VPNNSG01ID')]"
+
+
+
+
+
+
+
+            ],
+            "tags": {
+                "displayName": "vNet",
+                "deployment": "[variables('Deployment')]",
+                "environment": "[parameters('Environment')]"
+            },
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[variables('vnetPrefix01')]",
+                        "[variables('vnetPrefix02')]"
+                    ]
+                },
+                "dhcpOptions": {
+                    "dnsServers": [
+                        "[variables('DC1PrivateIPAddress')]",
+                        //"[variables('DC2PrivateIPAddress')]"
+                        "8.8.8.8"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[variables('snAD01Name')]",
+                        "properties": {
+                            "addressPrefix": "[variables('snAD01Prefix')]",
+                            "networkSecurityGroup": {
+                                "id": "[variables('ADNSG01ID')]"
+                            }
+                        }
+                    },
+                    {
+                        "name": "[variables('snMGMT01Name')]",
+                        "properties": {
+                            "addressPrefix": "[variables('snMGMT01Prefix')]",
+                            "networkSecurityGroup": {
+                                "id": "[variables('MGMTNSG01ID')]"
+
+                            }
+                        }
+                    },
+                    {
+                        "name": "[variables('snSQL01Name')]",
+                        "properties": {
+                            "addressPrefix": "[variables('snSQL01Prefix')]",
+                            "networkSecurityGroup": {
+                                "id": "[variables('SQLNSG01ID')]"
+                            }
+                        }
+                    },
+                    {
+                        "name": "[variables('snSQL02Name')]",
+                        "properties": {
+                            "addressPrefix": "[variables('snSQL02Prefix')]",
+                            "networkSecurityGroup": {
+                                "id": "[variables('SQLNSG02ID')]"
+
+                            }
+                        }
+                    },
+                    {
+                        "name": "[variables('snDMZ01Name')]",
+                        "properties": {
+                            "addressPrefix": "[variables('snDMZ01Prefix')]",
+                            "networkSecurityGroup": {
+                                "id": "[variables('DMZNSG01ID')]"
+
+                            }
+                        }
+                    },
+                    {
+                        "name": "[variables('snWAF01Name')]",
+                        "properties": {
+                            "addressPrefix": "[variables('snWAF01Prefix')]",
+                            "networkSecurityGroup": {
+                                "id": "[variables('WAFNSG01ID')]"
+
+                            }
+                        }
+                    },
+                    {
+                        "name": "[variables('snHST01Name')]",
+                        "properties": {
+                            "addressPrefix": "[variables('snHST01Prefix')]",
+                            "networkSecurityGroup": {
+                                "id": "[variables('HSTNSG01ID')]"
+
+                            }
+                        }
+                    },
+                    {
+                        "name": "[variables('sn360LIV01Name')]",
+                        "properties": {
+                            "addressPrefix": "[variables('sn360LIV01Prefix')]",
+                            "networkSecurityGroup": {
+                                "id": "[variables('360LIVNSG01ID')]"
+
+                            }
+                        }
+                    },
+                    {
+                        "name": "[variables('snVPN01Name')]",
+                        "properties": {
+                            "addressPrefix": "[variables('snVPN01Prefix')]",
+                            "networkSecurityGroup": {
+                                "id": "[variables('VPNNSG01ID')]"
+
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    ],
+    "outputs": {
+        "VNet-AddressPrefixes": {
+            "value": "[reference(variables('VnetID'), '2015-06-15').addressSpace.addressPrefixes]",
+            "type": "array"
+        },
+        "VNet-dhcpOptions": {
+            "value": "[reference(variables('VnetID'), '2015-06-15').dhcpOptions.dnsServers]",
+            "type": "array"
+        },
+        "VNet-Subnet-01": {
+            "value": "[reference(variables('VnetID'), '2015-06-15').subnets[0].name]",
+            "type": "string"
+        },
+        "VNet-Subnet-01-addressPrefix": {
+            "value": "[reference(variables('VnetID'), '2015-06-15').subnets[0].properties.addressPrefix]",
+            "type": "string"
+        },
+        "VNet-Subnet-02": {
+            "value": "[reference(variables('VnetID'), '2015-06-15').subnets[1].name]",
+            "type": "string"
+        },
+        "VNet-Subnet-02-addressPrefix": {
+            "value": "[reference(variables('VnetID'), '2015-06-15').subnets[1].properties.addressPrefix]",
+            "type": "string"
+        },
+        "VNet-Subnet-03": {
+            "value": "[reference(variables('VnetID'), '2015-06-15').subnets[2].name]",
+            "type": "string"
+        },
+        "VNet-Subnet-03-addressPrefix": {
+            "value": "[reference(variables('VnetID'), '2015-06-15').subnets[2].properties.addressPrefix]",
+            "type": "string"
+        },
+        "VNet-Subnet-04": {
+            "value": "[reference(variables('VnetID'), '2015-06-15').subnets[3].Name]",
+            "type": "string"
+        },
+        "VNet-Subnet-04-addressPrefix": {
+            "value": "[reference(variables('VnetID'), '2015-06-15').subnets[3].properties.addressPrefix]",
+            "type": "string"
+        },
+        "VNet-Subnet-05": {
+            "value": "[reference(variables('VnetID'), '2015-06-15').subnets[4].Name]",
+            "type": "string"
+        },
+        "VNet-Subnet-05-addressPrefix": {
+            "value": "[reference(variables('VnetID'), '2015-06-15').subnets[4].properties.addressPrefix]",
+            "type": "string"
+        },
+        "VNet-Subnet-06": {
+            "value": "[reference(variables('VnetID'), '2015-06-15').subnets[5].Name]",
+            "type": "string"
+        },
+        "VNet-Subnet-06-addressPrefix": {
+            "value": "[reference(variables('VnetID'), '2015-06-15').subnets[5].properties.addressPrefix]",
+            "type": "string"
+        },
+        "VNet-Subnet-07": {
+            "value": "[reference(variables('VnetID'), '2015-06-15').subnets[6].Name]",
+            "type": "string"
+        },
+        "VNet-Subnet-07-addressPrefix": {
+            "value": "[reference(variables('VnetID'), '2015-06-15').subnets[6].properties.addressPrefix]",
+            "type": "string"
+        },
+        "VNet-Subnet-08": {
+            "value": "[reference(variables('VnetID'), '2015-06-15').subnets[7].Name]",
+            "type": "string"
+        },
+        "VNet-Subnet-08-addressPrefix": {
+            "value": "[reference(variables('VnetID'), '2015-06-15').subnets[7].properties.addressPrefix]",
+            "type": "string"
+        },
+        "NetworkID": {
+            "value": "[resourceId(variables('resourceGroupName'), 'Microsoft.Network/VirtualNetworks', concat(Variables('Deployment'),'-vn'))]",
+            "type": "string"
+        },
+        "Subscription": {
+            "value": "[subscription()]",
+            "type": "object"
+        },
+        "VnetID": {
+            "value": "[resourceId(variables('subscriptionId'),variables('resourceGroupName'), 'Microsoft.Network/VirtualNetworks', concat(Variables('Deployment'),'-vn'))]",
+            "type": "string"
+        }
+
+    }
+}

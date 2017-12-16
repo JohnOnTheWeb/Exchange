@@ -1,0 +1,285 @@
+﻿{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        // Global
+        "DeploymentID": {
+            "type": "string",
+            "defaultValue": "01",
+            "maxLength": 1
+        },
+        "Prefix": {
+            "type": "string",
+            "defaultValue": "AZE2",
+            "minLength": 1,
+            "allowedValues": [
+                "AZE2",
+                "AZE",
+                "AZW2",
+                "AZW"
+            ]
+        },
+        "Environment": {
+            "type": "string",
+            "defaultValue": "D",
+            "allowedValues": [
+                "D",
+                "Q",
+                "T",
+                "U",
+                "Z",
+                "P"
+            ]
+        },
+        "Stage": {
+            "type": "object",
+            "defaultValue": {
+                "OMS": 1,
+                "VNet": 1,
+                "AD": 1,
+                "PLB": 0,
+                "ILB": 0,
+                "SQL": 0,
+                "VMPublic": 1,
+                "VMPrivate": 1,
+                "WAF": 0
+            }
+        },
+
+        // Used for all VM's, local and Domain Admin Password
+        "vmAdminPassword": {
+            "type": "securestring"
+        },
+        "_artifactsLocation": {
+            "type": "string",
+            "metadata": {
+                "description": "Auto-generated container in staging storage account to receive post-build staging folder upload"
+            }
+        },
+        "_artifactsLocationSasToken": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Auto-generated token to access artifactsLocation"
+            }
+        },
+        "WildcardCertBase64": {
+            "type": "securestring"
+        },
+        "DSCUpdateTagVersion": {
+            "type": "string",
+            "defaultValue": "1.0",
+            "metadata": {
+                "description": "This value must be changed from a previous deployment to ensure the DSC extensions will re-run"
+            }
+        },
+        "StorageAccountKey": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Used for copying source files to DSC from Azure Files storage"
+            }
+        },
+        "Extensions": {
+            "type": "object",
+            "defaultValue": {
+                "Antimalware": 1,
+                "MonitoringAgent": 1,
+                "IaaSDiagnostics": 1
+            }
+        },
+        "DeploymentInfo": {
+            "type": "object",
+            "metadata": {
+                "description": "Can be used to input LB/VM Etc objects from Parameters file"
+            }
+        },
+        "Global": {
+            "type": "object"
+        }
+    },
+    "variables": {
+        // Global  BRWDev101
+        "Deployment": "[concat(parameters('Prefix'),'-',parameters('Environment'),parameters('DeploymentID'),'-', parameters('Global').AppName)]",
+
+        "subscriptionId": "[subscription().subscriptionId]",
+        "resourceGroupName": "[resourceGroup().name]",
+
+        "Domain": "[split([parameters('Global').DomainName],'.')[0]]",
+
+        "VNetID": "[resourceId(variables('subscriptionId'),variables('ResourceGroupName'),'Microsoft.Network/VirtualNetworks',concat(variables('Deployment'),'-vn'))]",
+
+        "LBInfo": [
+            {
+                "LBName": "RDWEB",
+                "LBASName": "RDWEB",
+                "LBFEPort": 443,
+                "LBBEPort": 443,
+                "LBBEProbePort": 443
+            },
+            {
+                "LBName": "SSTP",
+                "LBASName": "SSTP",
+                "LBFEPort": 443,
+                "LBBEPort": 443,
+                "LBBEProbePort": 433
+            }
+        ]
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-06-15",
+            "name": "[concat(variables('Deployment'),'-pubicipplb',variables('LBInfo')[copyIndex()].LBName)]",
+            "copy": {
+                "name": "publiclbPublicIPLoop",
+                "count": "[length(variables('LBInfo'))]"
+            },
+            "tags": {
+                "displayName": "PLB_PublicIP"
+            },
+            "properties": {
+                "publicIPAllocationMethod": "Static",
+                "dnsSettings": {
+                    "domainNameLabel": "[toLower(concat(variables('Domain'),variables('Deployment'),'-pubicipplb',variables('LBInfo')[copyIndex()].LBName))]"
+                }
+            }
+        },
+        {
+            "apiVersion": "2015-06-15",
+            "name": "[concat(variables('Deployment'),'-plb',variables('LBInfo')[copyIndex()].LBName)]",
+            "type": "Microsoft.Network/loadBalancers",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[resourceId(resourceGroup().name,'Microsoft.Network/publicIPAddresses',concat(variables('Deployment'),'-pubicipplb',variables('LBInfo')[copyIndex()].LBName))]"
+            ],
+            "copy": {
+                "name": "publiclbLoop",
+                "count": "[length(variables('LBInfo'))]"
+            },
+            "tags": {
+                "displayName": "PLB_Deploy"
+            },
+            "properties": {
+                "frontendIPConfigurations": [
+                    {
+                        "name": "[concat(variables('Deployment'),'-plb',variables('LBInfo')[copyIndex()].LBName)]",
+                        "properties": {
+                            "publicIPAddress": {
+                                "id": "[resourceId(resourceGroup().name,'Microsoft.Network/publicIPAddresses',concat(variables('Deployment'),'-pubicipplb',variables('LBInfo')[copyIndex()].LBName))]"
+                            }
+                        }
+                    }
+                ],
+                "backendAddressPools": [
+                    {
+                        "name": "[variables('LBInfo')[copyIndex()].LBASName]"
+                    }
+                ],
+                "loadBalancingRules": [
+                    {
+                        "name": "[concat(variables('Deployment'),'-plb',variables('LBInfo')[copyIndex()].LBName)]",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[concat(resourceId('Microsoft.Network/loadBalancers/',concat(variables('Deployment'),'-plb',variables('LBInfo')[copyIndex()].LBName)),'/frontendIPConfigurations/',concat(variables('Deployment'),'-plb',variables('LBInfo')[copyIndex()].LBName))]"
+                            },
+                            "backendAddressPool": {
+                                "id": "[concat(resourceId('Microsoft.Network/loadBalancers/',concat(variables('Deployment'),'-plb',variables('LBInfo')[copyIndex()].LBName)),'/backendAddressPools/',variables('LBInfo')[copyIndex()].LBASName)]"
+                            },
+                            "probe": {
+                                "id": "[concat(resourceId('Microsoft.Network/loadBalancers/',concat(variables('Deployment'),'-plb',variables('LBInfo')[copyIndex()].LBName)),'/probes/',concat(variables('Deployment'),'-plb',variables('LBInfo')[copyIndex()].LBName))]"
+                            },
+                            "protocol": "Tcp",
+                            "frontendPort": "[variables('LBInfo')[copyIndex()].LBFEPort]",
+                            "backendPort": "[variables('LBInfo')[copyIndex()].LBBEPort]",
+                            "enableFloatingIP": true
+                        }
+                    }
+                ],
+                "probes": [
+                    {
+                        "name": "[concat(variables('Deployment'),'-plb',variables('LBInfo')[copyIndex()].LBName)]",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "port": "[variables('LBInfo')[copyIndex()].LBBEProbePort]",
+                            "intervalInSeconds": 5,
+                            "numberOfProbes": 2
+                        }
+                    }
+                ]
+            }
+        }
+        //{
+        //  "apiVersion": "2017-03-01",
+        //  "name": "[variables('LBName')]",
+        //  "type": "Microsoft.Network/loadBalancers",
+        //  "location": "[resourceGroup().location]",
+        //  "tags": {
+        //    "displayName": "PLB_Deploy"
+        //  },
+        //  "copy": {
+        //    "count": 1,
+        //    "name": "ilbLoop"
+        //  },
+        //  "dependsOn": [],
+        //  "properties": {
+        //    "frontendIPConfigurations": [
+        //      {
+        //        "name": "[variables('LBName')]",
+        //        "properties": {
+        //          "publicIPAddress": {
+        //            "id": "[resourceId(resourceGroup().name,'Microsoft.Network/publicIPAddresses',concat(variables('Deployment'),'-publicipSSTP'))]"
+        //          }
+        //        }
+        //      }
+        //    ],
+        //    "copy": [
+        //      {
+        //        // Backend Address Pool per pair mids i.e. per availabilityset
+        //        "name": "backendAddressPools",
+        //        "count": "[length(variables('AVAILABILITYSETS'))]",
+        //        "input": {
+        //          "name": "[concat(variables('Deployment'),'-as',variables('AVAILABILITYSETS')[copyIndex('backendAddressPools')].ASName)]"
+        //        }
+        //      },
+        //      {
+        //        "name": "loadBalancingRules",
+        //        "count": "[length(variables('LBInfo'))]",
+        //        "input": {
+        //          "name": "[variables('LBInfo')[copyIndex('loadBalancingRules')].ProbeName]",
+        //          "properties": {
+        //            "frontendIPConfiguration": {
+        //              "id": "[concat(variables('LBID'),'/frontendIPConfigurations/',variables('LBName'))]"
+        //            },
+        //            "backendAddressPool": {
+        //              "id": "[concat(variables('LBID'),'/backendAddressPools/',variables('Deployment'),'-as',variables('LBInfo')[copyIndex('loadBalancingRules')].ASName)]"
+        //            },
+        //            "probe": {
+        //              "id": "[concat(variables('LBID'),'/probes/',variables('LBInfo')[copyIndex('loadBalancingRules')].ProbeName)]"
+        //            },
+        //            "protocol": "Tcp",
+        //            "frontendPort": "[variables('LBInfo')[copyIndex('loadBalancingRules')].LBPort]",
+        //            "backendPort": "[variables('LBInfo')[copyIndex('loadBalancingRules')].LBPort]",
+        //            "enableFloatingIP": false
+        //          }
+        //        }
+        //      },
+        //      {
+        //        "name": "probes",
+        //        "count": "[length(variables('LBInfo'))]",
+        //        "input": {
+        //          "name": "[variables('LBInfo')[copyIndex('probes')].ProbeName]",
+        //          "properties": {
+        //            "protocol": "Tcp",
+        //            "port": "[variables('LBInfo')[copyIndex('probes')].LBPort]",
+        //            "intervalInSeconds": 5,
+        //            "numberOfProbes": 2
+        //          }
+        //        }
+        //      }
+        //    ]
+        //  }
+        //}
+    ],
+    "outputs": {
+    }
+}

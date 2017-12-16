@@ -1,0 +1,291 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "_artifactsLocation": {"type": "string","metadata": {
+        "description": "Auto-generated container in staging storage account to receive post-build staging folder upload"
+      } },
+    "_artifactsLocationSasToken": {"type": "securestring", "metadata": {
+        "description": "Auto-generated token to access artifactsLocation"
+      } },
+    "shutDownTime": {"type": "string", "minLength": 1, "defaultValue": "0400", "metadata": {
+        "description": "Global shut Down Time for VM's Created"
+      } },
+    "configureAutoStartStop": {"type": "string", "minLength": 1, "defaultValue": "no","metadata": {
+        "description": "Determines if auto Start and Stop is configured on VMs"
+      }},
+    "storageType": { "type": "string", "metadata": {
+        "description": "Type of storage account."
+      }},
+    "storageAccountNamePrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Prefix string for storage account name."
+      }
+    },
+    "vNetRangePrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "IP range of the virtual network."
+      }
+    },
+    "vmManagementAdminUserName": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "ManangementAdmin"
+    },
+    "vmManagementAdminPassword": {
+      "type": "securestring"
+    },
+    "vmSBSize": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "Standard_D1_v2"
+    },
+    "vmTestSize": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "Standard_D1_v2"
+    },
+    "vmWebSize": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "Standard_D1_v2"
+    },
+    "vmServicesSize": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "Standard_D1_v2"
+    },
+    "existingdiagnosticsStorageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of an existing storage account to which diagnostics data will be transferred."
+      }
+    },
+    "existingdiagnosticsStorageResourceGroup": {
+      "type": "string",
+      "metadata": {
+        "description": "The resource group for the storage account specified in existingdiagnosticsStorageAccountName"
+      }
+    },
+    "DeploymentInfo": { "type": "object", "metadata": {
+        "description": "Can be used to input LB/VM Etc objects from Parameters file"
+      } },
+    "DeploymentID": {"type": "string","defaultValue": "01", "minLength": 2},
+    "Prefix": {"type": "string", "defaultValue": "AZPOC", "minLength": 1}
+  },
+  "variables": {
+    "vNetName": "[concat(parameters('Prefix'),'-',parameters('DeploymentID'),'-exvn')]",
+    "deploymentApiVersion": "2016-02-01",
+    "storageApiVersion": "2015-06-15",
+    "vNetApiVersion": "2015-06-15",
+    "DeploymentInfoObject": {
+      "Storage": "storage.json",
+      "VNet": "vnet.json",
+      "SBFarm": "SB_FARM.json",
+      "Management": "ManagementVM.json",
+      "SBSQL": "SB_SQL.json",
+      "FileShare": "FileServerVM.json",
+      "EXServices": "EXServices.json"
+    }
+  },
+  "resources": [
+    {
+      "apiVersion": "[variables('deploymentApiVersion')]",
+      "name": "VNetDeployment",
+      "type": "Microsoft.Resources/deployments",
+      "condition": "[equals('yes','yes')]",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('_artifactsLocation'), '/shared/', variables('DeploymentInfoObject').VNET, parameters('_artifactsLocationSasToken'))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "vNetApiVersion": { "value": "[variables('vNetApiVersion')]" },
+          "vNetRangePrefix": { "value": "[parameters('vNetRangePrefix')]" },
+          "DeploymentID": { "value": "[parameters('DeploymentID')]" },
+          "DeploymentInfo": { "value": "[parameters('DeploymentInfo')]" }
+        }
+      }
+    },
+    {
+      "apiVersion": "[variables('deploymentApiVersion')]",
+      "name": "StorageDeployment",
+      "type": "Microsoft.Resources/deployments",
+      "condition": "[equals('yes','yes')]",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('_artifactsLocation'), '/shared/', variables('DeploymentInfoObject').storage, parameters('_artifactsLocationSasToken'))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "storageType": { "value": "[parameters('storageType')]" },
+          "DeploymentID": { "value": "[parameters('DeploymentID')]" },
+          "storageApiVersion": { "value": "[variables('storageApiVersion')]" },
+          "storageAccountNamePrefix": { "value": "[parameters('storageAccountNamePrefix')]" }
+        }
+      }
+    },
+    {
+      "apiVersion": "[variables('deploymentApiVersion')]",
+      "name": "SBFarm1",
+      "type": "Microsoft.Resources/deployments",
+      "condition": "[equals('yes','no')]",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/','StorageDeployment')]",
+        "[concat('Microsoft.Resources/deployments/', 'VNetDeployment')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('_artifactsLocation'), '/shared/', variables('DeploymentInfoObject').SBFarm, parameters('_artifactsLocationSasToken'))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "vmStorageAccountName": { "value": "[reference('StorageDeployment').outputs.storageAccountName.value]" },
+          "vmAdminUserName": { "value": "[parameters('vmManagementAdminUserName')]" },
+          "vmAdminPassword": { "value": "[parameters('vmManagementAdminPassword')]" },
+          "DeploymentID": { "value": "[parameters('DeploymentID')]" },
+          "Prefix": { "value": "[parameters('Prefix')]" },
+          "sqlsubnetID": { "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vNetName'), 'subnet-DB')]" },
+          "cfgsubnetID": { "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vNetName'), 'subnet-ServiceBus')]" },
+          "appsubnetID": { "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vNetName'), 'subnet-ServiceBus')]" },
+          "DeploymentInfo": { "value": "[parameters('DeploymentInfo')]" },
+          "configureAutoStartStop": { "value": "yes" },
+          "_artifactsLocation": { "value": "[parameters('_artifactsLocation')]" },
+          "_artifactsLocationSasToken": { "value": "[parameters('_artifactsLocationSasToken')]" },
+          "SBCFGLBIP": { "value": "[Concat(parameters('vNetRangePrefix'),'3.100')]" },
+          "SBAPPLBIP": { "value": "[Concat(parameters('vNetRangePrefix'),'3.101')]" }
+
+
+        }
+      }
+    },
+    {
+      "apiVersion": "[variables('deploymentApiVersion')]",
+      "name": "SBSQL",
+      "condition": "[equals('yes','no')]",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/','StorageDeployment')]",
+        "[concat('Microsoft.Resources/deployments/', 'VNetDeployment')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('_artifactsLocation'), '/shared/', variables('DeploymentInfoObject').SBSQL, parameters('_artifactsLocationSasToken'))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "vmStorageAccountName": { "value": "[reference('StorageDeployment').outputs.storageAccountName.value]" },
+          "vmAdminUserName": { "value": "[parameters('vmManagementAdminUserName')]" },
+          "vmAdminPassword": { "value": "[parameters('vmManagementAdminPassword')]" },
+          "DeploymentID": { "value": "[parameters('DeploymentID')]" },
+          "Prefix": { "value": "[parameters('Prefix')]" },
+          "sqlsubnetID": { "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vNetName'), 'subnet-Management')]" },
+          "DeploymentInfo": { "value": "[parameters('DeploymentInfo')]" },
+          "configureAutoStartStop": { "value": "yes" },
+          "_artifactsLocation": { "value": "[parameters('_artifactsLocation')]" },
+          "_artifactsLocationSasToken": { "value": "[parameters('_artifactsLocationSasToken')]" }
+
+        }
+      }
+    },
+    {
+      "apiVersion": "[variables('deploymentApiVersion')]",
+      "name": "FSandMQ",
+      "condition": "[equals('yes','no')]",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/','StorageDeployment')]",
+        "[concat('Microsoft.Resources/deployments/', 'VNetDeployment')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('_artifactsLocation'), '/shared/', variables('DeploymentInfoObject').FileShare, parameters('_artifactsLocationSasToken'))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "vmStorageAccountName": { "value": "[reference('StorageDeployment').outputs.storageAccountName.value]" },
+          "vmAdminUserName": { "value": "[parameters('vmManagementAdminUserName')]" },
+          "vmAdminPassword": { "value": "[parameters('vmManagementAdminPassword')]" },
+          "DeploymentID": { "value": "[parameters('DeploymentID')]" },
+          "Prefix": { "value": "[parameters('Prefix')]" },
+          "subnetID": { "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vNetName'), 'subnet-ServiceBus')]" },
+          "DeploymentInfo": { "value": "[parameters('DeploymentInfo')]" },
+          "configureAutoStartStop": { "value": "yes" },
+          "_artifactsLocation": { "value": "[parameters('_artifactsLocation')]" },
+          "_artifactsLocationSasToken": { "value": "[parameters('_artifactsLocationSasToken')]" }
+
+        }
+      }
+    },
+    {
+      "apiVersion": "[variables('deploymentApiVersion')]",
+      "name": "ExchangeServices",
+      "condition": "[equals('yes','yes')]",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/','StorageDeployment')]",
+        "[concat('Microsoft.Resources/deployments/', 'VNetDeployment')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('_artifactsLocation'), '/shared/', variables('DeploymentInfoObject').EXServices, parameters('_artifactsLocationSasToken'))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "vmStorageAccountName": { "value": "[reference('StorageDeployment').outputs.storageAccountName.value]" },
+          "vmAdminUserName": { "value": "[parameters('vmManagementAdminUserName')]" },
+          "vmAdminPassword": { "value": "[parameters('vmManagementAdminPassword')]" },
+          "DeploymentID": { "value": "[parameters('DeploymentID')]" },
+          "Prefix": { "value": "[parameters('Prefix')]" },
+          "subnetID": { "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vNetName'), 'subnet-Service')]" },
+          "DeploymentInfo": { "value": "[parameters('DeploymentInfo')]" },
+          "configureAutoStartStop": { "value": "yes" },
+          "_artifactsLocation": { "value": "[parameters('_artifactsLocation')]" },
+          "_artifactsLocationSasToken": { "value": "[parameters('_artifactsLocationSasToken')]" },
+          "EXWSLBIP": {
+            "value": "[Concat(parameters('vNetRangePrefix'),'4.100')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "[variables('deploymentApiVersion')]",
+      "name": "Management",
+      "condition": "[equals('yes','no')]",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/','StorageDeployment')]",
+        "[concat('Microsoft.Resources/deployments/', 'VNetDeployment')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('_artifactsLocation'), '/shared/', variables('DeploymentInfoObject').Management, parameters('_artifactsLocationSasToken'))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "vmStorageAccountName": { "value": "[reference('StorageDeployment').outputs.storageAccountName.value]" },
+          "vmAdminUserName": { "value": "[parameters('vmManagementAdminUserName')]" },
+          "vmAdminPassword": { "value": "[parameters('vmManagementAdminPassword')]" },
+          "DeploymentID": { "value": "[parameters('DeploymentID')]" },
+          "Prefix": { "value": "[parameters('Prefix')]" },
+          "subnetID": { "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vNetName'), 'subnet-Management')]" },
+          "DeploymentInfo": { "value": "[parameters('DeploymentInfo')]" },
+          "configureAutoStartStop": { "value": "yes" },
+          "_artifactsLocation": { "value": "[parameters('_artifactsLocation')]" },
+          "_artifactsLocationSasToken": { "value": "[parameters('_artifactsLocationSasToken')]" },
+          }
+        }
+      }
+    
+  ],
+  "outputs": {}
+  }

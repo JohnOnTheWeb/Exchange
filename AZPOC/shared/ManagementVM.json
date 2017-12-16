@@ -10,14 +10,6 @@
         "description": "Global shut Down Time for VM's Created"
       }
     },
-    "startUpTime": {
-      "type": "string",
-      "minLength": 1,
-      "defaultValue": "1200",
-      "metadata": {
-        "description": "Global Start Up Time for VM's Created"
-      }
-    },
     "configureAutoStartStop": {
       "type": "string",
       "minLength": 1,
@@ -26,23 +18,13 @@
         "description": "Determines if auto Start and Stop is configured on VMs"
       }
     },
-    "baseTemplateUri": {
-      "type": "string",
-      "metadata": {
-        "description": "Base URI of template resources."
-      }
-    },
     "subnetID": {
       "type": "string",
       "metadata": {
         "description": "Virtual network subnet reference."
       }
     },
-    "vmMgmtPrivatePublicIPDnsName": {
-      "type": "string",
-      "minLength": 1,
-      "defaultValue": "ex-managment-ipdns"
-    },
+
     "vmStorageAccountName": {
       "type": "string",
       "metadata": {
@@ -73,15 +55,34 @@
       "metadata": {
         "description": "Auto-generated token to access _artifactsLocation"
       }
+    },
+    "DeploymentInfo": {
+      "type": "object",
+      "metadata": {
+        "description": "Can be used to input LB/VM Etc objects from Parameters file"
+      }
+    },
+    "DeploymentID": {
+      "type": "string",
+      "defaultValue": "01",
+      "minLength": 2
+    },
+    "Prefix": {
+      "type": "string",
+      "defaultValue": "AZPOC",
+      "minLength": 1
+
     }
   },
   "variables": {
+    "vmWindowsOSVersion": "2012-R2-Datacenter",
     "vmImagePublisher": "MicrosoftWindowsServer",
     "vmImageOffer": "WindowsServer",
     "vmSku": "2012-R2-Datacenter",
-    "AzureFilesStorageName": "2012-R2-Datacenter",
-    "csexFileShareScriptFolder": "CustomScripts",
-    "csexFileShareScriptFileName": "csexFileShare.ps1"
+    "CreateNASScriptFolder": "CustomScripts",
+    "CreateNASScriptFileName": "CreateNAS.ps1",
+    "AzureFilesStorageName": "exchjnjnmac5vnlpo",
+    "AzureFilesStorageAccountResourceGroup": "InitialTest"
   },
   "resources": [
     {
@@ -90,7 +91,7 @@
       "location": "[resourceGroup().location]",
       "apiVersion": "2016-03-30",
       "dependsOn": [
-       
+
       ],
       "tags": {
         "displayName": "ExchangeManagmentNic"
@@ -132,9 +133,9 @@
 
         "storageProfile": {
           "imageReference": {
-            "publisher": "MicrosoftVisualStudio",
-            "offer": "VisualStudio",
-            "sku": "VS-2017-Ent-Latest-Win10-N",
+            "publisher": "[variables('vmImagePublisher')]",
+            "offer": "[variables('vmImageOffer')]",
+            "sku": "[variables('vmWindowsOSVersion')]",
             "version": "latest"
           },
           "osDisk": {
@@ -158,32 +159,6 @@
         }
       },
       "resources": [
-        {
-          "name": "AzureFileShares",
-          "type": "extensions",
-          "location": "[resourceGroup().location]",
-          "apiVersion": "2016-03-30",
-          "dependsOn": [
-            "[resourceId('Microsoft.Compute/virtualMachines', 'ExchangeManagmentVM')]"
-          ],
-          "tags": {
-            "displayName": "AzureFileShares"
-          },
-          "properties": {
-            "publisher": "Microsoft.Compute",
-            "type": "CustomScriptExtension",
-            "typeHandlerVersion": "1.4",
-            "autoUpgradeMinorVersion": true,
-            "settings": {
-              "fileUris": [
-                "https://raw.githubusercontent.com/JohnOnTheWeb/Exchange/master/Exchange/ps1/azurefiles.ps1"
-              ]
-            },
-            "protectedSettings": {
-              "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ','azurefiles.ps1 -SAName ',parameters('AzureFilesStorageName'),'  -SAKey ', listKeys(resourceId(variables('AzureFilesStorageAccountResourceGroup'),'Microsoft.Storage/storageAccounts', parameters('AzureFilesStorageName')), '2015-06-15').key1)]"
-            }
-          }
-        },
         {
           "type": "microsoft.devtestlab/schedules",
           "name": "[concat('shutdown-computevm-','ExchangeManagmentVM')]",
@@ -211,30 +186,6 @@
           "dependsOn": [
             "[resourceId('Microsoft.Compute/virtualMachines', 'ExchangeManagmentVM')]"
           ]
-        },
-        {
-          "name": "csexFileShare",
-          "type": "extensions",
-          "location": "[resourceGroup().location]",
-          "apiVersion": "2016-03-30",
-          "dependsOn": [
-            "[resourceId('Microsoft.Compute/virtualMachines', 'ExchangeManagmentVM')]"
-          ],
-          "tags": {
-            "displayName": "csexFileShare"
-          },
-          "properties": {
-            "publisher": "Microsoft.Compute",
-            "type": "CustomScriptExtension",
-            "typeHandlerVersion": "1.4",
-            "autoUpgradeMinorVersion": true,
-            "settings": {
-              "fileUris": [
-                "[concat(parameters('_artifactsLocation'), '/', variables('csexFileShareScriptFolder'), '/', variables('csexFileShareScriptFileName'), parameters('_artifactsLocationSasToken'))]"
-              ],
-              "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', variables('csexFileShareScriptFolder'), '/', variables('csexFileShareScriptFileName'))]"
-            }
-          }
         }
       ]
 
