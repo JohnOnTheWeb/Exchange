@@ -32,24 +32,24 @@
       <Visible>False</Visible>
     </None>
     <Content Include="Deploy-AzureResourceGroup.ps1" />
-    <None Include="dsc\ExchangeSB.ps1" />
-    <None Include="dsc\ExchangeWebServer.ps1" />
-    <None Include="dsc\ExchangeWebServer.zip" />
-    <None Include="dsc\FileResourceDemo.ps1" />
-    <None Include="dsc\FileResourceDemo.zip" />
-    <None Include="ps1\azurefiles.ps1" />
-    <None Include="ps1\CreateFileShare.ps1" />
-    <None Include="shared\AGS.json" />
-    <None Include="shared\azuredeploy.json" />
-    <None Include="shared\BaseStorage.json" />
-    <None Include="shared\DBMain.json" />
-    <None Include="shared\DBWeb.json" />
-    <None Include="shared\ManagementVM.json" />
-    <None Include="shared\SBFarm.json" />
-    <None Include="shared\ServicesVM.json" />
-    <None Include="shared\TestVM.json" />
-    <None Include="shared\VNet.json" />
-    <None Include="shared\WebVM.json" />
+    <Content Include="dsc\ExchangeSB.ps1" />
+    <Content Include="dsc\ExchangeWebServer.ps1" />
+    <Content Include="dsc\ExchangeWebServer.zip" />
+    <Content Include="dsc\FileResourceDemo.ps1" />
+    <Content Include="dsc\FileResourceDemo.zip" />
+    <Content Include="ps1\azurefiles.ps1" />
+    <Content Include="ps1\CreateFileShare.ps1" />
+    <Content Include="shared\AGS.json" />
+    <Content Include="shared\azuredeploy.json" />
+    <Content Include="shared\BaseStorage.json" />
+    <Content Include="shared\DBMain.json" />
+    <Content Include="shared\DBWeb.json" />
+    <Content Include="shared\ManagementVM.json" />
+    <Content Include="shared\SBFarm.json" />
+    <Content Include="shared\ServicesVM.json" />
+    <Content Include="shared\TestVM.json" />
+    <Content Include="shared\VNet.json" />
+    <Content Include="shared\WebVM.json" />
   </ItemGroup>
   <Target Name="GetReferenceAssemblyPaths" />
 </Project>

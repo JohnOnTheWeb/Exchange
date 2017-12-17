@@ -21,18 +21,36 @@
       "value": "Standard_LRS"
     },
     "testServerCount": { "value": 1 },
-    "deployVNET": { "value": "yes" },
-    "deployStorage": { "value": "yes" },
-    "deploySRVVM": { "value": "no" },
-    "deployMgtVM": { "value": "no" },
-    "deployDBVM": { "value": "no" },
-    "deployWebVM": { "value": "yes" },
-    "deployAGSVM": { "value": "no" },
-    "deployTestVM": { "value": "yes" },
-    "deployGENPOPSBVM": { "value": "no" },
-      "deployCHASESBVM": { "value": "no" },
-      "deployBACSBVM": { "value": "no" },
-      "deployWFSBVM": { "value": "no" },
+    "DeploymentInfo": {
+      "value": {
+        "DeploymentOptions": {
+            "deployStorage": { "value": "yes" },
+            "deployVNET": { "value": "yes" },
+            "deploySRVVM": { "value": "no" },
+            "deployMgtVM": { "value": "no" },
+            "deployDBVM": { "value": "no" },
+            "deployWebVM": { "value": "yes" },
+            "deployAGSVM": { "value": "no" },
+            "deployTestVM": { "value": "yes" },
+            "deployGENPOPSBVM": { "value": "no" },
+            "deployCHASESBVM": { "value": "no" },
+            "deployBACSBVM": { "value": "no" },
+            "deployWFSBVM": { "value": "no" }
+        },
+        "NSGLIS": [
+          { "ASName": "LimitAGS" },
+          { "ASName": "LimitDB" },
+          { "ASName": "LimitSRV" },
+          { "ASName": "LimitTest" },
+          { "ASName": "LimitWeb" },
+          { "ASName": "LimitSB" },
+          { "ASName": "LimitMgt" }
+        ]
+
+      }
+    },
+    
+    
     "vNetName": {
       "value": "exchangevnet"
     },

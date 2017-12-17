@@ -2,6 +2,12 @@
   "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "DeploymentInfo": {
+      "type": "object",
+      "metadata": {
+        "description": "Can be used to input LB/VM Etc objects from Parameters file"
+      }
+    },
     "storageAccountName": {
       "type": "string",
       "metadata": {
@@ -91,6 +97,7 @@
     }
   },
   "variables": {
+    "NSGList": "[parameters('DeploymentInfo').VMSBCFG]",
     "storageAccountType": "Standard_LRS",
     "availabilitySetName": "myAvSet",
     "addressPrefix": "10.0.0.0/16",
