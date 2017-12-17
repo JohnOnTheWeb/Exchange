@@ -24,8 +24,8 @@
     "DeploymentInfo": {
       "value": {
         "DeploymentOptions": {
-            "deployStorage": { "value": "yes" },
-            "deployVNET": { "value": "yes" },
+            "deployStorage":  "yes" ,
+            "deployVNET":  "yes" ,
             "deploySRVVM": { "value": "no" },
             "deployMgtVM": { "value": "no" },
             "deployDBVM": { "value": "no" },
