@@ -331,236 +331,236 @@
     //    }
     //  }
     //},
-    {
-      "apiVersion": "[variables('deploymentApiVersion')]",
-      "name": "GenPopSBDeployment",
-      "condition": "[equals(parameters('DeploymentInfo').DeploymentOptions.deployGENPOPSBVM,'yes')]",
-      "type": "Microsoft.Resources/deployments",
-      "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/','StorageDeployment')]",
-        "[concat('Microsoft.Resources/deployments/', 'VNetDeployment')]"
-      ],
-      "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[concat(parameters('baseTemplateUri'), '/shared/', 'SBFarm.json')]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "subnetID": { "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vNetName'), 'subnet-Managment')]" },
-          "vmStorageAccountName": { "value": "[reference('StorageDeployment').outputs.storageAccountName.value]" },
-          "vmAdminUserName": { "value": "[parameters('vmManagementAdminUserName')]" },
-          "vmAdminPassword": { "value": "[parameters('vmManagementAdminPassword')]" },
-          "sbFarmNamePrefix": { "value": "GenPop" },
-          "vmSize": { "value": "[parameters('vmSBSize')]" },
-          "cfgServerCount": { "value": "[parameters('cfgSBServerCount')]" },
-          "appServerCount": { "value": "[parameters('appSBServerCount')]" },
-          "shutDownTime": { "value": "[parameters('shutDownTime')]" },
-          "startUpTime": { "value": "[parameters('startUpTime')]" },
-          "configureAutoStartStop": { "value": "[parameters('configureAutoStartStop')]" }
-        }
-      }
-    },
-    {
-      "apiVersion": "[variables('deploymentApiVersion')]",
-      "name": "BACSBDeployment",
-      "condition": "[equals(parameters('DeploymentInfo').DeploymentOptions.deployBACSBVM,'yes')]",
-      "type": "Microsoft.Resources/deployments",
-      "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/','StorageDeployment')]",
-        "[concat('Microsoft.Resources/deployments/', 'VNetDeployment')]"
-      ],
-      "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[concat(parameters('baseTemplateUri'), '/shared/', 'SBFarm.json')]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "subnetID": { "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vNetName'), 'subnet-Managment')]" },
-          "vmStorageAccountName": { "value": "[reference('StorageDeployment').outputs.storageAccountName.value]" },
-          "vmAdminUserName": { "value": "[parameters('vmManagementAdminUserName')]" },
-          "vmAdminPassword": { "value": "[parameters('vmManagementAdminPassword')]" },
-          "sbFarmNamePrefix": { "value": "BAC" },
-          "vmSize": { "value": "[parameters('vmSBSize')]" },
-          "cfgServerCount": { "value": "[parameters('cfgSBServerCount')]" },
-          "appServerCount": { "value": "[parameters('appSBServerCount')]" },
-          "shutDownTime": { "value": "[parameters('shutDownTime')]" },
-          "startUpTime": { "value": "[parameters('startUpTime')]" },
-          "configureAutoStartStop": { "value": "[parameters('configureAutoStartStop')]" }
-        }
-      }
-    },
-    {
-      "apiVersion": "[variables('deploymentApiVersion')]",
-      "name": "WFSBDeployment",
-      "condition": "[equals(parameters('DeploymentInfo').DeploymentOptions.deployWFSBVM,'yes')]",
-      "type": "Microsoft.Resources/deployments",
-      "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/','StorageDeployment')]",
-        "[concat('Microsoft.Resources/deployments/', 'VNetDeployment')]"
-      ],
-      "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[concat(parameters('baseTemplateUri'), '/shared/', 'SBFarm.json')]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "subnetID": { "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vNetName'), 'subnet-Managment')]" },
-          "vmStorageAccountName": { "value": "[reference('StorageDeployment').outputs.storageAccountName.value]" },
-          "vmAdminUserName": { "value": "[parameters('vmManagementAdminUserName')]" },
-          "vmAdminPassword": { "value": "[parameters('vmManagementAdminPassword')]" },
-          "sbFarmNamePrefix": { "value": "WF" },
-          "vmSize": { "value": "[parameters('vmSBSize')]" },
-          "cfgServerCount": { "value": "[parameters('cfgSBServerCount')]" },
-          "appServerCount": { "value": "[parameters('appSBServerCount')]" },
-          "shutDownTime": { "value": "[parameters('shutDownTime')]" },
-          "startUpTime": { "value": "[parameters('startUpTime')]" },
-          "configureAutoStartStop": { "value": "[parameters('configureAutoStartStop')]" }
-        }
-      }
-    },
-    {
-      "apiVersion": "[variables('deploymentApiVersion')]",
-      "name": "ChaceSBDeployment",
-      "condition": "[equals(parameters('DeploymentInfo').DeploymentOptions.deployCHASESBVM,'yes')]",
-      "type": "Microsoft.Resources/deployments",
-      "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/','StorageDeployment')]",
-        "[concat('Microsoft.Resources/deployments/', 'VNetDeployment')]"
-      ],
-      "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[concat(parameters('baseTemplateUri'), '/shared/', 'SBFarm.json')]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "subnetID": { "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vNetName'), 'subnet-Managment')]" },
-          "vmStorageAccountName": { "value": "[reference('StorageDeployment').outputs.storageAccountName.value]" },
-          "vmAdminUserName": { "value": "[parameters('vmManagementAdminUserName')]" },
-          "vmAdminPassword": { "value": "[parameters('vmManagementAdminPassword')]" },
-          "sbFarmNamePrefix": { "value": "CHASE" },
-          "vmSize": { "value": "[parameters('vmSBSize')]" },
-          "cfgServerCount": { "value": "[parameters('cfgSBServerCount')]" },
-          "appServerCount": { "value": "[parameters('appSBServerCount')]" },
-          "shutDownTime": { "value": "[parameters('shutDownTime')]" },
-          "startUpTime": { "value": "[parameters('startUpTime')]" },
-          "configureAutoStartStop": { "value": "[parameters('configureAutoStartStop')]" }
-        }
-      }
-    },
-    {
-      "apiVersion": "[variables('deploymentApiVersion')]",
-      "name": "TestDeployment",
-      "type": "Microsoft.Resources/deployments",
-      "condition": "[equals(parameters('DeploymentInfo').DeploymentOptions.deployTestVM,'yes')]",
-      "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/','StorageDeployment')]",
-        "[concat('Microsoft.Resources/deployments/', 'VNetDeployment')]"
-      ],
-      "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[concat(parameters('baseTemplateUri'), '/shared/', 'TestVM.json')]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "subnetID": { "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vNetName'), 'subnet-Management')]" },
-          "vmStorageAccountName": { "value": "[reference('StorageDeployment').outputs.storageAccountName.value]" },
-          "vmAdminUserName": { "value": "[parameters('vmManagementAdminUserName')]" },
-          "vmAdminPassword": { "value": "[parameters('vmManagementAdminPassword')]" },
-          "vmSize": { "value": "[parameters('vmTestSize')]" },
-          "testServerCount": { "value": "[parameters('testServerCount')]" },
-          "baseTemplateUri": { "value": "[parameters('baseTemplateUri')]" },
-          "shutDownTime": { "value": "[parameters('shutDownTime')]" },
-          "startUpTime": { "value": "[parameters('startUpTime')]" },
-          "configureAutoStartStop": { "value": "[parameters('configureAutoStartStop')]" },
-          "existingdiagnosticsStorageAccountName": { "value": "[parameters('existingdiagnosticsStorageAccountName')]" },
-          "existingdiagnosticsStorageResourceGroup": { "value": "[parameters('existingdiagnosticsStorageResourceGroup')]" }
-        }
-      }
-    },
-    {
-      "apiVersion": "[variables('deploymentApiVersion')]",
-      "name": "WebDeployment",
-      "condition": "[equals(parameters('DeploymentInfo').DeploymentOptions.deployWebVM,'yes')]",
-      "type": "Microsoft.Resources/deployments",
-      "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/','StorageDeployment')]",
-        "[concat('Microsoft.Resources/deployments/', 'VNetDeployment')]"
-      ],
-      "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[concat(parameters('baseTemplateUri'), '/shared/', 'WebVM.json')]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "subnetID": { "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vNetName'), 'subnet-Web')]" },
-          "vmStorageAccountName": { "value": "[reference('StorageDeployment').outputs.storageAccountName.value]" },
-          "vmAdminUserName": { "value": "[parameters('vmManagementAdminUserName')]" },
-          "vmAdminPassword": { "value": "[parameters('vmManagementAdminPassword')]" },
-          "vmSize": { "value": "[parameters('vmWebSize')]" },
-          "webServerCount": { "value": "[parameters('webServerCount')]" },
-          "webLBIP": { "value": "[parameters('webLBIP')]" },
-          "baseTemplateUri": { "value": "[parameters('baseTemplateUri')]" },
-          "shutDownTime": { "value": "[parameters('shutDownTime')]" },
-          "startUpTime": { "value": "[parameters('startUpTime')]" },
-          "configureAutoStartStop": { "value": "[parameters('configureAutoStartStop')]" }
-        }
-      }
-    },
-    {
-      "apiVersion": "[variables('deploymentApiVersion')]",
-      "name": "AGSDeployment",
-      "condition": "[equals(parameters('DeploymentInfo').DeploymentOptions.deployAGSVM,'yes')]",
-      "type": "Microsoft.Resources/deployments",
-      "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/','StorageDeployment')]",
-        "[concat('Microsoft.Resources/deployments/', 'VNetDeployment')]"
-      ],
-      "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[concat(parameters('baseTemplateUri'), '/shared/', 'AGS.json')]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "subnetID": { "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vNetName'), 'subnet-AGS')]" },
-          "baseTemplateUri": { "value": "[parameters('baseTemplateUri')]" }
-        }
-      }
-    },
-    {
-      "apiVersion": "[variables('deploymentApiVersion')]",
-      "name": "ServicesDeployment",
-      "condition": "[equals(parameters('DeploymentInfo').DeploymentOptions.deploySRVVM,'yes')]",
-      "type": "Microsoft.Resources/deployments",
-      "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/','StorageDeployment')]",
-        "[concat('Microsoft.Resources/deployments/', 'VNetDeployment')]"
-      ],
-      "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[concat(parameters('baseTemplateUri'), '/shared/', 'ServicesVM.json')]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "subnetID": { "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vNetName'), 'subnet-Managment')]" },
-          "vmStorageAccountName": { "value": "[reference('StorageDeployment').outputs.storageAccountName.value]" },
-          "vmAdminUserName": { "value": "[parameters('vmManagementAdminUserName')]" },
-          "vmAdminPassword": { "value": "[parameters('vmManagementAdminPassword')]" },
-          "vmSize": { "value": "[parameters('vmServicesSize')]" },
-          "ServicesServerCount": { "value": "[parameters('servicesServerCount')]" },
-          "shutDownTime": { "value": "[parameters('shutDownTime')]" },
-          "startUpTime": { "value": "[parameters('startUpTime')]" },
-          "configureAutoStartStop": { "value": "[parameters('configureAutoStartStop')]" }
-        }
-      }
-    }
+    //{
+    //  "apiVersion": "[variables('deploymentApiVersion')]",
+    //  "name": "GenPopSBDeployment",
+    //  "condition": "[equals(parameters('DeploymentInfo').DeploymentOptions.deployGENPOPSBVM,'yes')]",
+    //  "type": "Microsoft.Resources/deployments",
+    //  "dependsOn": [
+    //    "[concat('Microsoft.Resources/deployments/','StorageDeployment')]",
+    //    "[concat('Microsoft.Resources/deployments/', 'VNetDeployment')]"
+    //  ],
+    //  "properties": {
+    //    "mode": "Incremental",
+    //    "templateLink": {
+    //      "uri": "[concat(parameters('baseTemplateUri'), '/shared/', 'SBFarm.json')]",
+    //      "contentVersion": "1.0.0.0"
+    //    },
+    //    "parameters": {
+    //      "subnetID": { "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vNetName'), 'subnet-Managment')]" },
+    //      "vmStorageAccountName": { "value": "[reference('StorageDeployment').outputs.storageAccountName.value]" },
+    //      "vmAdminUserName": { "value": "[parameters('vmManagementAdminUserName')]" },
+    //      "vmAdminPassword": { "value": "[parameters('vmManagementAdminPassword')]" },
+    //      "sbFarmNamePrefix": { "value": "GenPop" },
+    //      "vmSize": { "value": "[parameters('vmSBSize')]" },
+    //      "cfgServerCount": { "value": "[parameters('cfgSBServerCount')]" },
+    //      "appServerCount": { "value": "[parameters('appSBServerCount')]" },
+    //      "shutDownTime": { "value": "[parameters('shutDownTime')]" },
+    //      "startUpTime": { "value": "[parameters('startUpTime')]" },
+    //      "configureAutoStartStop": { "value": "[parameters('configureAutoStartStop')]" }
+    //    }
+    //  }
+    //},
+    //{
+    //  "apiVersion": "[variables('deploymentApiVersion')]",
+    //  "name": "BACSBDeployment",
+    //  "condition": "[equals(parameters('DeploymentInfo').DeploymentOptions.deployBACSBVM,'yes')]",
+    //  "type": "Microsoft.Resources/deployments",
+    //  "dependsOn": [
+    //    "[concat('Microsoft.Resources/deployments/','StorageDeployment')]",
+    //    "[concat('Microsoft.Resources/deployments/', 'VNetDeployment')]"
+    //  ],
+    //  "properties": {
+    //    "mode": "Incremental",
+    //    "templateLink": {
+    //      "uri": "[concat(parameters('baseTemplateUri'), '/shared/', 'SBFarm.json')]",
+    //      "contentVersion": "1.0.0.0"
+    //    },
+    //    "parameters": {
+    //      "subnetID": { "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vNetName'), 'subnet-Managment')]" },
+    //      "vmStorageAccountName": { "value": "[reference('StorageDeployment').outputs.storageAccountName.value]" },
+    //      "vmAdminUserName": { "value": "[parameters('vmManagementAdminUserName')]" },
+    //      "vmAdminPassword": { "value": "[parameters('vmManagementAdminPassword')]" },
+    //      "sbFarmNamePrefix": { "value": "BAC" },
+    //      "vmSize": { "value": "[parameters('vmSBSize')]" },
+    //      "cfgServerCount": { "value": "[parameters('cfgSBServerCount')]" },
+    //      "appServerCount": { "value": "[parameters('appSBServerCount')]" },
+    //      "shutDownTime": { "value": "[parameters('shutDownTime')]" },
+    //      "startUpTime": { "value": "[parameters('startUpTime')]" },
+    //      "configureAutoStartStop": { "value": "[parameters('configureAutoStartStop')]" }
+    //    }
+    //  }
+    //},
+    //{
+    //  "apiVersion": "[variables('deploymentApiVersion')]",
+    //  "name": "WFSBDeployment",
+    //  "condition": "[equals(parameters('DeploymentInfo').DeploymentOptions.deployWFSBVM,'yes')]",
+    //  "type": "Microsoft.Resources/deployments",
+    //  "dependsOn": [
+    //    "[concat('Microsoft.Resources/deployments/','StorageDeployment')]",
+    //    "[concat('Microsoft.Resources/deployments/', 'VNetDeployment')]"
+    //  ],
+    //  "properties": {
+    //    "mode": "Incremental",
+    //    "templateLink": {
+    //      "uri": "[concat(parameters('baseTemplateUri'), '/shared/', 'SBFarm.json')]",
+    //      "contentVersion": "1.0.0.0"
+    //    },
+    //    "parameters": {
+    //      "subnetID": { "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vNetName'), 'subnet-Managment')]" },
+    //      "vmStorageAccountName": { "value": "[reference('StorageDeployment').outputs.storageAccountName.value]" },
+    //      "vmAdminUserName": { "value": "[parameters('vmManagementAdminUserName')]" },
+    //      "vmAdminPassword": { "value": "[parameters('vmManagementAdminPassword')]" },
+    //      "sbFarmNamePrefix": { "value": "WF" },
+    //      "vmSize": { "value": "[parameters('vmSBSize')]" },
+    //      "cfgServerCount": { "value": "[parameters('cfgSBServerCount')]" },
+    //      "appServerCount": { "value": "[parameters('appSBServerCount')]" },
+    //      "shutDownTime": { "value": "[parameters('shutDownTime')]" },
+    //      "startUpTime": { "value": "[parameters('startUpTime')]" },
+    //      "configureAutoStartStop": { "value": "[parameters('configureAutoStartStop')]" }
+    //    }
+    //  }
+    //},
+    //{
+    //  "apiVersion": "[variables('deploymentApiVersion')]",
+    //  "name": "ChaceSBDeployment",
+    //  "condition": "[equals(parameters('DeploymentInfo').DeploymentOptions.deployCHASESBVM,'yes')]",
+    //  "type": "Microsoft.Resources/deployments",
+    //  "dependsOn": [
+    //    "[concat('Microsoft.Resources/deployments/','StorageDeployment')]",
+    //    "[concat('Microsoft.Resources/deployments/', 'VNetDeployment')]"
+    //  ],
+    //  "properties": {
+    //    "mode": "Incremental",
+    //    "templateLink": {
+    //      "uri": "[concat(parameters('baseTemplateUri'), '/shared/', 'SBFarm.json')]",
+    //      "contentVersion": "1.0.0.0"
+    //    },
+    //    "parameters": {
+    //      "subnetID": { "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vNetName'), 'subnet-Managment')]" },
+    //      "vmStorageAccountName": { "value": "[reference('StorageDeployment').outputs.storageAccountName.value]" },
+    //      "vmAdminUserName": { "value": "[parameters('vmManagementAdminUserName')]" },
+    //      "vmAdminPassword": { "value": "[parameters('vmManagementAdminPassword')]" },
+    //      "sbFarmNamePrefix": { "value": "CHASE" },
+    //      "vmSize": { "value": "[parameters('vmSBSize')]" },
+    //      "cfgServerCount": { "value": "[parameters('cfgSBServerCount')]" },
+    //      "appServerCount": { "value": "[parameters('appSBServerCount')]" },
+    //      "shutDownTime": { "value": "[parameters('shutDownTime')]" },
+    //      "startUpTime": { "value": "[parameters('startUpTime')]" },
+    //      "configureAutoStartStop": { "value": "[parameters('configureAutoStartStop')]" }
+    //    }
+    //  }
+    //},
+    //{
+    //  "apiVersion": "[variables('deploymentApiVersion')]",
+    //  "name": "TestDeployment",
+    //  "type": "Microsoft.Resources/deployments",
+    //  "condition": "[equals(parameters('DeploymentInfo').DeploymentOptions.deployTestVM,'yes')]",
+    //  "dependsOn": [
+    //    "[concat('Microsoft.Resources/deployments/','StorageDeployment')]",
+    //    "[concat('Microsoft.Resources/deployments/', 'VNetDeployment')]"
+    //  ],
+    //  "properties": {
+    //    "mode": "Incremental",
+    //    "templateLink": {
+    //      "uri": "[concat(parameters('baseTemplateUri'), '/shared/', 'TestVM.json')]",
+    //      "contentVersion": "1.0.0.0"
+    //    },
+    //    "parameters": {
+    //      "subnetID": { "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vNetName'), 'subnet-Management')]" },
+    //      "vmStorageAccountName": { "value": "[reference('StorageDeployment').outputs.storageAccountName.value]" },
+    //      "vmAdminUserName": { "value": "[parameters('vmManagementAdminUserName')]" },
+    //      "vmAdminPassword": { "value": "[parameters('vmManagementAdminPassword')]" },
+    //      "vmSize": { "value": "[parameters('vmTestSize')]" },
+    //      "testServerCount": { "value": "[parameters('testServerCount')]" },
+    //      "baseTemplateUri": { "value": "[parameters('baseTemplateUri')]" },
+    //      "shutDownTime": { "value": "[parameters('shutDownTime')]" },
+    //      "startUpTime": { "value": "[parameters('startUpTime')]" },
+    //      "configureAutoStartStop": { "value": "[parameters('configureAutoStartStop')]" },
+    //      "existingdiagnosticsStorageAccountName": { "value": "[parameters('existingdiagnosticsStorageAccountName')]" },
+    //      "existingdiagnosticsStorageResourceGroup": { "value": "[parameters('existingdiagnosticsStorageResourceGroup')]" }
+    //    }
+    //  }
+    //},
+    //{
+    //  "apiVersion": "[variables('deploymentApiVersion')]",
+    //  "name": "WebDeployment",
+    //  "condition": "[equals(parameters('DeploymentInfo').DeploymentOptions.deployWebVM,'yes')]",
+    //  "type": "Microsoft.Resources/deployments",
+    //  "dependsOn": [
+    //    "[concat('Microsoft.Resources/deployments/','StorageDeployment')]",
+    //    "[concat('Microsoft.Resources/deployments/', 'VNetDeployment')]"
+    //  ],
+    //  "properties": {
+    //    "mode": "Incremental",
+    //    "templateLink": {
+    //      "uri": "[concat(parameters('baseTemplateUri'), '/shared/', 'WebVM.json')]",
+    //      "contentVersion": "1.0.0.0"
+    //    },
+    //    "parameters": {
+    //      "subnetID": { "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vNetName'), 'subnet-Web')]" },
+    //      "vmStorageAccountName": { "value": "[reference('StorageDeployment').outputs.storageAccountName.value]" },
+    //      "vmAdminUserName": { "value": "[parameters('vmManagementAdminUserName')]" },
+    //      "vmAdminPassword": { "value": "[parameters('vmManagementAdminPassword')]" },
+    //      "vmSize": { "value": "[parameters('vmWebSize')]" },
+    //      "webServerCount": { "value": "[parameters('webServerCount')]" },
+    //      "webLBIP": { "value": "[parameters('webLBIP')]" },
+    //      "baseTemplateUri": { "value": "[parameters('baseTemplateUri')]" },
+    //      "shutDownTime": { "value": "[parameters('shutDownTime')]" },
+    //      "startUpTime": { "value": "[parameters('startUpTime')]" },
+    //      "configureAutoStartStop": { "value": "[parameters('configureAutoStartStop')]" }
+    //    }
+    //  }
+    //},
+    //{
+    //  "apiVersion": "[variables('deploymentApiVersion')]",
+    //  "name": "AGSDeployment",
+    //  "condition": "[equals(parameters('DeploymentInfo').DeploymentOptions.deployAGSVM,'yes')]",
+    //  "type": "Microsoft.Resources/deployments",
+    //  "dependsOn": [
+    //    "[concat('Microsoft.Resources/deployments/','StorageDeployment')]",
+    //    "[concat('Microsoft.Resources/deployments/', 'VNetDeployment')]"
+    //  ],
+    //  "properties": {
+    //    "mode": "Incremental",
+    //    "templateLink": {
+    //      "uri": "[concat(parameters('baseTemplateUri'), '/shared/', 'AGS.json')]",
+    //      "contentVersion": "1.0.0.0"
+    //    },
+    //    "parameters": {
+    //      "subnetID": { "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vNetName'), 'subnet-AGS')]" },
+    //      "baseTemplateUri": { "value": "[parameters('baseTemplateUri')]" }
+    //    }
+    //  }
+    //},
+    //{
+    //  "apiVersion": "[variables('deploymentApiVersion')]",
+    //  "name": "ServicesDeployment",
+    //  "condition": "[equals(parameters('DeploymentInfo').DeploymentOptions.deploySRVVM,'yes')]",
+    //  "type": "Microsoft.Resources/deployments",
+    //  "dependsOn": [
+    //    "[concat('Microsoft.Resources/deployments/','StorageDeployment')]",
+    //    "[concat('Microsoft.Resources/deployments/', 'VNetDeployment')]"
+    //  ],
+    //  "properties": {
+    //    "mode": "Incremental",
+    //    "templateLink": {
+    //      "uri": "[concat(parameters('baseTemplateUri'), '/shared/', 'ServicesVM.json')]",
+    //      "contentVersion": "1.0.0.0"
+    //    },
+    //    "parameters": {
+    //      "subnetID": { "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vNetName'), 'subnet-Managment')]" },
+    //      "vmStorageAccountName": { "value": "[reference('StorageDeployment').outputs.storageAccountName.value]" },
+    //      "vmAdminUserName": { "value": "[parameters('vmManagementAdminUserName')]" },
+    //      "vmAdminPassword": { "value": "[parameters('vmManagementAdminPassword')]" },
+    //      "vmSize": { "value": "[parameters('vmServicesSize')]" },
+    //      "ServicesServerCount": { "value": "[parameters('servicesServerCount')]" },
+    //      "shutDownTime": { "value": "[parameters('shutDownTime')]" },
+    //      "startUpTime": { "value": "[parameters('startUpTime')]" },
+    //      "configureAutoStartStop": { "value": "[parameters('configureAutoStartStop')]" }
+    //    }
+    //  }
+    //}
   ],
     "outputs": {}
   }
