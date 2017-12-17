@@ -2,102 +2,125 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "baseTemplateUri": {
-      "value": "https://raw.githubusercontent.com/JohnOnTheWeb/Exchange/master/Exchange"
-    },
-    "storageAccountNamePrefix": {
-      "value": "exch"
-    },
-    "shutDownTime": {
-      "value": "0400"
-    },
-    "startUpTime": {
-      "value": "1200"
-    },
-    "configureAutoStartStop": {
-      "value": "yes"
-    },
-    "storageType": {
-      "value": "Standard_LRS"
-    },
-    "testServerCount": { "value": 1 },
     "DeploymentInfo": {
       "value": {
         "DeploymentOptions": {
-            "deployStorage":  "yes" ,
-            "deployVNET":  "yes" ,
-            "deploySRVVM": { "value": "no" },
-            "deployMgtVM": { "value": "no" },
-            "deployDBVM": { "value": "no" },
-            "deployWebVM": { "value": "yes" },
-            "deployAGSVM": { "value": "no" },
-            "deployTestVM": { "value": "yes" },
-            "deployGENPOPSBVM": { "value": "no" },
-            "deployCHASESBVM": { "value": "no" },
-            "deployBACSBVM": { "value": "no" },
-            "deployWFSBVM": { "value": "no" }
+          "deployStorage": "yes",
+          "deployVNET": "yes",
+          "deploySRVVM": "no",
+          "deployMgtVM": "yes",
+          "deployDBVM": "no",
+          "deployWebVM": "yes",
+          "deployAGSVM": "no",
+          "deployTestVM": "yes",
+          "deployGENPOPSBVM": "no",
+          "deployCHASESBVM": "no",
+          "deployBACSBVM": "no",
+          "deployWFSBVM": "no"
         },
-        "NSGLIS": [
-          { "ASName": "LimitAGS" },
-          { "ASName": "LimitDB" },
-          { "ASName": "LimitSRV" },
-          { "ASName": "LimitTest" },
-          { "ASName": "LimitWeb" },
-          { "ASName": "LimitSB" },
-          { "ASName": "LimitMgt" }
-        ]
+        "VNETInfo": {
+          "vNetName": "exchangevnet",
+          "vNetRangePrefix": "10.121.",
+          "SubnetInfo": [
+            {
+              "name": "subnet-AGS",
+              "suffix": "0.0/24"
+            },
+            {
+              "name": "subnet-Management",
+              "suffix": "1.0/24"
+            }
+          ],
+          "NSGLIS": [
+            { "ASName": "LimitAGS" },
+            { "ASName": "LimitDB" },
+            { "ASName": "LimitSRV" },
+            { "ASName": "LimitTest" },
+            { "ASName": "LimitWeb" },
+            { "ASName": "LimitSB" },
+            { "ASName": "LimitMgt" }
+          ]
+        },
+        "VMInfo": {
+          "shutDownTime": "0400",
+          "configureAutoStartStop": "yes",
+          "vmManagementAdminUserName": "ExchangeAdmin",
+          "vmManagementAdminPassword": "ExchangeDev1",
+          "VMMANAGEMENT": {
+            "subnetName": "subnet-Management",
+            "MachineList": [
+              {
+                "MachineName": "ExMGT01",
+                "NicName": "ExMGTNic01",
+                "publisher": "MicrosoftVisualStudio",
+                "offer": "VisualStudio",
+                "sku": "VS-2017-Ent-Latest-Win10-N",
+                "version": "latest",
+                "vmSize": "Standard_D1_v2",
+                "DataDCount": "STD"
+              },
+              {
+                "MachineName": "ExMGT02",
+                "NicName": "ExMGTNic02",
+                "publisher": "MicrosoftVisualStudio",
+                "offer": "VisualStudio",
+                "sku": "VS-2017-Ent-Latest-Win10-N",
+                "version": "latest",
+                "vmSize": "Standard_D1_v2",
+                "DataDCount": "STD"
+              }
+            ]
+          },
+          "VMDC": {
+            "subnetName": "subnet-Management",
+            "MachineList": [
+              {
+                "MachineName": "ExMGT01",
+                "NicName": "ExMGTNic01",
+                "publisher": "MicrosoftVisualStudio",
+                "offer": "VisualStudio",
+                "sku": "VS-2017-Ent-Latest-Win10-N",
+                "version": "latest",
+                "vmSize": "Standard_D1_v2",
+                "DataDCount": "STD"
+              },
+              {
+                "MachineName": "ExMGT02",
+                "NicName": "ExMGTNic02",
+                "publisher": "MicrosoftVisualStudio",
+                "offer": "VisualStudio",
+                "sku": "VS-2017-Ent-Latest-Win10-N",
+                "version": "latest",
+                "vmSize": "Standard_D1_v2",
+                "DataDCount": "STD"
+              }
+            ]
+          }
 
+        },
+        "StorageInfo": {
+          "storageAccountNamePrefix": "exch",
+          "storageType": "Standard_LRS",
+          "diagnosticsStorageAccountName": "centraldiag1",
+          "diagnosticsStorageResourceGroup": "Central"
+        },
+        "DataDiskInfo": {
+          "STD": [
+            {"name": "-data-DATA00","lun": 0,"caching": "ReadOnly", "diskSizeGB": "127","createOption": "Empty"}
+          ],
+          "1": [
+            {"name": "-data-DATA00", "lun": 0,"caching": "ReadOnly","diskSizeGB": "127","createOption": "Empty"},
+            {"name": "-data-LOGS01","lun": 4,"caching": "None"," diskSizeGB": "127","createOption": "Empty"},
+            {"name": "-data-TEMPDB01","lun": 5,"caching": "ReadOnly","diskSizeGB": "127", "createOption": "Empty"},
+            {"name": "-data-BACKUP00", "lun": 6,"caching": "None","diskSizeGB": "127","createOption": "Empty"}
+          ],
+          "2": [
+            {"name": "-data-DATA00","lun": 0,"caching": "ReadOnly","diskSizeGB": "1023","createOption": "Empty"},
+            {"name": "-data-DATA01","lun": 1,"caching": "ReadOnly","diskSizeGB": "1023","createOption": "Empty"}
+          ]
+        }
       }
-    },
-    
-    
-    "vNetName": {
-      "value": "exchangevnet"
-    },
-    "vNetRange": {
-      "value": "10.100.0.0/20"
-    },
-    "subnetDBRange": {
-      "value": "10.100.0.0/24"
-    },
-    "subnetWebRange": {
-      "value": "10.100.1.0/24"
-    },
-    "webLBIP": {
-      "value": "10.100.1.100"
-    },
-    "subnetSBRange": {
-      "value": "10.100.2.0/24"
-    },
-    "subnetSrvRange": {
-      "value": "10.100.3.0/24"
-    },
-    "subnetMgtRange": {
-      "value": "10.100.4.0/24"
-    },
-    "subnetTstRange": {
-      "value": "10.100.5.0/24"
-    },
-    "subnetAGSRange": {
-      "value": "10.100.6.0/24"
-    },
-    "subnetVPNRange": {
-      "value": "10.100.7.0/24"
-    },
-    "ExternalVPNRange": {
-      "value": "10.101.0.0/24"
-    },
-    "vmManagementAdminUserName": {
-      "value": "ExchangeAdmin"
-    },
-    "vmManagementAdminPassword": {
-      "value": "ExchangeDev1"
-    },
-    "existingdiagnosticsStorageAccountName": {
-      "value": "centraldiag1"
-    },
-    "existingdiagnosticsStorageResourceGroup": {
-      "value": "Central"
+      
     }
   }
 }

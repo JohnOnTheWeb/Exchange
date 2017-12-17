@@ -2,65 +2,11 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "shutDownTime": {
-      "type": "string",
-      "minLength": 1,
-      "defaultValue": "1200",
+    "DeploymentInfo": {
+      "type": "object",
       "metadata": {
-        "description": "Global shut Down Time for VM's Created"
+        "description": "Can be used to input LB/VM Etc objects from Parameters file"
       }
-    },
-    "startUpTime": {
-      "type": "string",
-      "minLength": 1,
-      "defaultValue": "1200",
-      "metadata": {
-        "description": "Global Start Up Time for VM's Created"
-      }
-    },
-    "configureAutoStartStop": {
-      "type": "string",
-      "minLength": 1,
-      "defaultValue": "no",
-      "metadata": {
-        "description": "Determines if auto Start and Stop is configured on VMs"
-      }
-    },
-    "baseTemplateUri": {
-      "type": "string",
-      "metadata": {
-        "description": "Base URI of template resources."
-      }
-    },
-    "subnetID": {
-      "type": "string",
-      "metadata": {
-        "description": "Virtual network subnet reference."
-      }
-    },
-    "vmMgmtPrivatePublicIPDnsName": {
-      "type": "string",
-      "minLength": 1,
-      "defaultValue": "ex-managment-ipdns"
-    },
-    "vmStorageAccountName": {
-      "type": "string",
-      "metadata": {
-        "description": "Virtual Network Storage reference for VM "
-      }
-    },
-    "vmAdminUserName": {
-      "type": "string",
-      "minLength": 1,
-      "defaultValue": "ManangementAdmin"
-    },
-    "vmAdminPassword": {
-      "type": "securestring"
-    },
-    "vmSize": {
-      "type": "string",
-      "minLength": 1,
-      "defaultValue": "Standard_D1_v2"
     },
     "_artifactsLocation": {
       "type": "string",
@@ -71,26 +17,32 @@
     "_artifactsLocationSasToken": {
       "type": "securestring",
       "metadata": {
-        "description": "Auto-generated token to access _artifactsLocation"
+        "description": "Auto-generated token to access artifactsLocation"
+      }
+    },
+    "vmStorageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Virtual Network Storage reference for VM "
       }
     }
   },
   "variables": {
-    "vmImagePublisher": "MicrosoftWindowsServer",
-    "vmImageOffer": "WindowsServer",
-    "vmSku": "2012-R2-Datacenter",
-    "AzureFilesStorageName": "2012-R2-Datacenter",
-    "csexFileShareScriptFolder": "CustomScripts",
-    "csexFileShareScriptFileName": "csexFileShare.ps1"
+    "DeploymentInfo": "[parameters('DeploymentInfo')]",
+    "DataDiskInfo": "[parameters('DeploymentInfo').DataDiskInfo]"
   },
   "resources": [
     {
-      "name": "ExchangeManagmentNic",
+      "name": "[variables('DeploymentInfo').VMInfo.VMMANAGEMENT.MachineList[copyIndex('vmConfigNicCopy')].NicName]",
       "type": "Microsoft.Network/networkInterfaces",
       "location": "[resourceGroup().location]",
       "apiVersion": "2016-03-30",
+      "copy": {
+        "count": "[length( variables('DeploymentInfo').VMInfo.VMMANAGEMENT.MachineList )]",
+        "name": "vmConfigNicCopy"
+      },
       "dependsOn": [
-       
+
       ],
       "tags": {
         "displayName": "ExchangeManagmentNic"
@@ -102,7 +54,7 @@
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
               "subnet": {
-                "id": "[parameters('subnetID')]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('DeploymentInfo').VNETInfo.vNetName, variables('DeploymentInfo').VMInfo.VMMANAGEMENT.subnetName)]"
               }
             }
           }
@@ -110,93 +62,82 @@
       }
     },
     {
-      "name": "ExchangeManagmentVM",
+      "name": "[variables('DeploymentInfo').VMInfo.VMMANAGEMENT.MachineList[copyIndex('vmLoop')].MachineName]",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[resourceGroup().location]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30",
+      "copy": {
+        "name": "vmLoop",
+        "count": "[length( variables('DeploymentInfo').VMInfo.VMMANAGEMENT.MachineList )]"
+      },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces', 'ExchangeManagmentNic')]"
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('DeploymentInfo').VMInfo.VMMANAGEMENT.MachineList[copyIndex('vmLoop')].NicName)]"
       ],
       "tags": {
         "displayName": "ExchangeManagmentVM"
       },
       "properties": {
         "hardwareProfile": {
-          "vmSize": "[parameters('vmSize')]"
+          "vmSize": "[variables('DeploymentInfo').VMInfo.VMMANAGEMENT.MachineList[copyIndex('vmLoop')].vmSize]"
         },
         "osProfile": {
-          "computerName": "ExcMgt01",
-          "adminUsername": "[parameters('vmAdminUserName')]",
-          "adminPassword": "[parameters('vmAdminPassword')]"
+          "computerName": "[variables('DeploymentInfo').VMInfo.VMMANAGEMENT.MachineList[copyIndex('vmLoop')].MachineName]",
+          "adminUsername": "[variables('DeploymentInfo').VMInfo.vmManagementAdminUserName]",
+          "adminPassword": "[variables('DeploymentInfo').VMInfo.vmManagementAdminPassword]"
         },
 
         "storageProfile": {
           "imageReference": {
-            "publisher": "MicrosoftVisualStudio",
-            "offer": "VisualStudio",
-            "sku": "VS-2017-Ent-Latest-Win10-N",
-            "version": "latest"
+            "publisher": "[variables('DeploymentInfo').VMInfo.VMMANAGEMENT.MachineList[copyIndex('vmLoop')].publisher]",
+            "offer": "[variables('DeploymentInfo').VMInfo.VMMANAGEMENT.MachineList[copyIndex('vmLoop')].offer]",
+            "sku": "[variables('DeploymentInfo').VMInfo.VMMANAGEMENT.MachineList[copyIndex('vmLoop')].sku]",
+            "version": "[variables('DeploymentInfo').VMInfo.VMMANAGEMENT.MachineList[copyIndex('vmLoop')].version]"
           },
           "osDisk": {
-            "name": "[concat('ExchangeManagmentVM','-osdisk')]",
-            "vhd": {
-              "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', parameters('vmStorageAccountName')), '2016-01-01').primaryEndpoints.blob, 'vhds', '/', 'ExchangeManagmentVM-','-OSDisk', '.vhd')]"
-            },
+            "name": "[concat(variables('DeploymentInfo').VMInfo.VMMANAGEMENT.MachineList[copyIndex('vmLoop')].MachineName,'-osdisk')]",
             "caching": "ReadWrite",
-            "createOption": "FromImage"
-
-          }
+            "createOption": "FromImage",
+            "managedDisk": { "storageAccountType": "Standard_LRS" }
+          },
+          "copy": [
+            {
+              "name": "dataDisks",
+              "count": "[length(variables('DataDiskInfo')[variables('DeploymentInfo').VMInfo.VMMANAGEMENT.MachineList[copyIndex('vmLoop')].DataDCount])]",
+              "input": {
+                "name": "[concat(variables('DeploymentInfo').VMInfo.VMMANAGEMENT.MachineList[copyIndex('vmLoop')].MachineName, variables('DataDiskInfo')[variables('DeploymentInfo').VMInfo.VMMANAGEMENT.MachineList[copyIndex('vmLoop')].DataDCount][copyIndex('dataDisks')].name)]",
+                "lun": "[variables('DataDiskInfo')[variables('DeploymentInfo').VMInfo.VMMANAGEMENT.MachineList[copyIndex('vmLoop')].DataDCount][copyIndex('dataDisks')].lun]",
+                "caching": "[variables('DataDiskInfo')[variables('DeploymentInfo').VMInfo.VMMANAGEMENT.MachineList[copyIndex('vmLoop')].DataDCount][copyIndex('dataDisks')].caching]",
+                "diskSizeGB": "[variables('DataDiskInfo')[variables('DeploymentInfo').VMInfo.VMMANAGEMENT.MachineList[copyIndex('vmLoop')].DataDCount][copyIndex('dataDisks')].diskSizeGB]",
+                "createOption": "[variables('DataDiskInfo')[variables('DeploymentInfo').VMInfo.VMMANAGEMENT.MachineList[copyIndex('vmLoop')].DataDCount][copyIndex('dataDisks')].createOption]",
+                "managedDisk": {
+                  "storageAccountType": "Standard_LRS"
+                }
+              }
+            }
+          ]
         },
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', 'ExchangeManagmentNic')]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('DeploymentInfo').VMInfo.VMMANAGEMENT.MachineList[copyIndex('vmLoop')].NicName)]"
             }
-
-
           ]
         }
       },
       "resources": [
         {
-          "name": "AzureFileShares",
-          "type": "extensions",
-          "location": "[resourceGroup().location]",
-          "apiVersion": "2016-03-30",
-          "dependsOn": [
-            "[resourceId('Microsoft.Compute/virtualMachines', 'ExchangeManagmentVM')]"
-          ],
-          "tags": {
-            "displayName": "AzureFileShares"
-          },
-          "properties": {
-            "publisher": "Microsoft.Compute",
-            "type": "CustomScriptExtension",
-            "typeHandlerVersion": "1.4",
-            "autoUpgradeMinorVersion": true,
-            "settings": {
-              "fileUris": [
-                "https://raw.githubusercontent.com/JohnOnTheWeb/Exchange/master/Exchange/ps1/azurefiles.ps1"
-              ]
-            },
-            "protectedSettings": {
-              "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ','azurefiles.ps1 -SAName ',parameters('AzureFilesStorageName'),'  -SAKey ', listKeys(resourceId(variables('AzureFilesStorageAccountResourceGroup'),'Microsoft.Storage/storageAccounts', parameters('AzureFilesStorageName')), '2015-06-15').key1)]"
-            }
-          }
-        },
-        {
           "type": "microsoft.devtestlab/schedules",
-          "name": "[concat('shutdown-computevm-','ExchangeManagmentVM')]",
-          "apiVersion": "2016-05-15",
+          "name": "[concat('shutdown-computevm-',variables('DeploymentInfo').VMInfo.VMMANAGEMENT.MachineList[copyIndex('vmLoop')].MachineName)]",
+          "apiVersion": "2017-04-26-preview",
           "location": "[resourceGroup().location]",
-          "condition": "[equals(parameters('configureAutoStartStop'),'yes')]",
+          "condition": "[equals(variables('DeploymentInfo').VMInfo.configureAutoStartStop,'yes')]",
           "scale": null,
           "tags": {
             "displayName": "Shutdown"
           },
           "properties": {
             "dailyRecurrence": {
-              "time": "[parameters('shutDownTime')]"
+              "time": "[variables('DeploymentInfo').VMInfo.shutDownTime]"
             },
             "notificationSettings": {
               "status": "Disabled",
@@ -204,43 +145,16 @@
             },
             "provisioningState": "Succeeded",
             "status": "Enabled",
-            "targetResourceId": "[resourceId('Microsoft.Compute/virtualMachines', 'ExchangeManagmentVM')]",
+            "targetResourceId": "[resourceId('Microsoft.Compute/virtualMachines', variables('DeploymentInfo').VMInfo.VMMANAGEMENT.MachineList[copyIndex('vmLoop')].MachineName)]",
             "taskType": "ComputeVmShutdownTask",
             "timeZoneId": "UTC"
           },
           "dependsOn": [
-            "[resourceId('Microsoft.Compute/virtualMachines', 'ExchangeManagmentVM')]"
+            "[resourceId('Microsoft.Compute/virtualMachines', variables('DeploymentInfo').VMInfo.VMMANAGEMENT.MachineList[copyIndex('vmLoop')].MachineName)]"
           ]
-        },
-        {
-          "name": "csexFileShare",
-          "type": "extensions",
-          "location": "[resourceGroup().location]",
-          "apiVersion": "2016-03-30",
-          "dependsOn": [
-            "[resourceId('Microsoft.Compute/virtualMachines', 'ExchangeManagmentVM')]"
-          ],
-          "tags": {
-            "displayName": "csexFileShare"
-          },
-          "properties": {
-            "publisher": "Microsoft.Compute",
-            "type": "CustomScriptExtension",
-            "typeHandlerVersion": "1.4",
-            "autoUpgradeMinorVersion": true,
-            "settings": {
-              "fileUris": [
-                "[concat(parameters('_artifactsLocation'), '/', variables('csexFileShareScriptFolder'), '/', variables('csexFileShareScriptFileName'), parameters('_artifactsLocationSasToken'))]"
-              ],
-              "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', variables('csexFileShareScriptFolder'), '/', variables('csexFileShareScriptFileName'))]"
-            }
-          }
         }
       ]
-
     }
-
-
   ],
   "outputs": {
   }

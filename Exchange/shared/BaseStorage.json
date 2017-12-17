@@ -2,44 +2,42 @@
   "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "storageType": {
-      "type": "string",
-      "allowedValues": [
-        "Standard_LRS",
-        "Standard_ZRS",
-        "Standard_GRS",
-        "Standard_RAGRS",
-        "Premium_LRS"
-      ]
-    },
-    "storageApiVersion": {
-      "type": "string",
+    "DeploymentInfo": {
+      "type": "object",
       "metadata": {
-        "description": "Azure API for Storage Account."
+        "description": "Can be used to input LB/VM Etc objects from Parameters file"
       }
     },
-    "storageAccountNamePrefix": {
+    "_artifactsLocation": {
       "type": "string",
       "metadata": {
-        "description": "Prefix for Storage Account Name"
+        "description": "Auto-generated container in staging storage account to receive post-build staging folder upload"
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Auto-generated token to access artifactsLocation"
       }
     }
+  
   },
   "variables": {
-    "storageName": "[concat(parameters('storageAccountNamePrefix'), uniqueString(resourceGroup().id))]"
+    "DeploymentInfo": "[parameters('DeploymentInfo')]",
+    "storageName": "[concat(variables('DeploymentInfo').StorageInfo.storageAccountNamePrefix, uniqueString(resourceGroup().id))]"
   },
   "resources": [
     {
       "name": "[variables('storageName')]",
       "type": "Microsoft.Storage/storageAccounts",
       "location": "[resourceGroup().location]",
-      "apiVersion": "[parameters('storageApiVersion')]",
+      "apiVersion": "2015-06-15",
       "dependsOn": [],
       "tags": {
-        "displayName": "[variables('storageName')]"
+        "displayName": "Base Storage"
       },
       "properties": {
-        "accountType": "[parameters('storageType')]"
+        "accountType": "[variables('DeploymentInfo').StorageInfo.storageType]"
       }
     }
   ],

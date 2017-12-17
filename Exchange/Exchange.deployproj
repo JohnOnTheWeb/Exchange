@@ -40,7 +40,6 @@
     <Content Include="ps1\azurefiles.ps1" />
     <Content Include="ps1\CreateFileShare.ps1" />
     <Content Include="shared\AGS.json" />
-    <Content Include="shared\azuredeploy.json" />
     <Content Include="shared\BaseStorage.json" />
     <Content Include="shared\DBMain.json" />
     <Content Include="shared\DBWeb.json" />
@@ -50,6 +49,7 @@
     <Content Include="shared\TestVM.json" />
     <Content Include="shared\VNet.json" />
     <Content Include="shared\WebVM.json" />
+    <Content Include="shared\DCVM.json" />
   </ItemGroup>
   <Target Name="GetReferenceAssemblyPaths" />
 </Project>

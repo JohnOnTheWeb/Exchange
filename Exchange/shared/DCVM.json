@@ -1,0 +1,167 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+  },
+  "variables": {
+  },
+  "resources": [
+    {
+      "name": "[concat(variables('Deployment'),'-as',variables('AVAILABILITYSETS')[copyIndex()].ASName)]",
+      "type": "Microsoft.Compute/availabilitySets",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-04-30-preview",
+      "dependsOn": [],
+      "sku": {
+        "name": "Aligned"
+      },
+      "copy": {
+        "name": "asLoop",
+        "count": "[length( variables('AVAILABILITYSETS') )]"
+      },
+      "tags": {
+        "displayName": "availabilitySet"
+      },
+      "properties": {
+        "platformUpdateDomainCount": 5,
+        "platformFaultDomainCount": 3
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[resourceGroup().location]",
+      "name": "[concat(variables('Deployment'),'-nic',variables('ADServers')[copyIndex(0)].VMName)]",
+      "copy": {
+        "name": "nicLoop",
+        "count": "[length( variables('ADServers') )]"
+      },
+      "dependsOn": [
+        // Do not include dependencies in other deployments
+        //"[variables('VnetID')]",
+        //"[concat('PublicIP_vm',variables('ADServers')[copyIndex(0)].VMName)]"
+      ],
+      "tags": {
+        "displayName": "vmAZDC10x_NIC"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[concat(variables('VNetID'), '/subnets/','sn',variables('ADServers')[copyIndex(0)].Subnet)]"
+              } //,
+              // "publicIPAddress": {
+              //   "id": "[resourceId( 'Microsoft.Network/publicIPAddresses', concat('PublicIP_vm',variables('ADServers')[copyIndex(0)].VMName) )]"
+              //
+              // }
+            }
+          }
+        ]
+      }
+    },
+    // MidTier VM Loop
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-04-30-preview",
+      "name": "[concat(variables('Deployment'), '-vm', variables('ADServers')[copyIndex(0)].VMName)]",
+      "copy": {
+        "name": "vmLoop",
+        "count": "[length(variables('ADServers'))]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/', concat(variables('Deployment'),'-nic',variables('ADServers')[copyIndex(0)].VMName))]",
+        "[concat('Microsoft.Compute/availabilitySets/', concat(variables('Deployment'),'-as',variables('ADServers')[copyIndex(0)].ASName))]"
+      ],
+      "tags": {
+        "displayName": "vmAZDC10x",
+        "Environment": "[parameters('Environment')]"
+      },
+      "properties": {
+        "licenseType": "Windows_Server",
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', concat(variables('Deployment'),'-as',variables('ADServers')[copyIndex(0)].ASName))]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[variables('ADServers')[copyIndex(0)].VMSize]"
+        },
+        "osProfile": {
+          "computerName": "[variables('ADServers')[copyIndex(0)].VMName]",
+          "adminUsername": "[parameters('Global').AdminUsername]",
+          "adminPassword": "[parameters('vmAdminPassword')]",
+          "secrets": [
+            {
+              "sourceVault": {
+                "id": "[resourceId(parameters('Global').RGName, 'Microsoft.KeyVault/vaults', parameters('Global').KVName)]"
+              },
+              "vaultCertificates": [
+                {
+                  "certificateUrl": "[parameters('Global').certificateUrl]",
+                  "certificateStore": "My"
+                },
+                {
+                  "certificateUrl": "[parameters('Global').certificateUrl]",
+                  "certificateStore": "Root"
+                },
+                {
+                  "certificateUrl": "[parameters('Global').certificateUrl]",
+                  "certificateStore": "CA"
+                }
+              ]
+            }
+          ]
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('vmImagePublisher')]",
+            "offer": "[variables('vmImageOffer')]",
+            "sku": "[variables('vmWindowsOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(variables('Deployment'),variables('ADServers')[copyIndex(0)].VMName, '-OSDisk')]",
+            "caching": "ReadWrite",
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "[parameters('DeploymentInfo').vmStorageAccountType]"
+            }
+          },
+          "dataDisks": [
+            {
+              "name": "[concat(variables('Deployment'),variables('ADServers')[copyIndex(0)].VMName, '-data-DATA00')]",
+              "lun": 0,
+              "caching": "None",
+              "diskSizeGB": "20",
+              "createOption": "Empty",
+              "managedDisk": {
+                "storageAccountType": "[parameters('DeploymentInfo').vmStorageAccountType]"
+              }
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('Deployment'),'-nic',variables('ADServers')[copyIndex(0)].VMName))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": "true",
+            "storageUri": "[concat('http://', concat(variables('Deployment'), 'sadiag'), '.blob.core.windows.net')]"
+          }
+        }
+
+      },
+      "resources": [
+        
+      ]
+    }
+  ],
+  "outputs": {
+  }
+}
